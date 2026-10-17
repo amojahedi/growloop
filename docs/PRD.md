@@ -36,11 +36,11 @@ Later phases will extend the skill taxonomy and library to other roles.
 ## 3. Goals & non-goals
 
 **Goals**
-1. Plan learning with **quarterly OKRs** broken into **monthly plans**.
-2. Discover curated materials per **skill** and add them to the month in one click.
-3. Execute on a **kanban board** (Backlog → To Do → In Progress → Done).
-4. See a **monthly dashboard** of learning output.
-5. Reinforce learning by **summarizing in your own words**, optionally refined with AI.
+1. Set **yearly growth OKRs**, organized by quarter and tied to skills — with Claude's help.
+2. Pick from **gold-standard resources** into a personal **library** and **backlog**.
+3. Execute on a **board** in monthly or quarterly cycles.
+4. See a **dashboard** of learning output.
+5. Keep a **notebook** for summaries and notes worth reviewing later.
 
 **Non-goals (MVP)**
 - Daily task management / general to-do lists.
@@ -52,84 +52,98 @@ Later phases will extend the skill taxonomy and library to other roles.
 ## 4. Core concepts
 
 ```
-Quarter
- └─ Objective (O)                  e.g. "Become confident leading roadmap discussions"
-     ├─ Key Result (KR)            e.g. "Finish 2 roadmapping materials", "Present roadmap to leadership"
-     └─ linked Skills              e.g. Roadmapping, Stakeholder Management
+Year (archived when finished)
+ └─ Quarter
+     └─ Objective                 3–4 per year
+         └─ Key Result            2–3 per objective; each targets one Skill
+                                  type: certification | material (course/book…) | count (N items)
 
-Skill ─── has many ──► Materials (course | book | article | podcast | custom)
+Resources (curated) ──save──► My Library (saved + user-added) ──plan──► Backlog
+Cycle (monthly or quarterly, user setting)
+ └─ Board: Backlog → To Do → In Progress → Done
+     └─ Plan Item (material + skills + optional KR, tasks, notes, summary, reminder)
 
-Month Plan
- └─ Plan Items (a Material placed in a month, linked to Skill(s) and optionally a KR)
-     ├─ status: backlog | todo | in_progress | done
-     ├─ tasks: suggested + custom (MVP suggestion: "Summarize in my words")
-     ├─ notes & summary
-     ├─ reminder (date + note)
-     └─ time: estimate + logged hours (optional)
+Notebook ◄── free notes + summaries/notes collected from plan items
 ```
 
 ## 5. Functional requirements
 
-### 5.1 Monthly dashboard (home)
+### 5.1 Dashboard (home)
 | ID | Requirement | Priority |
 |---|---|---|
-| D-1 | Show **items completed** this month (essential metric), with delta vs last month. | Must |
-| D-2 | Show **hours learned** this month — *optional*: only shown when the user logs time. | Should |
-| D-3 | **Skill radar**: investment per skill this month/quarter. | Must |
-| D-4 | **OKR progress**: progress per objective and key result for the current quarter. | Must |
-| D-5 | **Learning streak** calendar (days with learning activity). | Should |
-| D-6 | **Latest summaries & notes** feed. | Should |
-| D-7 | **Upcoming reminders** panel. | Must |
-| D-8 | Month switcher to view past months. | Must |
+| D-1 | **Items completed** this cycle, with delta vs previous cycle (core metric). | Must |
+| D-2 | **Skill radar**: activity per skill this cycle. | Must |
+| D-3 | **OKR progress** for the current quarter. | Must |
+| D-4 | **Learning streak** calendar. | Should |
+| D-5 | **Latest notes** and notes due for review. | Should |
+| D-6 | **Upcoming reminders**. | Must |
+| D-7 | Cycle switcher to view past cycles. | Must |
+| D-8 | **Customize dashboard**: show/hide and reorder widgets; reset to default. Hours learned is an optional widget, hidden by default. | Must |
 
 ### 5.2 Skills
 | ID | Requirement | Priority |
 |---|---|---|
-| S-1 | Ship with a curated PM skill list (e.g. Stakeholder Management, Roadmapping, Product Discovery, Prioritization, Product Analytics, Product Strategy, UX & Design, Communication, Leadership, Go-to-Market, Technical Fluency, Experimentation). | Must |
-| S-2 | User can add, rename and hide skills. | Must |
-| S-3 | Skill detail page: description, related materials, items in plan, progress. One-click "Add to month". | Must |
+| S-1 | Ship with 12 curated PM skills. | Must |
+| S-2 | Users can add, rename and hide skills. | Must |
+| S-3 | Skill page: description, linked KRs, related resources, progress. | Must |
 
-### 5.3 Learning library
+### 5.3 Resources (curated)
 | ID | Requirement | Priority |
 |---|---|---|
-| L-1 | Curated catalog of **courses, books, articles and podcasts**, tagged by skill. | Must |
-| L-2 | Filter by skill, type, free/paid, length; search by title/author. | Must |
-| L-3 | Clicking a material opens a **brief**: what it covers, who it's for, key takeaways, length, link. | Must |
-| L-4 | "Add to plan" → choose month, (optional) KR; creates a plan item with suggested tasks. | Must |
-| L-5 | User can add their own materials (title, link, type, skills, estimate). | Must |
-| L-6 | AI: **Recommend materials** for a skill or objective (via local Claude Code). | Should |
+| RS-1 | Gold-standard catalog of courses, certifications, books, articles and podcasts, tagged by skill. | Must |
+| RS-2 | Filters: skill, type, level, cost, length, plus search. | Must |
+| RS-3 | Brief on click: what it covers, who it's for, key takeaways, length, link. | Must |
+| RS-4 | Actions: **Save to library** or **Add to backlog** (optionally linked to a KR). | Must |
+| RS-5 | AI: **Recommend resources** for a skill or KR. | Should |
 
-### 5.4 OKR planner
+### 5.4 My Library
 | ID | Requirement | Priority |
 |---|---|---|
-| O-1 | Create quarterly objectives with key results. | Must |
-| O-2 | Link objectives to skills; link plan items to key results. | Must |
-| O-3 | KR progress computed from linked items (done/total) or set manually. | Must |
+| ML-1 | Everything the user saved from Resources or added themselves. | Must |
+| ML-2 | **Paste to add**: paste a title or link; Claude fills type, author, summary, skills and length for review. Without Claude, a pre-filled form. | Must |
+| ML-3 | Move an item to the backlog. | Must |
 
-### 5.5 Board
+### 5.5 Personal OKRs
 | ID | Requirement | Priority |
 |---|---|---|
-| B-1 | Kanban columns: **Backlog → To Do → In Progress → Done**. | Must |
-| B-2 | Drag & drop cards between and within columns (keyboard accessible). | Must |
-| B-3 | Filter board by month, skill, objective. | Must |
-| B-4 | Card shows title, type icon, skills, task progress, due/reminder. | Must |
+| O-1 | Plannable quarters: the rest of the current year plus next year (e.g. in Oct 2026: Q4 2026 and Q1–Q4 2027). | Must |
+| O-2 | When a year ends, it can be **archived** (read-only, still viewable). | Must |
+| O-3 | **OKR wizard**: Claude asks a fixed set of questions, then proposes 3–4 objectives with 2–3 KRs each, spread across quarters and covering the user's skills. User edits and accepts. Without Claude, a manual form. | Must |
+| O-4 | Each KR targets one skill with a measurable type: earn a certification, finish a specific material, or complete N items in the skill. | Must |
+| O-5 | KR progress is automatic from linked plan items. | Must |
 
-### 5.6 Card detail
+### 5.6 My Board
+| ID | Requirement | Priority |
+|---|---|---|
+| B-1 | Columns: **Backlog → To Do → In Progress → Done**. | Must |
+| B-2 | Drag & drop, keyboard accessible. | Must |
+| B-3 | Filter by skill and objective. | Must |
+| B-4 | Card: title, type icon, skills, task progress, reminder. | Must |
+| B-5 | **Cycle length** (monthly or quarterly) chosen at setup, changeable in Settings. | Must |
+
+### 5.7 Card detail
 | ID | Requirement | Priority |
 |---|---|---|
 | C-1 | Material brief + link. | Must |
-| C-2 | Task checklist — suggested "Summarize in my words" task + custom tasks. | Must |
-| C-3 | Personal notes (markdown-lite). | Must |
-| C-4 | Summary editor; AI **"Help me refine"** gives feedback on gaps and clarity. | Must / Should (AI) |
-| C-5 | Reminder: date + note, shown in dashboard. | Must |
-| C-6 | Time: estimate + log hours (optional). | Should |
+| C-2 | Tasks: suggested "Summarize in my words" + custom. | Must |
+| C-3 | Notes and summary; AI **Refine my summary**. | Must |
+| C-4 | Reminder (date + note). | Must |
+| C-5 | Optional time estimate and log. | Should |
 
-### 5.7 Month rollover
+### 5.8 Cycle review
 | ID | Requirement | Priority |
 |---|---|---|
-| R-1 | When a new month starts and unfinished items exist, show a **review**: carry over / move to backlog / drop, per item or in bulk. | Must |
+| R-1 | At the end of a cycle, unfinished To Do / In Progress items get a review: carry over, back to backlog, or drop. | Must |
 
-### 5.8 Help & onboarding
+### 5.9 Notebook
+| ID | Requirement | Priority |
+|---|---|---|
+| N-1 | Create, edit and organize free notes (title, body, tags, optional skill). | Must |
+| N-2 | Summaries and notes from plan items appear automatically, linked to their item. | Must |
+| N-3 | **Review later**: mark a note with a review date; due notes show on the dashboard. | Must |
+| N-4 | Search and filter by tag, skill and source. | Should |
+
+### 5.10 Help & onboarding
 | ID | Requirement | Priority |
 |---|---|---|
 | H-1 | A persistent **Help** button in the app shell, reachable from every page. | Must |
@@ -138,7 +152,7 @@ Month Plan
 | H-4 | **Guide page** ("How Growloop works"): explains the loop — set quarterly OKRs → pick materials → plan the month → learn on the board → summarize in your own words → monthly review — with short visuals and links into each area. Also covers enabling AI via local Claude Code and data/privacy (local-first, export/import). | Must |
 | H-5 | Help content is written as data (not hard-coded into components) so it can be edited and extended without touching UI code. | Should |
 
-### 5.9 Appearance & themes
+### 5.11 Appearance & themes
 | ID | Requirement | Priority |
 |---|---|---|
 | T-1 | MVP ships one style theme, **Linen** (warm & soft), from the design exploration in `design/directions/`. | Must |
@@ -151,8 +165,10 @@ Month Plan
 
 - AI runs on the **user's own machine via their installed Claude Code CLI** (headless `claude -p`), using their own Claude subscription. No API keys, no hosted LLM.
 - Features in MVP:
-  1. **Recommend materials** for a skill or objective.
-  2. **Refine my summary** — feedback on a user-written summary.
+  1. **OKR wizard** — fixed questions → 3–4 objectives with 2–3 skill-linked KRs.
+  2. **Paste to add** — fill in a resource's details from a pasted title or link.
+  3. **Recommend resources** for a skill or KR.
+  4. **Refine my summary** — feedback on a user-written summary.
 - If Claude Code is not installed / not signed in, AI buttons show a friendly setup hint. **Everything else works without AI.**
 - On the hosted demo, AI is disabled with an explanation of how to enable it locally.
 
