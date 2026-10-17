@@ -38,7 +38,7 @@ Later phases will extend the skill taxonomy and library to other roles.
 **Goals**
 1. Set **yearly growth OKRs**, organized by quarter and tied to skills — with Claude's help.
 2. Pick from **gold-standard resources** into a personal **library** and **backlog**.
-3. Execute on a **board** in monthly or quarterly cycles.
+3. Execute on a **monthly board**.
 4. See a **dashboard** of learning output.
 5. Keep a **notebook** for summaries and notes worth reviewing later.
 
@@ -59,7 +59,7 @@ Year (archived when finished)
                                   type: certification | material (course/book…) | count (N items)
 
 Resources (curated) ──save──► My Library (saved + user-added) ──plan──► Backlog
-Cycle (monthly or quarterly, user setting)
+Month
  └─ Board: Backlog → To Do → In Progress → Done
      └─ Plan Item (material + skills + optional KR, tasks, notes, summary, reminder)
 
@@ -71,13 +71,13 @@ Notebook ◄── free notes + summaries/notes collected from plan items
 ### 5.1 Dashboard (home)
 | ID | Requirement | Priority |
 |---|---|---|
-| D-1 | **Items completed** this cycle, with delta vs previous cycle (core metric). | Must |
-| D-2 | **Skill radar**: activity per skill this cycle. | Must |
+| D-1 | **Items completed** this month, with delta vs last month (core metric). | Must |
+| D-2 | **Skill radar**: activity per skill this month. | Must |
 | D-3 | **OKR progress** for the current quarter. | Must |
 | D-4 | **Learning streak** calendar. | Should |
 | D-5 | **Latest notes** and notes due for review. | Should |
 | D-6 | **Upcoming reminders**. | Must |
-| D-7 | Cycle switcher to view past cycles. | Must |
+| D-7 | Month switcher to view past months. | Must |
 | D-8 | **Customize dashboard**: show/hide and reorder widgets; reset to default. Hours learned is an optional widget, hidden by default. | Must |
 
 ### 5.2 Skills
@@ -93,7 +93,7 @@ Notebook ◄── free notes + summaries/notes collected from plan items
 | RS-1 | Gold-standard catalog of courses, certifications, books, articles and podcasts, tagged by skill. | Must |
 | RS-2 | Filters: skill, type, level, cost, length, plus search. | Must |
 | RS-3 | Brief on click: what it covers, who it's for, key takeaways, length, link. | Must |
-| RS-4 | Actions: **Save to library** or **Add to backlog** (optionally linked to a KR). | Must |
+| RS-4 | Primary **Add** button puts the item on the **current month's board**; secondary **Save to library**. KR link is optional. | Must |
 | RS-5 | AI: **Recommend resources** for a skill or KR. | Should |
 
 ### 5.4 My Library
@@ -101,7 +101,7 @@ Notebook ◄── free notes + summaries/notes collected from plan items
 |---|---|---|
 | ML-1 | Everything the user saved from Resources or added themselves. | Must |
 | ML-2 | **Paste to add**: paste a title or link; Claude fills type, author, summary, skills and length for review. Without Claude, a pre-filled form. | Must |
-| ML-3 | Move an item to the backlog. | Must |
+| ML-3 | **Add** button puts an item on the current month's board. | Must |
 
 ### 5.5 Personal OKRs
 | ID | Requirement | Priority |
@@ -119,7 +119,7 @@ Notebook ◄── free notes + summaries/notes collected from plan items
 | B-2 | Drag & drop, keyboard accessible. | Must |
 | B-3 | Filter by skill and objective. | Must |
 | B-4 | Card: title, type icon, skills, task progress, reminder. | Must |
-| B-5 | **Cycle length** (monthly or quarterly) chosen at setup, changeable in Settings. | Must |
+| B-5 | The board always opens on the **current month**, with a month switcher to look back. | Must |
 
 ### 5.7 Card detail
 | ID | Requirement | Priority |
@@ -130,10 +130,10 @@ Notebook ◄── free notes + summaries/notes collected from plan items
 | C-4 | Reminder (date + note). | Must |
 | C-5 | Optional time estimate and log. | Should |
 
-### 5.8 Cycle review
+### 5.8 Month-end review
 | ID | Requirement | Priority |
 |---|---|---|
-| R-1 | At the end of a cycle, unfinished To Do / In Progress items get a review: carry over, back to backlog, or drop. | Must |
+| R-1 | At month end, unfinished To Do / In Progress items get a review: carry over, back to backlog, or drop. | Must |
 
 ### 5.9 Notebook
 | ID | Requirement | Priority |
