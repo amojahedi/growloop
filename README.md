@@ -43,6 +43,8 @@ Copy `.env.example` to `.env.local`. All variables are optional:
 
 ## Development
 
+`npm run dev` and `npm start` bind to `127.0.0.1`, so the app (and its AI endpoints, which run the Claude Code CLI on your subscription) isn't reachable from other devices on your network. The AI endpoints additionally refuse requests that don't arrive via `localhost`/`127.0.0.1`/`[::1]` from the app's own origin.
+
 ```bash
 npm run lint        # ESLint
 npm run typecheck   # route type generation + tsc
