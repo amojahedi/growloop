@@ -8,7 +8,7 @@
 <script>(function(){var t;try{t=localStorage.getItem('growloop-theme')}catch(e){}if(t!=='light'&&t!=='dark'){t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.theme=t;})();</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist:wght@600&family=Geist+Mono:wght@500&family=Fraunces:opsz,wght@9..144,500&family=DM+Sans:wght@500&family=Bricolage+Grotesque:opsz,wght@12..96,800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist:wght@600&family=Geist+Mono:wght@500&family=Fraunces:opsz,wght@9..144,500&family=DM+Sans:wght@500&family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Instrument+Serif&display=swap">
 <style>
 :root{--bg:#F5F5F4;--surface:#FFFFFF;--surface-2:#F0F0EE;--border:#E5E5E2;--border-strong:#D4D4D0;--text:#1C1B19;--text-2:#4F4D49;--text-3:#6B6964;--ring:#5149D6;--shadow:0 1px 2px rgba(0,0,0,.04),0 12px 32px -18px rgba(0,0,0,.18);--hover-shadow:0 2px 4px rgba(0,0,0,.04),0 24px 48px -20px rgba(0,0,0,.28)}
 html[data-theme="dark"]{--bg:#0E0E0D;--surface:#171716;--surface-2:#1F1F1D;--border:#2A2A27;--border-strong:#3A3A36;--text:#EEEDEA;--text-2:#BDBBB5;--text-3:#94928C;--ring:#8F8AF7;--shadow:0 0 0 1px rgba(255,255,255,.02),0 16px 40px -20px rgba(0,0,0,.8);--hover-shadow:0 24px 48px -20px rgba(0,0,0,.9)}
@@ -36,7 +36,7 @@ h1{font-size:48px;line-height:1.05;letter-spacing:-.035em;font-weight:700;max-wi
 .how{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 .how span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--text-2);padding:5px 10px;border-radius:99px;background:var(--surface);border:1px solid var(--border)}
 .how b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--surface-2);font-size:11px;color:var(--text-3)}
-.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;padding-bottom:40px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px;padding-bottom:40px}
 .dir{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .25s,transform .25s}
 .dir:hover{box-shadow:var(--hover-shadow);transform:translateY(-2px)}
 .preview{position:relative;display:block;border-bottom:1px solid var(--border);background:var(--surface-2)}
@@ -62,6 +62,8 @@ html[data-theme="dark"] .sw-chip{box-shadow:inset 0 0 0 1px rgba(255,255,255,.14
 .sw-hex{font-size:10.5px;color:var(--text-3);font-family:ui-monospace,"SF Mono",Menlo,monospace;line-height:1.2}
 .sks{display:flex;gap:6px}
 .sk{width:22px;height:22px;border-radius:50%;box-shadow:0 0 0 2px var(--surface)}
+.sk-g{width:16px;height:16px;border-radius:0;margin:3px;box-shadow:none}
+.new{display:inline-block;vertical-align:middle;margin-left:6px;padding:2px 8px;border-radius:99px;background:var(--text);color:var(--bg);font-size:11px;font-weight:600;letter-spacing:.02em}
 .type{display:flex;align-items:center;gap:16px;padding:14px 16px;border-radius:14px;background:var(--surface-2)}
 .type-aa{font-size:46px;line-height:1}
 .type-meta{display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -73,7 +75,7 @@ html[data-theme="dark"] .sw-chip{box-shadow:inset 0 0 0 1px rgba(255,255,255,.14
 .open{margin-top:auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;border-radius:12px;background:var(--text);color:var(--bg);font-weight:600;font-size:14px;transition:opacity .15s}
 .open:hover{opacity:.88}
 .foot{padding:8px 0 48px;color:var(--text-3);font-size:13px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:20px}
-@media (max-width:1180px){.grid{grid-template-columns:1fr 1fr}.hero{grid-template-columns:1fr;gap:16px}}
+@media (max-width:1180px){.hero{grid-template-columns:1fr;gap:16px}}
 @media (max-width:760px){.wrap{padding:0 16px}.grid{grid-template-columns:1fr}h1{font-size:36px}.sws{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:10px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -92,10 +94,10 @@ html[data-theme="dark"] .sw-chip{box-shadow:inset 0 0 0 1px rgba(255,255,255,.14
   <section class="hero">
     <div>
       <p class="kicker"><i></i>Plan, learn, reflect, repeat</p>
-      <h1>Three ways Growloop could look.</h1>
+      <h1>Four ways Growloop could look.</h1>
     </div>
     <div>
-      <p class="lede">Each direction shows the same October 2026 sample data across the same screens, so you are comparing the look, not the content. The theme toggle here also switches the previews.</p>
+      <p class="lede">Each direction shows the same October 2026 sample data across the same screens, so you are comparing the look, not the content. Nocturne (04) adds the owner&rsquo;s follow-up requests: a customizable dashboard and no hours widget. The theme toggle here also switches the previews.</p>
       <div class="how"><span><b>1</b>Toggle light / dark</span><span><b>2</b>Open Board, drag a card</span><span><b>3</b>Open a brief in Library</span></div>
     </div>
   </section>
@@ -212,6 +214,44 @@ html[data-theme="dark"] .sw-chip{box-shadow:inset 0 0 0 1px rgba(255,255,255,.14
       </div>
 
       <a class="open" href="3-bold.html">Open Prism<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+    </div>
+  </article>
+  <article class="dir">
+    <a class="preview" href="4-moon.html#dashboard" aria-label="Open Nocturne direction">
+      <div class="frame-wrap"><iframe src="4-moon.html#dashboard" title="Nocturne preview" loading="eager" tabindex="-1" aria-hidden="true"></iframe></div>
+      <span class="preview-cta">Open Nocturne<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></span>
+    </a>
+    <div class="dir-body">
+      <div class="dir-head">
+        <span class="dir-num">04</span>
+        <div><h2 class="dir-name">Nocturne <span class="new">New</span></h2><p class="dir-style">Black & white · moon and stars</p></div>
+      </div>
+      <p class="dir-line">Ink on paper by day, a quiet night sky by night. Pure monochrome where the only colour is the skills, set like small jewels.</p>
+
+      <div class="block">
+        <h3>Palette</h3>
+        <div class="pal-row"><span class="pal-mode">Light</span><ul class="sws"><li class="sw"><span class="sw-chip" style="background:#FAFAFA"></span><span class="sw-label">Paper</span><span class="sw-hex">#FAFAFA</span></li><li class="sw"><span class="sw-chip" style="background:#FFFFFF"></span><span class="sw-label">Surface</span><span class="sw-hex">#FFFFFF</span></li><li class="sw"><span class="sw-chip" style="background:#5C5C5C"></span><span class="sw-label">Graphite</span><span class="sw-hex">#5C5C5C</span></li><li class="sw"><span class="sw-chip" style="background:#0A0A0A"></span><span class="sw-label">Ink</span><span class="sw-hex">#0A0A0A</span></li></ul></div>
+        <div class="pal-row"><span class="pal-mode">Dark</span><ul class="sws"><li class="sw"><span class="sw-chip" style="background:#000000"></span><span class="sw-label">Night</span><span class="sw-hex">#000000</span></li><li class="sw"><span class="sw-chip" style="background:#0B0B0C"></span><span class="sw-label">Surface</span><span class="sw-hex">#0B0B0C</span></li><li class="sw"><span class="sw-chip" style="background:#8F8F8F"></span><span class="sw-label">Dust</span><span class="sw-hex">#8F8F8F</span></li><li class="sw"><span class="sw-chip" style="background:#F5F5F5"></span><span class="sw-label">Moonlight</span><span class="sw-hex">#F5F5F5</span></li></ul></div>
+        <div class="pal-row"><span class="pal-mode">Skills</span><div class="sks"><span class="sk sk-g" style="background:#6366F1;clip-path:circle(50%)" title="Discovery"></span><span class="sk sk-g" style="background:#0D9488;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)" title="Stakeholders"></span><span class="sk sk-g" style="background:#D97706;clip-path:inset(10% round 2px)" title="Roadmapping"></span><span class="sk sk-g" style="background:#E11D48;clip-path:polygon(50% 4%,100% 96%,0 96%)" title="Prioritization"></span><span class="sk sk-g" style="background:#0284C7;clip-path:polygon(25% 6%,75% 6%,100% 50%,75% 94%,25% 94%,0 50%)" title="Analytics"></span><span class="sk sk-g" style="background:#65A30D;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)" title="Strategy"></span></div></div>
+      </div>
+
+      <div class="block">
+        <h3>Type pairing</h3>
+        <div class="type">
+          <span class="type-aa" style="font-family:'Instrument Serif',serif;font-weight:400;letter-spacing:-0.01em">Aa</span>
+          <div class="type-meta">
+            <span class="type-sample" style="font-family:'Instrument Serif',serif;font-weight:400;letter-spacing:-0.01em">7 completed this month</span>
+            <span class="type-names"><strong>Instrument Serif</strong> + <strong style="font-family:'Geist',sans-serif;font-weight:500">Geist</strong> <em>for UI</em></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="block notes">
+        <p><span class="k">Why it works</span>Progress becomes moon phases, the streak becomes a star map and finished cards twinkle. The dashboard is a customizable widget grid with a prominent skill radar, Jira-style.</p>
+        <p><span class="k">Watch out</span>The motif must stay small and disciplined as features grow.</p>
+      </div>
+
+      <a class="open" href="4-moon.html">Open Nocturne<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
     </div>
   </article>
   </main>
