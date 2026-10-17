@@ -58,7 +58,7 @@ flowchart LR
   shell --> help["Help"]
 
   dash --> dash1["Greeting + momentum line<br/>Hero: items completed this month, delta, month bars"]
-  dash --> dash2["Widgets: OKR progress · skill radar · streak<br/>due for review · reminders · latest notes · hours (hidden)"]
+  dash --> dash2["Widgets: OKR progress · skill radar · streak<br/>due for review · reminders · latest notes"]
   res --> res1["Search + filters · 'For my KRs' chip · Recommend<br/>every item: Add · Save to library"]
   res --> brief[/"Brief drawer<br/>Add · Save to library"/]
   lib --> lib1["All · From Resources · Added by me · status badges<br/>every item: Add"]
@@ -333,20 +333,21 @@ Edge cases: the widget shows the 3 oldest due notes + "n more"; notes from dropp
 ```mermaid
 flowchart TD
   d(["Dashboard · current month"]) --> c["Customize"]
-  c --> m["Edit mode<br/>each widget: handle + hide · hero locked · 'Hidden' tray"]
+  c --> m["Edit mode<br/>each widget: drag handle · S/M/L size · remove · hero can't be removed"]
   m --> act{"Change"}
-  act -->|"reorder"| ro["Drag, or Move up / down"]
-  act -->|"hide"| hd["Widget → Hidden tray"]
-  act -->|"show"| sh["From tray → added at the end"]
-  act -->|"reset"| rs{"Confirm reset?"}
-  rs -->|"yes"| def["Default order · Hours hidden"]
+  act -->|"reorder"| ro["Drag, or keyboard: Space, arrows, Space"]
+  act -->|"resize"| rz["Small / Medium / Large = 1 / 2 / 3 columns"]
+  act -->|"remove"| hd["Widget leaves the grid"]
+  act -->|"add"| sh["Add widget gallery → added at the end"]
+  act -->|"reset"| def["Default layout (Cancel still reverts)"]
   ro --> dn["Done · saved locally · Cancel reverts"]
+  rz --> dn
   hd --> dn
   sh --> dn
   def --> dn
 ```
 
-Default order: Hero (locked; items completed this month vs last) · Current-quarter OKRs · Skill radar (this month) · Due for review · Reminders · Streak · Latest notes · *(hidden)* Hours. The month switcher re-scopes hero, radar, streak and hours; the OKR widget follows that month's quarter. Hours shown with no logs: "Log time on a card to see hours here." Everything hidden: hero plus a Customize link.
+Default order: Hero (locked: can be moved and resized but not removed; items completed this month vs last) · Current-quarter OKRs · Skill radar (this month) · Due for review · Reminders · Streak · Latest notes. Hours are never on the dashboard (ADR 006); they stay optional on cards. The month switcher re-scopes hero, radar and streak; the OKR widget follows that month's quarter.
 
 ### i) Year end → archive → next year
 
@@ -431,7 +432,7 @@ flowchart LR
 
 Against `src/lib/domain/types.ts`. Monthly-only keeps `MonthKey` and most of the board model intact.
 
-1. **Profile & settings**: `name?`, `onboarding { completedAt?, objectivesSkipped? }`, `tourDoneAt?`, `dashboard: { widgetId, visible, order }[]`. No cycle setting.
+1. **Profile & settings**: `name?`, `onboarding { completedAt?, objectivesSkipped? }`, `tourDoneAt?`, `dashboardLayout: { widgetId, size }[] | null` (visible widgets in order, hidden ones omitted; `null` = default; shipped as workspace schema v3). No cycle setting.
 2. **Month review**: keep `RolloverRecord` (rename to month review if desired); add optional `quarterWrap: { objectiveId, outcome: closed | moved }[]`.
 3. **Year**: `{ year, archivedAt? }`; plannable quarters derived from today.
 4. **Objective**: add `why?`, `status: active | closed | moved`, `finalProgress?`, `source: wizard | starter | manual`. Derive `skillIds` from KRs instead of storing.
@@ -442,7 +443,7 @@ Against `src/lib/domain/types.ts`. Monthly-only keeps `MonthKey` and most of the
 9. **Activity log**: add `note_reviewed`; keep the rest.
 10. **Extension only (if §6 is adopted)**: `SkillLevel { skillId, current 1–5, target 1–5, at }`; `profile.context?` (pasted CV text, local only).
 
-Docs to update: ADR 007 (cycle choice is now superseded: monthly only) and PRD B-5, RS-4, ML-3 (Add to backlog → Add to this month), H-2/H-4 (tour still names the Skills page). ADR 006 says the hours widget appears only when time is logged; the new decision is hidden by default and user-enabled.
+Docs to update: ADR 007 (cycle choice is now superseded: monthly only) and PRD B-5, RS-4, ML-3 (Add to backlog → Add to this month), H-2/H-4 (tour still names the Skills page). ADR 006 now says hours never appear on the dashboard.
 
 ---
 

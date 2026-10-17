@@ -6,7 +6,7 @@ import { upcomingReminders } from "@/lib/domain/dashboard";
 import { formatShortDate } from "@/lib/format";
 import { useActions, useMaterialMap, usePlanItems, useToday } from "@/lib/store/hooks";
 
-/** Upcoming and overdue reminders (D-7). */
+/** Upcoming and overdue reminders (D-6). */
 export function RemindersPanel() {
   const items = usePlanItems();
   const materials = useMaterialMap();
@@ -15,7 +15,7 @@ export function RemindersPanel() {
   const reminders = upcomingReminders(items, today, { limit: 5 });
 
   return (
-    <Section title="Upcoming reminders">
+    <Section title="Upcoming reminders" className="h-full">
       {reminders.length === 0 ? (
         <EmptyHint>No reminders. Add one from a card on the board.</EmptyHint>
       ) : (

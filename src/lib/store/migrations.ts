@@ -1,7 +1,7 @@
 import { backfillActivity } from "@/lib/domain/activity";
 import { APP_DATA_VERSION } from "@/lib/domain/app-data";
-import type { Workspace } from "@/lib/domain/types";
-import { validateAppDataV1 } from "./schema";
+import type { Workspace, WorkspaceV2 } from "@/lib/domain/types";
+import { validateAppDataV1, validateWorkspaceV2 } from "./schema";
 
 /**
  * Schema migrations for persisted and imported data.
@@ -23,7 +23,14 @@ export const migrations: Readonly<Record<number, Migration>> = {
   1: (data) => {
     const v1 = validateAppDataV1(data);
     if (!v1.ok) throw new MigrationError(`Saved data (v1) is invalid: ${v1.error}`);
-    const upgraded: Workspace = { ...v1.data, version: 2, activity: backfillActivity(v1.data.planItems) };
+    const upgraded: WorkspaceV2 = { ...v1.data, version: 2, activity: backfillActivity(v1.data.planItems) };
+    return upgraded as unknown as Record<string, unknown>;
+  },
+  /** v2 → v3: add the dashboard layout, unset so existing users get the default dashboard. */
+  2: (data) => {
+    const v2 = validateWorkspaceV2(data);
+    if (!v2.ok) throw new MigrationError(`Saved data (v2) is invalid: ${v2.error}`);
+    const upgraded: Workspace = { ...v2.data, version: 3, dashboardLayout: null };
     return upgraded as unknown as Record<string, unknown>;
   },
 };

@@ -78,7 +78,7 @@ Notebook ◄── free notes + summaries/notes collected from plan items
 | D-5 | **Latest notes** and notes due for review. | Should |
 | D-6 | **Upcoming reminders**. | Must |
 | D-7 | Month switcher to view past months. | Must |
-| D-8 | **Customize dashboard**: show/hide and reorder widgets; reset to default. Hours learned is an optional widget, hidden by default. | Must |
+| D-8 | **Customize dashboard** (Jira-style): add/remove widgets from a gallery, drag to reorder, resize (S/M/L), reset to default. Hours are not shown on the dashboard. | Must |
 
 ### 5.2 Skills
 | ID | Requirement | Priority |
@@ -86,6 +86,7 @@ Notebook ◄── free notes + summaries/notes collected from plan items
 | S-1 | Ship with 12 curated PM skills. | Must |
 | S-2 | Users can add, rename and hide skills. | Must |
 | S-3 | **Skill sheet** opens from any skill chip or radar axis: description, linked KRs, related resources, progress. Skills are managed in Settings (no nav item). | Must |
+| S-4 | **Skill impact**: every material shows which skills it builds and how strongly; the dashboard radar shows completed vs projected skill growth, with a hover preview of any item's impact. | Must |
 
 ### 5.3 Resources (curated)
 | ID | Requirement | Priority |

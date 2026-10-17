@@ -198,7 +198,7 @@ footer{margin-top:64px;color:var(--text-3);font-size:13px}
   shell --&gt; help[&quot;Help&quot;]
 
   dash --&gt; dash1[&quot;Greeting + momentum line&lt;br/&gt;Hero: items completed this month, delta, month bars&quot;]
-  dash --&gt; dash2[&quot;Widgets: OKR progress · skill radar · streak&lt;br/&gt;due for review · reminders · latest notes · hours (hidden)&quot;]
+  dash --&gt; dash2[&quot;Widgets: OKR progress · skill radar · streak&lt;br/&gt;due for review · reminders · latest notes&quot;]
   res --&gt; res1[&quot;Search + filters · &#x27;For my KRs&#x27; chip · Recommend&lt;br/&gt;every item: Add · Save to library&quot;]
   res --&gt; brief[/&quot;Brief drawer&lt;br/&gt;Add · Save to library&quot;/]
   lib --&gt; lib1[&quot;All · From Resources · Added by me · status badges&lt;br/&gt;every item: Add&quot;]
@@ -378,18 +378,19 @@ footer{margin-top:64px;color:var(--text-3);font-size:13px}
     </div>
 
     <div class="flow" id="flow-h">
-      <div class="flow-meta"><span class="tag">h · updated</span><h3>Customize dashboard</h3><p>Show, hide, reorder, reset. The hero (items completed this month) is locked.</p>
-        <ul><li>Default: Hero · OKRs · Radar · Due · Reminders · Streak · Notes · Hours (hidden).</li><li>Month switcher re-scopes hero, radar, streak, hours.</li></ul></div>
+      <div class="flow-meta"><span class="tag">h · updated</span><h3>Customize dashboard</h3><p>Add, remove, reorder, resize (S/M/L), reset. The hero (items completed this month) can't be removed.</p>
+        <ul><li>Default: Hero · OKRs · Radar · Due · Reminders · Streak · Notes. No hours on the dashboard.</li><li>Month switcher re-scopes hero, radar, streak.</li></ul></div>
       <div class="diagram"><pre data-src="customize">flowchart TD
   d([&quot;Dashboard · current month&quot;]) --&gt; c[&quot;Customize&quot;]
-  c --&gt; m[&quot;Edit mode&lt;br/&gt;each widget: handle + hide · hero locked · &#x27;Hidden&#x27; tray&quot;]
+  c --&gt; m[&quot;Edit mode&lt;br/&gt;each widget: drag handle · S/M/L size · remove · hero can&#x27;t be removed&quot;]
   m --&gt; act{&quot;Change&quot;}
-  act --&gt;|&quot;reorder&quot;| ro[&quot;Drag, or Move up / down&quot;]
-  act --&gt;|&quot;hide&quot;| hd[&quot;Widget → Hidden tray&quot;]
-  act --&gt;|&quot;show&quot;| sh[&quot;From tray → added at the end&quot;]
-  act --&gt;|&quot;reset&quot;| rs{&quot;Confirm reset?&quot;}
-  rs --&gt;|&quot;yes&quot;| def[&quot;Default order · Hours hidden&quot;]
+  act --&gt;|&quot;reorder&quot;| ro[&quot;Drag, or keyboard: Space, arrows, Space&quot;]
+  act --&gt;|&quot;resize&quot;| rz[&quot;Small / Medium / Large = 1 / 2 / 3 columns&quot;]
+  act --&gt;|&quot;remove&quot;| hd[&quot;Widget leaves the grid&quot;]
+  act --&gt;|&quot;add&quot;| sh[&quot;Add widget gallery → added at the end&quot;]
+  act --&gt;|&quot;reset&quot;| def[&quot;Default layout (Cancel still reverts)&quot;]
   ro --&gt; dn[&quot;Done · saved locally · Cancel reverts&quot;]
+  rz --&gt; dn
   hd --&gt; dn
   sh --&gt; dn
   def --&gt; dn

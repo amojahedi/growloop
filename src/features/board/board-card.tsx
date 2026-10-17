@@ -2,23 +2,24 @@
 
 import { cn } from "cn";
 import { MaterialTypeIcon } from "@/components/icons";
+import { SkillImpact } from "@/components/skills/skill-impact";
 import { Badge } from "@/components/ui/badge";
 import { taskProgress } from "@/lib/domain/plan-items";
-import type { Material, PlanItem, Skill } from "@/lib/domain/types";
+import type { Material, PlanItem } from "@/lib/domain/types";
 import { formatShortDate } from "@/lib/format";
 
 export interface BoardCardProps extends React.ComponentProps<"div"> {
   item: PlanItem;
   material: Material | undefined;
-  skills: ReadonlyMap<string, Skill>;
 }
 
 /**
  * What a plan item shows on the board (B-4). Extra div props let the sortable
  * wrapper make it the drag handle; the last row leaves room for the remove
- * button, which sits beside the card rather than inside it.
+ * button, which sits beside the card rather than inside it. Skill impact bars
+ * show which skills the item builds and how strongly (S-4).
  */
-export function BoardCard({ item, material, skills, className, ...props }: BoardCardProps) {
+export function BoardCard({ item, material, className, ...props }: BoardCardProps) {
   const tasks = taskProgress(item);
   const title = material?.title ?? "Unknown material";
 
@@ -28,14 +29,12 @@ export function BoardCard({ item, material, skills, className, ...props }: Board
         {material && <MaterialTypeIcon type={material.type} className="mt-0.5 size-4 shrink-0" />}
         {title}
       </p>
-      <div className="mt-2 flex flex-wrap gap-1">
-        {item.skillIds.map((id) => (
-          <Badge key={id} variant="secondary">
-            {skills.get(id)?.name ?? id}
-          </Badge>
-        ))}
-        {item.carriedFrom?.length ? <Badge variant="outline">Carried over</Badge> : null}
-      </div>
+      <SkillImpact material={item} className="mt-2" />
+      {item.carriedFrom?.length ? (
+        <Badge variant="outline" className="mt-2">
+          Carried over
+        </Badge>
+      ) : null}
       <p className="mt-2 flex min-h-6 items-center pr-7 text-xs text-muted-foreground">
         {tasks.total > 0 && `${tasks.done}/${tasks.total} tasks`}
         {item.reminder && !item.reminder.dismissed && ` · Reminder ${formatShortDate(item.reminder.date)}`}

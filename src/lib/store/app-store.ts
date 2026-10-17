@@ -30,6 +30,7 @@ import type {
   RolloverRecord,
   Skill,
   TimeLog,
+  WidgetPlacement,
   Workspace,
 } from "@/lib/domain/types";
 import { isDemoMode } from "@/lib/env";
@@ -106,6 +107,10 @@ export interface AppActions {
 
   // Month rollover
   applyRollover: (toMonth: MonthKey, decisions: Readonly<Record<ID, RolloverDecision>>) => RolloverRecord;
+
+  // Dashboard
+  /** Saves the dashboard layout; `null` goes back to the default layout. */
+  setDashboardLayout: (layout: readonly WidgetPlacement[] | null) => void;
 
   // Data management
   exportData: () => string;
@@ -307,6 +312,10 @@ export const useAppStore = create<AppState>()(
           set({ data: result.data });
           return result.record;
         },
+
+        // --- Dashboard ------------------------------------------------------------------
+        setDashboardLayout: (layout) =>
+          update((data) => ({ ...data, dashboardLayout: layout && layout.map((placement) => ({ ...placement })) })),
 
         // --- Data management ----------------------------------------------------------
         exportData: () => serializeWorkspace(get().data),

@@ -1,19 +1,21 @@
 "use client";
 
 import { ExternalLinkIcon } from "lucide-react";
+import { SkillImpact } from "@/components/skills/skill-impact";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { ID, Material, Skill } from "@/lib/domain/types";
+import type { Material } from "@/lib/domain/types";
 import { ResourceActions } from "./resource-actions";
-import { metaLine, ResourceBadges, SkillDots } from "./resource-meta";
+import { metaLine, ResourceBadges } from "./resource-meta";
 
-/** The brief drawer (RS-3): what it covers, who it's for, takeaways, length, link, and the same two actions. */
+/**
+ * The brief drawer (RS-3): what it covers, who it's for, takeaways, length,
+ * link, the same two actions, and which skills it builds and how strongly (S-4).
+ */
 export function ResourceBrief({
   material,
-  skills,
   onClose,
 }: {
   material: Material | undefined;
-  skills: ReadonlyMap<ID, Skill>;
   onClose: () => void;
 }) {
   return (
@@ -27,7 +29,11 @@ export function ResourceBrief({
           </DialogHeader>
 
           <ResourceActions material={material} />
-          <SkillDots skillIds={material.skillIds} skills={skills} />
+          {material.skillIds.length > 0 && (
+            <BriefSection title="Skill impact">
+              <SkillImpact material={material} className="max-w-sm" />
+            </BriefSection>
+          )}
 
           {material.summary && <BriefSection title="What it covers">{material.summary}</BriefSection>}
           {material.audience && <BriefSection title="Who it's for">{material.audience}</BriefSection>}

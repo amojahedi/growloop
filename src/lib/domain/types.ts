@@ -195,8 +195,8 @@ export interface ActivityEvent {
   refId?: ID;
 }
 
-/** Everything the app stores locally (schema v2: v1 plus the activity log). */
-export interface Workspace extends Omit<AppData, "version"> {
+/** Schema v2: v1 plus the activity log. Kept for migrating older saves. */
+export interface WorkspaceV2 extends Omit<AppData, "version"> {
   version: 2;
   activity: ActivityEvent[];
   /**
@@ -205,4 +205,25 @@ export interface Workspace extends Omit<AppData, "version"> {
    * own materials are always in the library and are not listed here.
    */
   savedMaterialIds?: ID[];
+}
+
+export const WIDGET_SIZES = ["small", "medium", "large"] as const;
+
+export type WidgetSize = (typeof WIDGET_SIZES)[number];
+
+/**
+ * One visible dashboard widget, in display order. `widgetId` is a plain string
+ * here because stored data may name widgets this build doesn't know (added by
+ * a newer version or since retired); the dashboard skips those when rendering.
+ */
+export interface WidgetPlacement {
+  widgetId: string;
+  size: WidgetSize;
+}
+
+/** Everything the app stores locally (schema v3: v2 plus the dashboard layout). */
+export interface Workspace extends Omit<WorkspaceV2, "version"> {
+  version: 3;
+  /** Visible widgets in order; hidden widgets are omitted. `null` = the default layout. */
+  dashboardLayout: WidgetPlacement[] | null;
 }

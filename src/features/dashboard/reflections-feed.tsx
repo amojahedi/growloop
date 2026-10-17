@@ -5,14 +5,14 @@ import { latestReflections } from "@/lib/domain/dashboard";
 import { formatShortDate } from "@/lib/format";
 import { useMaterialMap, usePlanItems } from "@/lib/store/hooks";
 
-/** Latest summaries and notes (D-6). */
+/** Latest summaries and notes (D-5). */
 export function ReflectionsFeed() {
   const items = usePlanItems();
   const materials = useMaterialMap();
   const reflections = latestReflections(items, 5);
 
   return (
-    <Section title="Latest summaries & notes">
+    <Section title="Notes & summaries" description="Latest first" className="h-full">
       {reflections.length === 0 ? (
         <EmptyHint>Summaries you write in your own words will show up here.</EmptyHint>
       ) : (

@@ -1,4 +1,4 @@
-import type { ActivityEvent, AppData, KeyResult, Material, Objective, PlanItem, Skill, Workspace } from "@/lib/domain/types";
+import type { ActivityEvent, AppData, KeyResult, Material, Objective, PlanItem, Skill, Workspace, WorkspaceV2 } from "@/lib/domain/types";
 
 /** Small builders for tests. Every builder takes overrides; ids are sequential and readable. */
 
@@ -71,7 +71,7 @@ export function makeObjective(overrides: Partial<Objective> = {}): Objective {
 
 export function makeData(overrides: Partial<Workspace> = {}): Workspace {
   return {
-    version: 2,
+    version: 3,
     skills: [],
     customMaterials: [],
     objectives: [],
@@ -79,13 +79,20 @@ export function makeData(overrides: Partial<Workspace> = {}): Workspace {
     rollovers: [],
     activity: [],
     savedMaterialIds: [],
+    dashboardLayout: null,
     ...overrides,
   };
 }
 
+/** Schema v2 data (before the dashboard layout), e.g. a save from an older build. */
+export function makeDataV2(overrides: Partial<WorkspaceV2> = {}): WorkspaceV2 {
+  const { dashboardLayout: _layout, ...rest } = makeData();
+  return { ...rest, version: 2, ...overrides };
+}
+
 /** Schema v1 data (before the activity log), e.g. authored seed data or an old export. */
 export function makeDataV1(overrides: Partial<AppData> = {}): AppData {
-  const { activity: _activity, savedMaterialIds: _saved, ...rest } = makeData();
+  const { activity: _activity, savedMaterialIds: _saved, dashboardLayout: _layout, ...rest } = makeData();
   return { ...rest, version: 1, ...overrides };
 }
 

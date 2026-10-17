@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { at, makeData, makeDataV1, makeEvent, makeItem, makeKeyResult, makeObjective, makeSkill } from "@/lib/testing/fixtures";
+import { at, makeData, makeDataV1, makeDataV2, makeEvent, makeItem, makeKeyResult, makeObjective, makeSkill } from "@/lib/testing/fixtures";
 import { migrateAppData, MigrationError } from "./migrations";
 import { validateWorkspace } from "./schema";
 import { exportFileName, parseImportedData, serializeWorkspace } from "./serialization";
@@ -20,6 +20,10 @@ const sample = () =>
       { fromMonth: "2026-09", toMonth: "2026-10", completedAt: "2026-10-01T08:00:00Z", counts: { carry_over: 1, backlog: 0, drop: 2 } },
     ],
     activity: [makeEvent({ kind: "time_logged", hours: 1, refId: "log" })],
+    dashboardLayout: [
+      { widgetId: "skill-radar", size: "large" },
+      { widgetId: "reminders", size: "small" },
+    ],
   });
 
 describe("validateWorkspace", () => {
@@ -40,13 +44,16 @@ describe("validateWorkspace", () => {
     }
   });
 
-  it("loads v2 data saved before `savedMaterialIds` existed, defaulting it to [] (no migration)", () => {
+  it("loads data saved without `savedMaterialIds`, defaulting it to []", () => {
     const { savedMaterialIds: _saved, ...older } = sample();
     expect(older).not.toHaveProperty("savedMaterialIds");
 
     expect(validateWorkspace(older)).toEqual({ ok: true, data: { ...older, savedMaterialIds: [] } });
     expect(parseImportedData(JSON.stringify(older))).toEqual({ ok: true, data: { ...older, savedMaterialIds: [] } });
-    expect(migrateAppData(older, 2)).toBe(older);
+    expect(migrateAppData(older, 3)).toBe(older);
+
+    const { savedMaterialIds: _v2Saved, ...olderV2 } = makeDataV2();
+    expect(migrateAppData(olderV2, 2)).toEqual({ ...olderV2, version: 3, savedMaterialIds: [], dashboardLayout: null });
   });
 
   it("keeps saved material ids and rejects malformed ones", () => {
@@ -60,10 +67,21 @@ describe("validateWorkspace", () => {
   });
 
   it("rejects other versions and a missing activity log", () => {
-    expect(validateWorkspace({ ...sample(), version: 1 }).ok).toBe(false);
-    expect(validateWorkspace({ ...sample(), version: 3 }).ok).toBe(false);
+    expect(validateWorkspace({ ...sample(), version: 2 }).ok).toBe(false);
+    expect(validateWorkspace({ ...sample(), version: 4 }).ok).toBe(false);
     const { activity: _activity, ...withoutLog } = sample();
     expect(validateWorkspace(withoutLog).ok).toBe(false);
+  });
+
+  it("validates the dashboard layout", () => {
+    const withLayout = (dashboardLayout: unknown) => validateWorkspace({ ...sample(), dashboardLayout }).ok;
+    expect(withLayout(null)).toBe(true);
+    // Unknown widget ids are allowed (skipped when rendering); malformed placements are not.
+    expect(withLayout([{ widgetId: "from-the-future", size: "small" }])).toBe(true);
+    expect(withLayout([{ widgetId: "reminders", size: "huge" }])).toBe(false);
+    expect(withLayout([{ size: "small" }])).toBe(false);
+    const { dashboardLayout: _layout, ...withoutLayout } = sample();
+    expect(validateWorkspace(withoutLayout).ok).toBe(false);
   });
 });
 
@@ -78,7 +96,7 @@ describe("migrateAppData", () => {
 
   it("is a no-op at the current version", () => {
     const data = sample();
-    expect(migrateAppData(data, 2)).toBe(data);
+    expect(migrateAppData(data, 3)).toBe(data);
   });
 
   it("upgrades v1 data to v2, backfilling the activity log", () => {
@@ -89,10 +107,19 @@ describe("migrateAppData", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data.version).toBe(2);
+      expect(result.data.version).toBe(3);
       expect(result.data.activity).toEqual([expect.objectContaining({ kind: "item_completed", itemId: "done", day: "2026-10-03" })]);
       expect(result.data.planItems).toEqual(v1.planItems);
     }
+  });
+
+  it("upgrades v2 data to v3 with the default dashboard layout", () => {
+    const v2 = makeDataV2({ skills: [makeSkill({ id: "roadmapping" })], activity: [makeEvent()] });
+    expect(migrateAppData(v2, 2)).toEqual({ ...v2, version: 3, dashboardLayout: null });
+  });
+
+  it("refuses to migrate invalid v2 data", () => {
+    expect(() => migrateAppData({ ...makeDataV2(), activity: "nope" }, 2)).toThrow(/v2/);
   });
 
   it("refuses to migrate invalid v1 data", () => {
@@ -123,7 +150,10 @@ describe("export / import", () => {
     const v1 = makeDataV1({ skills: [makeSkill({ id: "roadmapping" })] });
     const result = parseImportedData(JSON.stringify({ app: "growloop", exportedAt: "2026-09-01T00:00:00Z", data: v1 }));
 
-    expect(result).toMatchObject({ ok: true, data: { version: 2, activity: [], savedMaterialIds: [], skills: v1.skills } });
+    expect(result).toMatchObject({
+      ok: true,
+      data: { version: 3, activity: [], savedMaterialIds: [], skills: v1.skills, dashboardLayout: null },
+    });
   });
 
   it("explains why an import failed", () => {

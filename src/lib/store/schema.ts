@@ -1,5 +1,14 @@
 import { z } from "zod";
-import { MATERIAL_COSTS, MATERIAL_LEVELS, MATERIAL_TYPES, SKILL_COLORS, type AppData, type Workspace } from "@/lib/domain/types";
+import {
+  MATERIAL_COSTS,
+  MATERIAL_LEVELS,
+  MATERIAL_TYPES,
+  SKILL_COLORS,
+  WIDGET_SIZES,
+  type AppData,
+  type Workspace,
+  type WorkspaceV2,
+} from "@/lib/domain/types";
 
 /**
  * Runtime schemas for stored data. Used to validate anything that enters the
@@ -129,12 +138,25 @@ const activityEventSchema = z.object({
   refId: id.optional(),
 });
 
-/** Current schema (v2). */
-export const workspaceSchema = appDataV1Schema.extend({
+/** Schema v2 (before the dashboard layout); used to upgrade old saves and imports. */
+export const workspaceV2Schema = appDataV1Schema.extend({
   version: z.literal(2),
   activity: z.array(activityEventSchema),
   // Added after v2 shipped: optional with a default, so saves without it load unchanged (no version bump).
   savedMaterialIds: z.array(id).default([]),
+}) satisfies z.ZodType<WorkspaceV2>;
+
+// Any non-empty id is accepted: unknown widgets are skipped when rendering, so a
+// layout from a newer build never invalidates the whole workspace.
+const widgetPlacementSchema = z.object({
+  widgetId: id,
+  size: z.enum(WIDGET_SIZES),
+});
+
+/** Current schema (v3). */
+export const workspaceSchema = workspaceV2Schema.extend({
+  version: z.literal(3),
+  dashboardLayout: z.array(widgetPlacementSchema).nullable(),
 }) satisfies z.ZodType<Workspace>;
 
 export type ValidationResult<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -146,6 +168,11 @@ function toResult<T>(result: z.ZodSafeParseResult<T>): ValidationResult<T> {
 /** Validates unknown input as a current-schema `Workspace`, with a readable error on failure. */
 export function validateWorkspace(input: unknown): ValidationResult<Workspace> {
   return toResult(workspaceSchema.safeParse(input));
+}
+
+/** Validates unknown input as schema v2 data. */
+export function validateWorkspaceV2(input: unknown): ValidationResult<WorkspaceV2> {
+  return toResult(workspaceV2Schema.safeParse(input));
 }
 
 /** Validates unknown input as schema v1 data. */
