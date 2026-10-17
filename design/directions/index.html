@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Growloop Visual Directions</title>
+<meta name="description" content="Three visual directions for Growloop, side by side.">
+<script>(function(){var t;try{t=localStorage.getItem('growloop-theme')}catch(e){}if(t!=='light'&&t!=='dark'){t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.theme=t;})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist:wght@600&family=Geist+Mono:wght@500&family=Fraunces:opsz,wght@9..144,500&family=DM+Sans:wght@500&family=Bricolage+Grotesque:opsz,wght@12..96,800&display=swap">
+<style>
+:root{--bg:#F5F5F4;--surface:#FFFFFF;--surface-2:#F0F0EE;--border:#E5E5E2;--border-strong:#D4D4D0;--text:#1C1B19;--text-2:#4F4D49;--text-3:#6B6964;--ring:#5149D6;--shadow:0 1px 2px rgba(0,0,0,.04),0 12px 32px -18px rgba(0,0,0,.18);--hover-shadow:0 2px 4px rgba(0,0,0,.04),0 24px 48px -20px rgba(0,0,0,.28)}
+html[data-theme="dark"]{--bg:#0E0E0D;--surface:#171716;--surface-2:#1F1F1D;--border:#2A2A27;--border-strong:#3A3A36;--text:#EEEDEA;--text-2:#BDBBB5;--text-3:#94928C;--ring:#8F8AF7;--shadow:0 0 0 1px rgba(255,255,255,.02),0 16px 40px -20px rgba(0,0,0,.8);--hover-shadow:0 24px 48px -20px rgba(0,0,0,.9)}
+@media (prefers-color-scheme:dark){html:not([data-theme]){--bg:#0E0E0D;--surface:#171716;--surface-2:#1F1F1D;--border:#2A2A27;--border-strong:#3A3A36;--text:#EEEDEA;--text-2:#BDBBB5;--text-3:#94928C;--ring:#8F8AF7}}
+*,*::before,*::after{box-sizing:border-box}
+html{color-scheme:light}html[data-theme="dark"]{color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Inter",ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;transition:background-color .2s,color .2s}
+h1,h2,h3,p,ul{margin:0}ul{padding:0;list-style:none}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--ring);outline-offset:3px;border-radius:6px}
+svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.wrap{max-width:1480px;margin:0 auto;padding:0 32px}
+.top{display:flex;align-items:center;justify-content:space-between;padding:22px 0}
+.mark{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:-.02em}
+.mark svg{width:26px;height:26px}
+.top-right{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-3)}
+.toggle{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer}
+.toggle:hover{color:var(--text);border-color:var(--border-strong)}
+.toggle .moon{display:none}html[data-theme="dark"] .toggle .sun{display:none}html[data-theme="dark"] .toggle .moon{display:block}
+.hero{padding:40px 0 36px;display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:end}
+.kicker{font-size:13px;font-weight:600;color:var(--text-3);margin-bottom:12px;display:flex;gap:8px;align-items:center}
+.kicker i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#16A34A}
+h1{font-size:48px;line-height:1.05;letter-spacing:-.035em;font-weight:700;max-width:16ch}
+.lede{color:var(--text-2);font-size:16px;max-width:52ch}
+.how{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.how span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--text-2);padding:5px 10px;border-radius:99px;background:var(--surface);border:1px solid var(--border)}
+.how b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--surface-2);font-size:11px;color:var(--text-3)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;padding-bottom:40px}
+.dir{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .25s,transform .25s}
+.dir:hover{box-shadow:var(--hover-shadow);transform:translateY(-2px)}
+.preview{position:relative;display:block;border-bottom:1px solid var(--border);background:var(--surface-2)}
+.frame-wrap{position:relative;width:100%;aspect-ratio:1440/900;overflow:hidden}
+.frame-wrap iframe{position:absolute;top:0;left:0;width:1440px;height:900px;border:0;transform-origin:0 0;pointer-events:none}
+.preview-cta{position:absolute;right:14px;bottom:14px;display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:99px;background:rgba(20,20,20,.86);color:#fff;font-size:13px;font-weight:600;opacity:0;transform:translateY(6px);transition:opacity .2s,transform .2s;backdrop-filter:blur(8px)}
+.preview:hover .preview-cta,.preview:focus-visible .preview-cta{opacity:1;transform:none}
+.dir-body{display:flex;flex-direction:column;gap:20px;padding:24px 24px 24px;flex:1}
+.dir-head{display:flex;gap:14px;align-items:center}
+.dir-num{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:var(--surface-2);font-weight:700;font-size:13px;color:var(--text-2);font-variant-numeric:tabular-nums}
+.dir-name{font-size:24px;font-weight:700;letter-spacing:-.025em;line-height:1.1}
+.dir-style{font-size:13px;color:var(--text-3);font-weight:500;margin-top:2px}
+.dir-line{color:var(--text-2);font-size:15px}
+.block h3{font-size:11.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px}
+.pal-row{display:grid;grid-template-columns:48px 1fr;align-items:center;gap:8px;padding:6px 0}
+.pal-row+.pal-row{border-top:1px dashed var(--border)}
+.pal-mode{font-size:12px;color:var(--text-3);font-weight:500}
+.sws{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.sw{display:grid;grid-template-columns:22px 1fr;grid-template-rows:auto auto;column-gap:7px;align-items:center;min-width:0}
+.sw-chip{grid-row:1/3;width:22px;height:22px;border-radius:7px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)}
+html[data-theme="dark"] .sw-chip{box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.sw-label{font-size:12px;font-weight:600;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sw-hex{font-size:10.5px;color:var(--text-3);font-family:ui-monospace,"SF Mono",Menlo,monospace;line-height:1.2}
+.sks{display:flex;gap:6px}
+.sk{width:22px;height:22px;border-radius:50%;box-shadow:0 0 0 2px var(--surface)}
+.type{display:flex;align-items:center;gap:16px;padding:14px 16px;border-radius:14px;background:var(--surface-2)}
+.type-aa{font-size:46px;line-height:1}
+.type-meta{display:flex;flex-direction:column;gap:4px;min-width:0}
+.type-sample{font-size:19px;line-height:1.15}
+.type-names{font-size:12.5px;color:var(--text-2)}
+.type-names em{display:block;font-style:normal;color:var(--text-3);font-size:12px}
+.notes{display:flex;flex-direction:column;gap:10px;font-size:14px;color:var(--text-2)}
+.notes .k{display:block;font-size:11.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);margin-bottom:2px}
+.open{margin-top:auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;border-radius:12px;background:var(--text);color:var(--bg);font-weight:600;font-size:14px;transition:opacity .15s}
+.open:hover{opacity:.88}
+.foot{padding:8px 0 48px;color:var(--text-3);font-size:13px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:20px}
+@media (max-width:1180px){.grid{grid-template-columns:1fr 1fr}.hero{grid-template-columns:1fr;gap:16px}}
+@media (max-width:760px){.wrap{padding:0 16px}.grid{grid-template-columns:1fr}h1{font-size:36px}.sws{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:10px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="mark"><svg viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="7" fill="currentColor" stroke="none"/><path d="M17.6 8.6a6.2 6.2 0 1 0 1.6 4.4h-5.4" stroke="var(--bg)" stroke-width="2.3"/></svg>Growloop</div>
+    <div class="top-right"><span>Visual directions · Round 1</span>
+      <button class="toggle" id="toggle" type="button" aria-label="Switch theme">
+        <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </header>
+  <section class="hero">
+    <div>
+      <p class="kicker"><i></i>Plan, learn, reflect, repeat</p>
+      <h1>Three ways Growloop could look.</h1>
+    </div>
+    <div>
+      <p class="lede">Each direction shows the same October 2026 sample data across the same screens, so you are comparing the look, not the content. The theme toggle here also switches the previews.</p>
+      <div class="how"><span><b>1</b>Toggle light / dark</span><span><b>2</b>Open Board, drag a card</span><span><b>3</b>Open a brief in Library</span></div>
+    </div>
+  </section>
+  <main class="grid">
+  <article class="dir">
+    <a class="preview" href="1-minimal.html#dashboard" aria-label="Open Graphite direction">
+      <div class="frame-wrap"><iframe src="1-minimal.html#dashboard" title="Graphite preview" loading="eager" tabindex="-1" aria-hidden="true"></iframe></div>
+      <span class="preview-cta">Open Graphite<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></span>
+    </a>
+    <div class="dir-body">
+      <div class="dir-head">
+        <span class="dir-num">01</span>
+        <div><h2 class="dir-name">Graphite</h2><p class="dir-style">Clean minimal</p></div>
+      </div>
+      <p class="dir-line">A quiet, precise instrument panel: monochrome surfaces, hairline borders and one indigo accent, so the numbers do the talking.</p>
+
+      <div class="block">
+        <h3>Palette</h3>
+        <div class="pal-row"><span class="pal-mode">Light</span><ul class="sws"><li class="sw"><span class="sw-chip" style="background:#F7F7F8"></span><span class="sw-label">Canvas</span><span class="sw-hex">#F7F7F8</span></li><li class="sw"><span class="sw-chip" style="background:#FFFFFF"></span><span class="sw-label">Surface</span><span class="sw-hex">#FFFFFF</span></li><li class="sw"><span class="sw-chip" style="background:#18181B"></span><span class="sw-label">Ink</span><span class="sw-hex">#18181B</span></li><li class="sw"><span class="sw-chip" style="background:#5149D6"></span><span class="sw-label">Indigo</span><span class="sw-hex">#5149D6</span></li></ul></div>
+        <div class="pal-row"><span class="pal-mode">Dark</span><ul class="sws"><li class="sw"><span class="sw-chip" style="background:#0D0D0F"></span><span class="sw-label">Canvas</span><span class="sw-hex">#0D0D0F</span></li><li class="sw"><span class="sw-chip" style="background:#141417"></span><span class="sw-label">Surface</span><span class="sw-hex">#141417</span></li><li class="sw"><span class="sw-chip" style="background:#EDEDEF"></span><span class="sw-label">Ink</span><span class="sw-hex">#EDEDEF</span></li><li class="sw"><span class="sw-chip" style="background:#8F8AF7"></span><span class="sw-label">Indigo</span><span class="sw-hex">#8F8AF7</span></li></ul></div>
+        <div class="pal-row"><span class="pal-mode">Skills</span><div class="sks"><span class="sk" style="background:#6366F1" title="Discovery"></span><span class="sk" style="background:#0D9488" title="Stakeholders"></span><span class="sk" style="background:#D97706" title="Roadmapping"></span><span class="sk" style="background:#E11D48" title="Prioritization"></span><span class="sk" style="background:#0284C7" title="Analytics"></span><span class="sk" style="background:#65A30D" title="Strategy"></span></div></div>
+      </div>
+
+      <div class="block">
+        <h3>Type pairing</h3>
+        <div class="type">
+          <span class="type-aa" style="font-family:'Geist',sans-serif;font-weight:600;letter-spacing:-0.03em">Aa</span>
+          <div class="type-meta">
+            <span class="type-sample" style="font-family:'Geist',sans-serif;font-weight:600;letter-spacing:-0.03em">7 completed this month</span>
+            <span class="type-names"><strong>Geist</strong> + <strong style="font-family:'Geist Mono',monospace;font-weight:500">Geist Mono</strong> <em>for numbers</em></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="block notes">
+        <p><span class="k">Why it works</span>Feels like the pro tools PMs already live in. Dense, calm and fast to scan, with ink-black buttons and an indigo accent kept for data.</p>
+        <p><span class="k">Watch out</span>Could feel a little corporate for a personal growth app.</p>
+      </div>
+
+      <a class="open" href="1-minimal.html">Open Graphite<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+    </div>
+  </article>
+  <article class="dir">
+    <a class="preview" href="2-warm.html#dashboard" aria-label="Open Linen direction">
+      <div class="frame-wrap"><iframe src="2-warm.html#dashboard" title="Linen preview" loading="eager" tabindex="-1" aria-hidden="true"></iframe></div>
+      <span class="preview-cta">Open Linen<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></span>
+    </a>
+    <div class="dir-body">
+      <div class="dir-head">
+        <span class="dir-num">02</span>
+        <div><h2 class="dir-name">Linen</h2><p class="dir-style">Warm & soft</p></div>
+      </div>
+      <p class="dir-line">A calm, paper-like journal: warm off-whites, a friendly serif voice, pastel skill tags and soft rounded cards.</p>
+
+      <div class="block">
+        <h3>Palette</h3>
+        <div class="pal-row"><span class="pal-mode">Light</span><ul class="sws"><li class="sw"><span class="sw-chip" style="background:#F6F1E9"></span><span class="sw-label">Linen</span><span class="sw-hex">#F6F1E9</span></li><li class="sw"><span class="sw-chip" style="background:#FFFDF9"></span><span class="sw-label">Paper</span><span class="sw-hex">#FFFDF9</span></li><li class="sw"><span class="sw-chip" style="background:#2E2823"></span><span class="sw-label">Ink</span><span class="sw-hex">#2E2823</span></li><li class="sw"><span class="sw-chip" style="background:#B4532A"></span><span class="sw-label">Clay</span><span class="sw-hex">#B4532A</span></li></ul></div>
+        <div class="pal-row"><span class="pal-mode">Dark</span><ul class="sws"><li class="sw"><span class="sw-chip" style="background:#1A1815"></span><span class="sw-label">Canvas</span><span class="sw-hex">#1A1815</span></li><li class="sw"><span class="sw-chip" style="background:#23201C"></span><span class="sw-label">Surface</span><span class="sw-hex">#23201C</span></li><li class="sw"><span class="sw-chip" style="background:#F3EDE4"></span><span class="sw-label">Ink</span><span class="sw-hex">#F3EDE4</span></li><li class="sw"><span class="sw-chip" style="background:#E58F66"></span><span class="sw-label">Apricot</span><span class="sw-hex">#E58F66</span></li></ul></div>
+        <div class="pal-row"><span class="pal-mode">Skills</span><div class="sks"><span class="sk" style="background:#4E9A5E" title="Discovery"></span><span class="sk" style="background:#8566D0" title="Stakeholders"></span><span class="sk" style="background:#D4703C" title="Roadmapping"></span><span class="sk" style="background:#3B87C4" title="Prioritization"></span><span class="sk" style="background:#B8900F" title="Analytics"></span><span class="sk" style="background:#C8557A" title="Strategy"></span></div></div>
+      </div>
+
+      <div class="block">
+        <h3>Type pairing</h3>
+        <div class="type">
+          <span class="type-aa" style="font-family:'Fraunces',serif;font-weight:500;letter-spacing:-0.02em">Aa</span>
+          <div class="type-meta">
+            <span class="type-sample" style="font-family:'Fraunces',serif;font-weight:500;letter-spacing:-0.02em">7 completed this month</span>
+            <span class="type-names"><strong>Fraunces</strong> + <strong style="font-family:'DM Sans',sans-serif;font-weight:500">DM Sans</strong> <em>for UI</em></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="block notes">
+        <p><span class="k">Why it works</span>Makes reflection feel personal rather than like another work dashboard. Summaries read like notes in a notebook and progress feels encouraging, not judgemental.</p>
+        <p><span class="k">Watch out</span>Lower density; the serif needs care at small sizes.</p>
+      </div>
+
+      <a class="open" href="2-warm.html">Open Linen<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+    </div>
+  </article>
+  <article class="dir">
+    <a class="preview" href="3-bold.html#dashboard" aria-label="Open Prism direction">
+      <div class="frame-wrap"><iframe src="3-bold.html#dashboard" title="Prism preview" loading="eager" tabindex="-1" aria-hidden="true"></iframe></div>
+      <span class="preview-cta">Open Prism<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></span>
+    </a>
+    <div class="dir-body">
+      <div class="dir-head">
+        <span class="dir-num">03</span>
+        <div><h2 class="dir-name">Prism</h2><p class="dir-style">Bold & vibrant</p></div>
+      </div>
+      <p class="dir-line">Confident and celebratory: a deep indigo rail, violet-to-rose gradients, chunky display type and colourful skills.</p>
+
+      <div class="block">
+        <h3>Palette</h3>
+        <div class="pal-row"><span class="pal-mode">Light</span><ul class="sws"><li class="sw"><span class="sw-chip" style="background:#F4F3FA"></span><span class="sw-label">Mist</span><span class="sw-hex">#F4F3FA</span></li><li class="sw"><span class="sw-chip" style="background:#13102A"></span><span class="sw-label">Rail</span><span class="sw-hex">#13102A</span></li><li class="sw"><span class="sw-chip" style="background:#7C3AED"></span><span class="sw-label">Violet</span><span class="sw-hex">#7C3AED</span></li><li class="sw"><span class="sw-chip" style="background:linear-gradient(120deg,#7C3AED,#C026D3,#E11D48)"></span><span class="sw-label">Prism</span><span class="sw-hex">gradient</span></li></ul></div>
+        <div class="pal-row"><span class="pal-mode">Dark</span><ul class="sws"><li class="sw"><span class="sw-chip" style="background:#0B0A18"></span><span class="sw-label">Night</span><span class="sw-hex">#0B0A18</span></li><li class="sw"><span class="sw-chip" style="background:#14122A"></span><span class="sw-label">Surface</span><span class="sw-hex">#14122A</span></li><li class="sw"><span class="sw-chip" style="background:#F5F3FF"></span><span class="sw-label">Ink</span><span class="sw-hex">#F5F3FF</span></li><li class="sw"><span class="sw-chip" style="background:#F472B6"></span><span class="sw-label">Rose</span><span class="sw-hex">#F472B6</span></li></ul></div>
+        <div class="pal-row"><span class="pal-mode">Skills</span><div class="sks"><span class="sk" style="background:#7C3AED" title="Discovery"></span><span class="sk" style="background:#EC4899" title="Stakeholders"></span><span class="sk" style="background:#F59E0B" title="Roadmapping"></span><span class="sk" style="background:#059669" title="Prioritization"></span><span class="sk" style="background:#0EA5E9" title="Analytics"></span><span class="sk" style="background:#E11D48" title="Strategy"></span></div></div>
+      </div>
+
+      <div class="block">
+        <h3>Type pairing</h3>
+        <div class="type">
+          <span class="type-aa" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;letter-spacing:-0.04em">Aa</span>
+          <div class="type-meta">
+            <span class="type-sample" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;letter-spacing:-0.04em">7 completed this month</span>
+            <span class="type-names"><strong>Bricolage Grotesque</strong> + <strong style="font-family:'Inter',sans-serif;font-weight:500">Inter</strong> <em>for UI</em></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="block notes">
+        <p><span class="k">Why it works</span>Turns progress into something you want to show off. Lots of personality, but the gradients stay on hero moments and the data underneath stays readable.</p>
+        <p><span class="k">Watch out</span>Gradients need discipline as the product grows.</p>
+      </div>
+
+      <a class="open" href="3-bold.html">Open Prism<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+    </div>
+  </article>
+  </main>
+  <footer class="foot"><span>Desktop-first at 1440 px, responsive down to ~768 px. Static HTML; no build step.</span><span>Sample content: Q4 2026 OKRs, October plan, curated PM library.</span></footer>
+</div>
+<script>
+(function(){
+  var root=document.documentElement,KEY='growloop-theme';
+  function fit(){document.querySelectorAll('.frame-wrap').forEach(function(w){var f=w.querySelector('iframe');f.style.transform='scale('+(w.clientWidth/1440)+')'})}
+  fit();addEventListener('resize',fit);
+  function sync(){document.querySelectorAll('iframe').forEach(function(f){try{f.contentDocument.documentElement.dataset.theme=root.dataset.theme}catch(e){}})}
+  document.querySelectorAll('iframe').forEach(function(f){f.addEventListener('load',sync)});
+  document.getElementById('toggle').addEventListener('click',function(){
+    var t=root.dataset.theme==='dark'?'light':'dark';root.dataset.theme=t;try{localStorage.setItem(KEY,t)}catch(e){}sync();
+    this.setAttribute('aria-label',t==='dark'?'Switch to light theme':'Switch to dark theme');
+  });
+})();
+</script>
+</body>
+</html>
