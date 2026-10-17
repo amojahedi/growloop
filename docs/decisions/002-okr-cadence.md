@@ -1,6 +1,6 @@
 # 002 — Quarterly OKRs with monthly plans
 
-**Status:** Accepted · 2026-10-17
+**Status:** Superseded by [007](007-yearly-okrs-and-cycles.md) · 2026-10-17
 
 ## Context
 Learning goals ("get better at roadmapping") take longer than a month, but a month is the right horizon for realistic planning and reflection.
