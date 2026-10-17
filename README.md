@@ -27,6 +27,38 @@ npm run dev
 
 Open http://localhost:3000.
 
+### AI features (optional)
+
+AI recommendations and summary feedback use your own [Claude Code](https://docs.claude.com/en/docs/claude-code) CLI, run locally in headless mode (`claude -p`). Install it and sign in once (`claude`), then restart the dev server. Nothing else is required: no API keys are stored by the app, and everything else works without it. See [ADR 004](docs/decisions/004-ai-via-local-claude-code.md).
+
+### Configuration
+
+Copy `.env.example` to `.env.local`. All variables are optional:
+
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_DEMO_MODE` | `true` seeds sample data on first load and disables the AI bridge (hosted demo). |
+| `CLAUDE_CLI_PATH` | Path to `claude` if it isn't on the server's `PATH`. |
+| `GROWLOOP_CLAUDE_MODEL` | Model passed to `claude --model` for AI features. |
+
+## Development
+
+```bash
+npm run lint        # ESLint
+npm run typecheck   # route type generation + tsc
+npm test            # Vitest (npm run test:watch for watch mode)
+npm run build       # production build
+```
+
+| Path | Contents |
+|---|---|
+| `src/lib/domain/` | Pure, framework-free domain logic (dates, board, OKRs, dashboard selectors, rollover) and the shared types. |
+| `src/lib/store/` | Zustand store persisted to localStorage, zod schema, migrations, JSON export/import. |
+| `src/lib/ai/` | Bridge to the local Claude Code CLI, prompts, response schemas and the `useAI()` hook. |
+| `src/styles/` | Design tokens: shared contract plus the Linen theme (light and dark). |
+| `src/data/` | Curated skills, library and demo data. |
+| `src/features/` | Page-level feature components; `src/app/` holds routes. |
+
 ## License
 
 MIT
