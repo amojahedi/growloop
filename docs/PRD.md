@@ -171,7 +171,7 @@ Notebook ◄── free notes + summaries/notes collected from plan items
   3. **Recommend resources** for a skill or KR.
   4. **Refine my summary** — feedback on a user-written summary.
 - If Claude Code is not installed / not signed in, AI buttons show a friendly setup hint. **Everything else works without AI.**
-- On the hosted demo, AI is disabled with an explanation of how to enable it locally.
+- **Hosted app:** AI uses the visitor's **own Claude API key** (Settings; stored only in their browser, sent directly to the Claude API). Provider order: own key → local Claude Code → off. See ADR 008.
 
 ## 7. Non-functional requirements
 
@@ -182,7 +182,7 @@ Notebook ◄── free notes + summaries/notes collected from plan items
 | Theme | Light + dark, follows system, manual toggle. |
 | Accessibility | Keyboard navigable, WCAG AA contrast, drag & drop with keyboard alternative. |
 | Quality | TypeScript strict, unit tests for domain logic, CI on every push. |
-| Distribution | Open source. Local install (`npm install && npm run dev`) for full features; Vercel demo with sample data. |
+| Distribution | Open source. Hosted on Vercel as a real, empty workspace with **Try sample data**; local install also supported. |
 
 ## 8. Success metrics (for when real users arrive)
 

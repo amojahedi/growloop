@@ -11,3 +11,4 @@ Product and technical decisions, recorded as short ADR-style entries.
 | 005 | [Tech stack](005-tech-stack.md) | 2026-10-17 |
 | 006 | [Task count is the core metric; hours are optional](006-core-metric.md) | 2026-10-17 |
 | 007 | [Yearly OKRs by quarter, monthly board](007-yearly-okrs-and-cycles.md) | 2026-10-17 |
+| 008 | [Hosted app; AI with the user's own Claude key](008-hosted-app-with-own-key.md) | 2026-10-17 |
