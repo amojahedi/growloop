@@ -157,6 +157,28 @@ export function restrictDraftSkills(draft: MaterialDraft, skills: readonly { id:
   return { ...draft, skillIds: skills.map((skill) => skill.id).filter((id) => chosen.has(id)) };
 }
 
+// --- Draft OKRs (OKR wizard) -----------------------------------------------------
+
+/**
+ * Provisional contract for the upcoming OKR wizard (PRD §6: fixed questions →
+ * 3–4 objectives with 2–3 skill-linked key results). The wizard owns this
+ * shape and may refine it, adding zod schemas and a prompt in `prompts.ts`.
+ */
+export interface DraftOkrsRequest {
+  /** The wizard's fixed questions with the user's answers. */
+  answers: { question: string; answer: string }[];
+  /** The user's skills; key results may only link to these ids. */
+  skills: { id: string; name: string }[];
+}
+
+export interface OkrDraft {
+  objectives: {
+    title: string;
+    description?: string;
+    keyResults: { title: string; skillIds: string[] }[];
+  }[];
+}
+
 // --- Errors -----------------------------------------------------------------------
 
 export const aiErrorCodes = [

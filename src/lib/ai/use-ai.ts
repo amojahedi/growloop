@@ -1,11 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { AIRequestError, fetchAIStatus, requestMaterialDraft, requestRecommendations, requestSummaryFeedback } from "./client";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useClaudeApiKey } from "./api-key-storage";
+import { fetchAIStatus } from "./client";
+import { offProvider, selectProviderKind, type AIProvider, type AIProviderKind } from "./provider";
+import { localProvider } from "./providers/local";
+import { createOwnKeyProvider } from "./providers/own-key";
+import { AIRequestError } from "./request-error";
 import type {
   AIStatus,
+  DraftOkrsRequest,
   EnrichMaterialRequest,
   MaterialDraft,
+  OkrDraft,
   RecommendRequest,
   RecommendResponse,
   RefineSummaryRequest,
@@ -13,8 +20,11 @@ import type {
 } from "./schemas";
 
 /**
- * React access to the local AI features: availability plus one async action
- * per feature, each with its own loading / error / data state.
+ * React access to the AI features: which provider is active, plus one async
+ * action per feature, each with its own loading / error / data state.
+ *
+ * Provider order (ADR 008): the visitor's own Claude API key → the local
+ * Claude Code CLI (only when `/api/ai/status` says it's available) → off.
  *
  *   const ai = useAI();
  *   if (ai.status.state === "available") ai.recommend.run({ context, existingTitles });
@@ -23,6 +33,7 @@ import type {
 export type AIStatusState =
   | { state: "checking" }
   | { state: "available" }
+  /** No key and no local Claude Code; `reason` and `code` describe the local check. */
   | { state: "unavailable"; reason?: string; code?: AIStatus["code"] };
 
 export interface AsyncAction<Input, Output> {
@@ -104,40 +115,55 @@ function useAsyncAction<Input, Output>(
 }
 
 export interface UseAI {
+  /** Where AI calls go; "off" while checking or when neither a key nor local Claude Code is available. */
+  provider: AIProviderKind;
   status: AIStatusState;
-  /** Re-checks availability, e.g. after the user installs or signs in to Claude Code. */
+  /** Re-checks local availability, e.g. after the user installs or signs in to Claude Code. */
   recheck: () => void;
   recommend: AsyncAction<RecommendRequest, RecommendResponse>;
   refineSummary: AsyncAction<RefineSummaryRequest, SummaryFeedback>;
   /** Drafts a resource's details from a pasted title or link. */
   enrichMaterial: AsyncAction<EnrichMaterialRequest, MaterialDraft>;
+  /** Drafts objectives for the OKR wizard. The providers don't implement it yet. */
+  draftOkrs: AsyncAction<DraftOkrsRequest, OkrDraft>;
 }
 
 export function useAI(): UseAI {
-  const [status, setStatus] = useState<AIStatusState>({ state: "checking" });
+  const apiKey = useClaudeApiKey();
+  const hasKey = apiKey !== null;
+  const [localStatus, setLocalStatus] = useState<AIStatusState>({ state: "checking" });
 
   const check = useCallback((fresh: boolean) => {
     let active = true;
     loadStatus(fresh).then((result) => {
-      if (active) setStatus(toStatusState(result));
+      if (active) setLocalStatus(toStatusState(result));
     });
     return () => {
       active = false;
     };
   }, []);
 
-  useEffect(() => check(false), [check]);
+  // With a key the local CLI is never used, so skip its status check (which spawns processes).
+  useEffect(() => (hasKey ? undefined : check(false)), [hasKey, check]);
 
   const recheck = useCallback(() => {
-    setStatus({ state: "checking" });
+    setLocalStatus({ state: "checking" });
     check(true);
   }, [check]);
 
+  const provider = selectProviderKind({ apiKey, localAvailable: localStatus.state === "available" });
+  const active = useMemo<AIProvider>(() => {
+    if (provider === "own-key" && apiKey) return createOwnKeyProvider(apiKey);
+    return provider === "local" ? localProvider : offProvider;
+  }, [provider, apiKey]);
+
   return {
-    status,
+    provider,
+    status: hasKey ? { state: "available" } : localStatus,
     recheck,
-    recommend: useAsyncAction(requestRecommendations),
-    refineSummary: useAsyncAction(requestSummaryFeedback),
-    enrichMaterial: useAsyncAction(requestMaterialDraft),
+    recommend: useAsyncAction(active.recommend),
+    refineSummary: useAsyncAction(active.refineSummary),
+    enrichMaterial: useAsyncAction(active.enrichMaterial),
+    draftOkrs: useAsyncAction(active.draftOkrs),
   };
 }

@@ -21,6 +21,7 @@ const { STORAGE_KEY, useAppStore } = await import("./app-store");
 const { emptyWorkspace } = await import("./seed");
 const { hoursLoggedInMonth, monthActivity } = await import("@/lib/domain/dashboard");
 const { BACKUP_STORAGE_KEY } = await import("./backup");
+const { API_KEY_STORAGE_KEY, readApiKey, saveApiKey } = await import("@/lib/ai/api-key-storage");
 
 const store = () => useAppStore.getState();
 const data = () => useAppStore.getState().data;
@@ -239,6 +240,27 @@ describe("data management", () => {
 
     expect(store().importData(exported)).toEqual({ ok: true, data: before });
     expect(data()).toEqual(before);
+  });
+
+  it("never includes the visitor's Claude API key in exports, and imports never touch it", () => {
+    const key = "sk-ant-api03-secret-test-key";
+    saveApiKey(key);
+    store().addPlanItem("inspired", "2026-10");
+
+    const exported = store().exportData();
+    expect(exported).not.toContain(key);
+    expect(exported).not.toContain(API_KEY_STORAGE_KEY);
+    expect(localStorage.getItem(STORAGE_KEY) ?? "").not.toContain(key);
+
+    // An import file carrying a key-like field doesn't set or replace the stored key.
+    const parsed = JSON.parse(exported);
+    const tampered = JSON.stringify({ ...parsed, apiKey: "sk-ant-api03-other", data: { ...parsed.data, apiKey: "sk-ant-api03-other" } });
+    store().importData(tampered);
+    expect(JSON.stringify(data())).not.toContain("sk-ant-api03-other");
+    expect(readApiKey()).toBe(key);
+
+    store().resetToEmpty();
+    expect(readApiKey()).toBe(key);
   });
 
   it("keeps current data when an import is invalid", () => {
