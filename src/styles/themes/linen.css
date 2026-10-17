@@ -1,0 +1,104 @@
+/*
+ * Linen style theme (the app's only theme for now).
+ * Colors, typefaces, radius and card shadows come from the CSS variables in
+ * design/directions/2-warm.html, mapped onto the shared semantic tokens.
+ * Interim (not in the mockup yet): chart-2..5, elevation-md/lg, --border-width-strong.
+ * A future theme is another file like this one, scoped to its own [data-style] value
+ * and defining the same tokens (see src/styles/tokens.css).
+ */
+
+[data-style="linen"] {
+  color-scheme: light;
+  --typeface-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --typeface-display: var(--font-fraunces), Georgia, serif;
+  --typeface-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 0.875rem;
+  --border-width: 1px;
+  --border-width-strong: 1.5px;
+
+  --background: #f6f1e9;
+  --foreground: #2e2823;
+  --card: #fffdf9;
+  --card-foreground: #2e2823;
+  --popover: #fffdf9;
+  --popover-foreground: #2e2823;
+  --primary: #b4532a;
+  --primary-foreground: #fffdf9;
+  --secondary: #f5efe6;
+  --secondary-foreground: #2e2823;
+  --muted: #f5efe6;
+  --muted-foreground: #73685d;
+  --accent: #f9e9de;
+  --accent-foreground: #a34a24;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: #ece4d7;
+  --input: #dcd0be;
+  --ring: #b4532a;
+  --brand: #b4532a;
+  --brand-foreground: #fffdf9;
+  --brand-soft: #f9e9de;
+  --brand-soft-foreground: #a34a24;
+  --brand-gradient: linear-gradient(90deg, #b4532a, #b4532a);
+  --chart-1: #b4532a;
+  --chart-2: #6b8e5a;
+  --chart-3: #c8932f;
+  --chart-4: #8c6bb1;
+  --chart-5: #5b7a99;
+  --sidebar: #f6f1e9;
+  --sidebar-foreground: #2e2823;
+  --sidebar-primary: #b4532a;
+  --sidebar-primary-foreground: #fffdf9;
+  --sidebar-accent: #f5efe6;
+  --sidebar-accent-foreground: #2e2823;
+  --sidebar-border: #ece4d7;
+  --sidebar-ring: #b4532a;
+  --elevation-xs: 0 1px 2px rgb(80 55 30 / 0.05);
+  --elevation-sm: 0 1px 3px rgb(80 55 30 / 0.08);
+  --elevation-md: 0 12px 24px -10px rgb(80 55 30 / 0.18);
+  --elevation-lg: 0 24px 48px -16px rgb(80 55 30 / 0.25);
+}
+
+.dark [data-style="linen"],
+[data-style="linen"].dark {
+  color-scheme: dark;
+  --background: #1a1815;
+  --foreground: #f3ede4;
+  --card: #23201c;
+  --card-foreground: #f3ede4;
+  --popover: #272320;
+  --popover-foreground: #f3ede4;
+  --primary: #e58f66;
+  --primary-foreground: #1a1815;
+  --secondary: #2b2722;
+  --secondary-foreground: #f3ede4;
+  --muted: #2b2722;
+  --muted-foreground: #a69a8c;
+  --accent: #3a271d;
+  --accent-foreground: #f0a47f;
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: #332e28;
+  --input: #463f36;
+  --ring: #e58f66;
+  --brand: #e58f66;
+  --brand-foreground: #1a1815;
+  --brand-soft: #3a271d;
+  --brand-soft-foreground: #f0a47f;
+  --brand-gradient: linear-gradient(90deg, #e58f66, #e58f66);
+  --chart-1: #e58f66;
+  --chart-2: #9dbb8a;
+  --chart-3: #e8c26e;
+  --chart-4: #b49bd6;
+  --chart-5: #8faacb;
+  --sidebar: #1a1815;
+  --sidebar-foreground: #f3ede4;
+  --sidebar-primary: #e58f66;
+  --sidebar-primary-foreground: #1a1815;
+  --sidebar-accent: #2b2722;
+  --sidebar-accent-foreground: #f3ede4;
+  --sidebar-border: #332e28;
+  --sidebar-ring: #e58f66;
+  --elevation-xs: 0 1px 2px rgb(0 0 0 / 0.25);
+  --elevation-sm: 0 1px 3px rgb(0 0 0 / 0.3);
+  --elevation-md: 0 12px 24px -10px rgb(0 0 0 / 0.6);
+  --elevation-lg: 0 24px 48px -16px rgb(0 0 0 / 0.7);
+}
