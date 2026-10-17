@@ -1,6 +1,6 @@
 # 004 — AI through the user's local Claude Code
 
-**Status:** Accepted · 2026-10-17
+**Status:** Accepted · 2026-10-17 · Extended by [008](008-hosted-app-with-own-key.md)
 
 ## Context
 AI adds real value (recommending materials, giving feedback on summaries), but hosting an LLM means API keys, cost and abuse protection. Target users (product people) increasingly already have a Claude subscription and Claude Code installed.
@@ -14,6 +14,6 @@ MVP AI features:
 
 ## Consequences
 - No AI cost for the project; users keep control of their own usage.
-- AI is unavailable on the hosted demo — the UI explains how to enable it locally.
+- The local bridge is unavailable on the hosted app; AI there uses the visitor's own key (ADR 008).
 - The app must detect whether `claude` is available and degrade gracefully. All core features work without AI.
 - AI responses are requested as structured JSON and validated before use.
