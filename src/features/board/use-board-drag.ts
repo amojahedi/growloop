@@ -36,7 +36,7 @@ class MouseAndPenSensor extends PointerSensor {
 
 const SCREEN_READER_INSTRUCTIONS: ScreenReaderInstructions = {
   draggable:
-    "To pick up a card, press space or enter on its drag handle. Use the arrow keys to move it within and " +
+    "To pick up a card, focus it and press space or enter. Use the arrow keys to move it within and " +
     "between columns, press space or enter again to drop it, or press escape to cancel.",
 };
 
