@@ -35,8 +35,9 @@ describe("initial state", () => {
   it("starts with the built-in skills and an empty plan", () => {
     expect(data().skills.map((skill) => skill.id)).toEqual(["roadmapping", "discovery"]);
     expect(data().planItems).toEqual([]);
-    expect(data().version).toBe(2);
+    expect(data().version).toBe(3);
     expect(data().activity).toEqual([]);
+    expect(data().dashboardLayout).toBeNull();
   });
 });
 
@@ -255,13 +256,13 @@ describe("data management", () => {
 });
 
 describe("persistence", () => {
-  const saved = (value: unknown, version = 2) => localStorage.setItem(STORAGE_KEY, JSON.stringify({ state: { data: value }, version }));
+  const saved = (value: unknown, version = 3) => localStorage.setItem(STORAGE_KEY, JSON.stringify({ state: { data: value }, version }));
 
   it("saves data under a versioned key", () => {
     store().addSkill({ name: "Negotiation" });
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
 
-    expect(stored.version).toBe(2);
+    expect(stored.version).toBe(3);
     expect(stored.state.data.skills).toHaveLength(3);
     expect(stored.state).not.toHaveProperty("addSkill");
   });
@@ -275,7 +276,7 @@ describe("persistence", () => {
   });
 
   it("backs up and ignores invalid saved data", async () => {
-    saved({ version: 2, skills: "corrupt" });
+    saved({ version: 3, skills: "corrupt" });
     const raw = localStorage.getItem(STORAGE_KEY);
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -316,12 +317,12 @@ describe("persistence", () => {
   });
 
   it("does not load data written by a newer version", async () => {
-    saved({ ...emptyWorkspace(), version: 3, skills: [] }, 3);
+    saved({ ...emptyWorkspace(), version: 4, skills: [] }, 4);
     vi.spyOn(console, "warn").mockImplementation(() => {});
 
     await useAppStore.persist.rehydrate();
     expect(data()).toEqual(emptyWorkspace());
-    expect(localStorage.getItem(BACKUP_STORAGE_KEY)).toContain('"version":3');
+    expect(localStorage.getItem(BACKUP_STORAGE_KEY)).toContain('"version":4');
   });
 
   it("rehydrates v2 saves written before `savedMaterialIds` existed", async () => {
@@ -339,7 +340,35 @@ describe("persistence", () => {
     saved(v1, 1);
 
     await useAppStore.persist.rehydrate();
-    expect(data().version).toBe(2);
+    expect(data().version).toBe(3);
     expect(data().activity.map((event) => event.kind)).toEqual(["item_completed"]);
+    expect(data().dashboardLayout).toBeNull();
+  });
+
+  it("upgrades v2 saves to the default dashboard layout", async () => {
+    const { makeDataV2, makeEvent } = await import("@/lib/testing/fixtures");
+    const v2 = makeDataV2({ activity: [makeEvent()] });
+    saved(v2, 2);
+
+    await useAppStore.persist.rehydrate();
+    expect(data()).toEqual({ ...v2, version: 3, dashboardLayout: null });
+  });
+});
+
+describe("dashboard layout", () => {
+  it("saves a layout and goes back to the default", () => {
+    const layout = [{ widgetId: "skill-radar", size: "large" as const }];
+    store().setDashboardLayout(layout);
+    expect(data().dashboardLayout).toEqual(layout);
+    expect(data().dashboardLayout).not.toBe(layout);
+
+    store().setDashboardLayout(null);
+    expect(data().dashboardLayout).toBeNull();
+  });
+
+  it("persists the layout", () => {
+    store().setDashboardLayout([{ widgetId: "reminders", size: "small" }]);
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
+    expect(stored.state.data.dashboardLayout).toEqual([{ widgetId: "reminders", size: "small" }]);
   });
 });

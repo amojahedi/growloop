@@ -4,6 +4,9 @@ export const formatPercent = (value: number) => `${Math.round(value)}%`;
 
 export const formatHours = (hours: number) => `${Number.isInteger(hours) ? hours : hours.toFixed(1)}h`;
 
+/** Skill impact weights: at most two decimals, no trailing zeros ("3.5", "0.75", "2"). */
+export const formatWeight = (weight: number) => String(Math.round(weight * 100) / 100);
+
 export const formatDelta = (delta: number) => (delta > 0 ? `+${delta}` : String(delta));
 
 /** "Oct 24" for a "YYYY-MM-DD" date or ISO timestamp, in the user's locale. */

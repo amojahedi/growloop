@@ -1,12 +1,12 @@
 "use client";
 
-import { createContext, use, useMemo, useSyncExternalStore } from "react";
+import { createContext, use, useEffect, useMemo, useSyncExternalStore, type FocusEvent } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { CURATED_MATERIALS } from "@/lib/catalog";
 import { addMonths, dayKey, monthOf, quarterOf, type DayKey } from "@/lib/domain/dates";
 import type { ID, Material, MonthKey, QuarterKey, Skill } from "@/lib/domain/types";
 import { useAppStore, type AppActions, type AppState } from "./app-store";
-import { useUIStore } from "./ui-store";
+import { useUIStore, type SkillPreview } from "./ui-store";
 
 // --- Data selectors -------------------------------------------------------------
 
@@ -14,6 +14,8 @@ export const useAppData = () => useAppStore((state) => state.data);
 export const usePlanItems = () => useAppStore((state) => state.data.planItems);
 export const useObjectives = () => useAppStore((state) => state.data.objectives);
 export const useActivity = () => useAppStore((state) => state.data.activity);
+/** The saved dashboard layout, or `null` for the default one. */
+export const useSavedDashboardLayout = () => useAppStore((state) => state.data.dashboardLayout);
 
 /** Skills in display order; hidden skills are excluded unless requested. */
 export function useSkills({ includeHidden = false }: { includeHidden?: boolean } = {}): Skill[] {
@@ -116,4 +118,34 @@ export function useMonthNavigation(): MonthNavigation {
       goToCurrentMonth: () => setSelectedMonth(null),
     };
   }, [month, currentMonth, setSelectedMonth]);
+}
+
+// --- Skill impact preview ----------------------------------------------------------
+
+/** The item currently previewed on skill radars, if any. */
+export const useSkillPreview = () => useUIStore((state) => state.skillPreview);
+
+/**
+ * Event handlers that preview an item's skill impact while it is hovered or
+ * focused. Spread them on the item's outermost element.
+ */
+export function useSkillPreviewTrigger(preview: SkillPreview) {
+  const showSkillPreview = useUIStore((state) => state.showSkillPreview);
+  const hideSkillPreview = useUIStore((state) => state.hideSkillPreview);
+  const { id } = preview;
+
+  // A removed or moved-away item must not leave its preview behind.
+  useEffect(() => () => hideSkillPreview(id), [id, hideSkillPreview]);
+
+  const show = () => showSkillPreview(preview);
+  const hide = () => hideSkillPreview(id);
+  return {
+    onMouseEnter: show,
+    onMouseLeave: hide,
+    onFocus: show,
+    // Moving focus between controls inside the item keeps the preview.
+    onBlur: (event: FocusEvent<HTMLElement>) => {
+      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) hide();
+    },
+  };
 }

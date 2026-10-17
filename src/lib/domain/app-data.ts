@@ -4,7 +4,7 @@ import type { KeyResult, Material, Objective, QuarterKey, Skill, Workspace } fro
 /** Factories for user-created records. */
 
 /** Current schema version of stored data (see src/lib/store/migrations.ts). */
-export const APP_DATA_VERSION = 2 as const;
+export const APP_DATA_VERSION = 3 as const;
 
 /** A fresh workspace: the given starter skills and nothing planned yet. */
 export function newWorkspace(skills: readonly Skill[]): Workspace {
@@ -17,6 +17,7 @@ export function newWorkspace(skills: readonly Skill[]): Workspace {
     rollovers: [],
     activity: [],
     savedMaterialIds: [],
+    dashboardLayout: null,
   };
 }
 
