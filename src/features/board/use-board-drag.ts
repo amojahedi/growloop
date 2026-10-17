@@ -18,12 +18,12 @@ import {
   type PointerSensorOptions,
   type ScreenReaderInstructions,
 } from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import type { BoardColumns, MoveTarget } from "@/lib/domain/board";
-import { type BoardStatus, type ID, type MonthKey, type PlanItem } from "@/lib/domain/types";
+import type { BoardStatus, ID, MonthKey, PlanItem } from "@/lib/domain/types";
 import { STATUS_LABELS } from "./board-labels";
-import { columnOf, isColumnDropId, dropTarget, moveCard, toColumnIds, type ColumnIds } from "./drag-and-drop";
+import { columnOf, dropTarget, isColumnDropId, moveCard, toColumnIds, type ColumnIds } from "./drag-and-drop";
+import { boardKeyboardCoordinates } from "./keyboard-coordinates";
 
 /** Mouse and pen only: touch goes to the TouchSensor, which waits for a press so the page still scrolls. */
 class MouseAndPenSensor extends PointerSensor {
@@ -80,7 +80,7 @@ export function useBoardDrag({ columns, items, month, titleOf, onMove }: BoardDr
   const sensors = useSensors(
     useSensor(MouseAndPenSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, { coordinateGetter: boardKeyboardCoordinates }),
   );
 
   const visible = toColumnIds(columns);
@@ -110,7 +110,10 @@ export function useBoardDrag({ columns, items, month, titleOf, onMove }: BoardDr
       return `Picked up ${titleOf(id(active))}.`;
     },
     onDragOver: ({ active, over }) => {
-      if (!over) return `${titleOf(id(active))} is no longer over a column.`;
+      if (!over) {
+        lastAnnounced.current = "";
+        return `${titleOf(id(active))} is no longer over a column.`;
+      }
       const position = describePosition(active, over);
       // Hovering another part of the same slot (including the starting one) isn't news.
       if (position === lastAnnounced.current) return undefined;
