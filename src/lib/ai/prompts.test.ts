@@ -23,6 +23,7 @@ describe("buildRecommendPrompt", () => {
         keyResults: ["Present a roadmap to leadership"],
         skills: ["Roadmapping", "Communication"],
       },
+      existingTitles: [],
     });
 
     expect(prompt).toContain("quarterly learning objective");

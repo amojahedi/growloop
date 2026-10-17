@@ -1,4 +1,4 @@
-import { MAX_RECOMMENDATIONS, type RecommendRequest, type RefineSummaryRequest } from "./schemas";
+import { MAX_RECOMMENDATIONS, type RecommendInput, type RefineSummaryInput } from "./schemas";
 
 /**
  * Prompts and output schemas for the local Claude Code CLI.
@@ -65,7 +65,7 @@ export const RECOMMEND_JSON_SCHEMA: Record<string, unknown> = {
   additionalProperties: false,
 };
 
-export function buildRecommendPrompt(request: RecommendRequest): PromptSpec {
+export function buildRecommendPrompt(request: RecommendInput): PromptSpec {
   const { context } = request;
   const goal =
     context.kind === "skill"
@@ -88,7 +88,7 @@ export function buildRecommendPrompt(request: RecommendRequest): PromptSpec {
           ),
         ];
 
-  const existing = request.existingTitles ?? [];
+  const existing = request.existingTitles;
   const exclusions = existing.length
     ? [
         "The user already has these materials. Do not recommend them again:",
@@ -128,7 +128,7 @@ export const REFINE_SUMMARY_JSON_SCHEMA: Record<string, unknown> = {
   additionalProperties: false,
 };
 
-export function buildRefineSummaryPrompt(request: RefineSummaryRequest): PromptSpec {
+export function buildRefineSummaryPrompt(request: RefineSummaryInput): PromptSpec {
   const { material, summary } = request;
   const materialText = [
     `Title: ${material.title}`,

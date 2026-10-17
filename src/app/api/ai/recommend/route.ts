@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   if (body.response) return body.response;
 
   try {
-    const result = await askClaude({ ...buildRecommendPrompt(body.data), schema: recommendationsSchema });
+    const result = await askClaude({ ...buildRecommendPrompt(body.data), schema: recommendationsSchema, signal: request.signal });
     return Response.json(result satisfies RecommendResponse);
   } catch (error) {
     return aiFailureResponse(error);

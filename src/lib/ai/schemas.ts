@@ -7,7 +7,8 @@ import { z } from "zod";
 
 // --- Status ---------------------------------------------------------------------
 
-export const aiUnavailableCodes = ["demo-mode", "not-installed", "not-signed-in", "error"] as const;
+/** "disabled": the server isn't reached via localhost, so AI is off (e.g. a hosted deployment). */
+export const aiUnavailableCodes = ["demo-mode", "disabled", "not-installed", "not-signed-in", "error"] as const;
 export type AIUnavailableCode = (typeof aiUnavailableCodes)[number];
 
 export const aiStatusSchema = z.object({
@@ -19,27 +20,50 @@ export type AIStatus = z.infer<typeof aiStatusSchema>;
 
 // --- Recommend materials --------------------------------------------------------
 
-const shortText = (max: number) => z.string().trim().max(max);
+/** Trims and truncates instead of rejecting, so long titles never break a request. */
+const clampedText = (max: number) => z.string().transform((value) => value.trim().slice(0, max));
+const requiredText = (max: number) => clampedText(max).pipe(z.string().min(1));
+/** Keeps the first `maxItems` entries, each truncated. `hardLimit` only rejects absurd payloads. */
+const clampedList = (maxItems: number, maxLength: number, hardLimit = 2_000) =>
+  z
+    .array(z.string())
+    .max(hardLimit)
+    .transform((values) => values.map((value) => value.trim().slice(0, maxLength)).filter(Boolean).slice(0, maxItems));
+
+export const MAX_EXISTING_TITLES = 150;
+export const MAX_TITLE_LENGTH = 150;
+
+/**
+ * Prepares "already have these" titles for the prompt: trimmed, truncated,
+ * de-duplicated and capped. Used by the client (small payloads) and the server.
+ */
+export function limitExistingTitles(titles: readonly string[]): string[] {
+  const unique = new Set(titles.map((title) => title.trim().slice(0, MAX_TITLE_LENGTH)).filter(Boolean));
+  return [...unique].slice(0, MAX_EXISTING_TITLES);
+}
 
 export const recommendRequestSchema = z.object({
   context: z.discriminatedUnion("kind", [
     z.object({
       kind: z.literal("skill"),
-      name: shortText(100).min(1),
-      description: shortText(1000).optional(),
+      name: requiredText(100),
+      description: clampedText(1000).optional(),
     }),
     z.object({
       kind: z.literal("objective"),
-      title: shortText(300).min(1),
-      description: shortText(1000).optional(),
-      keyResults: z.array(shortText(300)).max(10).optional(),
-      skills: z.array(shortText(100)).max(20).optional(),
+      title: requiredText(300),
+      description: clampedText(1000).optional(),
+      keyResults: clampedList(10, 300).optional(),
+      skills: clampedList(20, 100).optional(),
     }),
   ]),
   /** Titles already in the library or plan, so they aren't suggested again. */
-  existingTitles: z.array(shortText(300)).max(300).default([]),
+  existingTitles: z.array(z.string()).max(5_000).default([]).transform(limitExistingTitles),
 });
+/** What clients send. */
 export type RecommendRequest = z.input<typeof recommendRequestSchema>;
+/** What the server works with after validation and truncation. */
+export type RecommendInput = z.output<typeof recommendRequestSchema>;
 
 export const MAX_RECOMMENDATIONS = 5;
 
@@ -65,14 +89,16 @@ export type RecommendResponse = z.infer<typeof recommendationsSchema>;
 
 export const refineSummaryRequestSchema = z.object({
   material: z.object({
-    title: shortText(300).min(1),
-    author: shortText(200).optional(),
+    title: requiredText(300),
+    author: clampedText(200).optional(),
     /** What the material covers, so feedback can point out missing ideas. */
-    brief: shortText(3000).optional(),
+    brief: clampedText(3000).optional(),
   }),
-  summary: shortText(8000).min(1, "Write a summary first."),
+  // The summary is the user's own text: reject rather than silently cut it.
+  summary: z.string().trim().min(1, "Write a summary first.").max(8000, "Summaries are limited to 8,000 characters."),
 });
 export type RefineSummaryRequest = z.input<typeof refineSummaryRequestSchema>;
+export type RefineSummaryInput = z.output<typeof refineSummaryRequestSchema>;
 
 export const summaryFeedbackSchema = z.object({
   strengths: z.array(z.string().trim().min(1)),
@@ -88,6 +114,10 @@ export const aiErrorCodes = [
   "demo-mode",
   "forbidden",
   "bad-request",
+  "unsupported-media-type",
+  "too-large",
+  "busy",
+  "aborted",
   "not-installed",
   "timeout",
   "process-failed",

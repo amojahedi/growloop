@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   if (body.response) return body.response;
 
   try {
-    const result = await askClaude({ ...buildRefineSummaryPrompt(body.data), schema: summaryFeedbackSchema });
+    const result = await askClaude({ ...buildRefineSummaryPrompt(body.data), schema: summaryFeedbackSchema, signal: request.signal });
     return Response.json(result satisfies SummaryFeedback);
   } catch (error) {
     return aiFailureResponse(error);

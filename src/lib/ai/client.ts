@@ -3,6 +3,7 @@ import { isDemoMode } from "@/lib/env";
 import {
   aiErrorResponseSchema,
   aiStatusSchema,
+  limitExistingTitles,
   recommendationsSchema,
   summaryFeedbackSchema,
   type AIErrorCode,
@@ -66,7 +67,9 @@ export function fetchAIStatus({ fresh = false } = {}): Promise<AIStatus> {
 }
 
 export function requestRecommendations(input: RecommendRequest, signal?: AbortSignal): Promise<RecommendResponse> {
-  return requestJson("/api/ai/recommend", recommendationsSchema, postJson(input, signal));
+  // Large libraries would make the payload (and prompt) huge; send a bounded list.
+  const body = { ...input, existingTitles: limitExistingTitles(input.existingTitles ?? []) };
+  return requestJson("/api/ai/recommend", recommendationsSchema, postJson(body, signal));
 }
 
 export function requestSummaryFeedback(input: RefineSummaryRequest, signal?: AbortSignal): Promise<SummaryFeedback> {

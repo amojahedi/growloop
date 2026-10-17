@@ -1,8 +1,10 @@
 import { EventEmitter } from "node:events";
+import { existsSync } from "node:fs";
 import os from "node:os";
+import path from "node:path";
 import { PassThrough, Writable } from "node:stream";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { askClaude, checkClaudeStatus, parseLoggedIn } from "./claude-cli";
+import { askClaude, checkClaudeStatus, getClaudeStatus, parseLoggedIn } from "./claude-cli";
 import { summaryFeedbackSchema } from "./schemas";
 
 vi.mock("node:child_process", () => ({ spawn: vi.fn() }));
@@ -88,10 +90,16 @@ describe("askClaude", () => {
       "--tools",
       "",
       "--no-session-persistence",
+      "--setting-sources",
+      "user",
       "--strict-mcp-config",
       "--disable-slash-commands",
     ]);
-    expect(options).toMatchObject({ cwd: os.tmpdir() });
+    // A private, empty directory per call, removed afterwards.
+    const cwd = String(options?.cwd);
+    expect(path.dirname(cwd)).toBe(path.resolve(os.tmpdir()));
+    expect(path.basename(cwd)).toMatch(/^growloop-claude-/);
+    expect(existsSync(cwd)).toBe(false);
     expect(options).not.toHaveProperty("shell");
     expect(children[0].input).toBe("--summary that starts with dashes");
   });
@@ -132,6 +140,53 @@ describe("askClaude", () => {
       code: "timeout",
     });
     expect(children[0].kill).toHaveBeenCalledWith("SIGTERM");
+  });
+
+  it("kills the process when the request is aborted", async () => {
+    const children = queueRuns({ hang: true });
+    const controller = new AbortController();
+    const pending = askClaude({ ...spec, schema: summaryFeedbackSchema, signal: controller.signal });
+
+    await vi.waitFor(() => expect(children).toHaveLength(1));
+    controller.abort();
+
+    await expect(pending).rejects.toMatchObject({ code: "aborted" });
+    expect(children[0].kill).toHaveBeenCalledWith("SIGTERM");
+  });
+
+  it("does not spawn at all for an already-aborted request", async () => {
+    await expect(
+      askClaude({ ...spec, schema: summaryFeedbackSchema, signal: AbortSignal.abort() }),
+    ).rejects.toMatchObject({ code: "aborted" });
+    expect(spawnMock).not.toHaveBeenCalled();
+  });
+
+  it("runs at most two processes at once", async () => {
+    const children = queueRuns({ hang: true }, { hang: true }, { stdout: resultEnvelope({ structured_output: feedback }) });
+    const controller = new AbortController();
+    const first = askClaude({ ...spec, schema: summaryFeedbackSchema, signal: controller.signal });
+    const second = askClaude({ ...spec, schema: summaryFeedbackSchema, signal: controller.signal });
+    const third = askClaude({ ...spec, schema: summaryFeedbackSchema });
+
+    await vi.waitFor(() => expect(children).toHaveLength(2));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(spawnMock).toHaveBeenCalledTimes(2);
+
+    controller.abort();
+    await Promise.allSettled([first, second]);
+    await expect(third).resolves.toEqual(feedback);
+    expect(spawnMock).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe("getClaudeStatus", () => {
+  it("shares one check between concurrent callers and caches the result", async () => {
+    queueRuns({ stdout: "2.1.283" }, { stdout: JSON.stringify({ loggedIn: true }) });
+
+    const results = await Promise.all([getClaudeStatus({ fresh: true }), getClaudeStatus(), getClaudeStatus({ fresh: true })]);
+    expect(results).toEqual([{ available: true }, { available: true }, { available: true }]);
+    expect(await getClaudeStatus()).toEqual({ available: true });
+    expect(spawnMock).toHaveBeenCalledTimes(2);
   });
 });
 

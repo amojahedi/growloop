@@ -6,7 +6,10 @@ export class ClaudeCliError extends Error {
 
   constructor(
     message: string,
-    readonly code: Extract<AIErrorCode, "not-installed" | "timeout" | "process-failed" | "model-error" | "invalid-output">,
+    readonly code: Extract<
+      AIErrorCode,
+      "not-installed" | "timeout" | "process-failed" | "model-error" | "invalid-output" | "busy" | "aborted"
+    >,
     options?: ErrorOptions,
   ) {
     super(message, options);

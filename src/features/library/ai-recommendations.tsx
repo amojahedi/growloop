@@ -27,7 +27,7 @@ export function AIRecommendations({ context, existingTitles, skillIds = [] }: AI
       {status.state === "unavailable" && (
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span>{status.reason}</span>
-          {status.code !== "demo-mode" && (
+          {status.code !== "demo-mode" && status.code !== "disabled" && (
             <Button variant="ghost" size="xs" onClick={recheck}>
               Check again
             </Button>
