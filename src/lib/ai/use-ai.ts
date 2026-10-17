@@ -1,8 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AIRequestError, fetchAIStatus, requestRecommendations, requestSummaryFeedback } from "./client";
-import type { AIStatus, RecommendRequest, RecommendResponse, RefineSummaryRequest, SummaryFeedback } from "./schemas";
+import { AIRequestError, fetchAIStatus, requestMaterialDraft, requestRecommendations, requestSummaryFeedback } from "./client";
+import type {
+  AIStatus,
+  EnrichMaterialRequest,
+  MaterialDraft,
+  RecommendRequest,
+  RecommendResponse,
+  RefineSummaryRequest,
+  SummaryFeedback,
+} from "./schemas";
 
 /**
  * React access to the local AI features: availability plus one async action
@@ -101,6 +109,8 @@ export interface UseAI {
   recheck: () => void;
   recommend: AsyncAction<RecommendRequest, RecommendResponse>;
   refineSummary: AsyncAction<RefineSummaryRequest, SummaryFeedback>;
+  /** Drafts a resource's details from a pasted title or link. */
+  enrichMaterial: AsyncAction<EnrichMaterialRequest, MaterialDraft>;
 }
 
 export function useAI(): UseAI {
@@ -128,5 +138,6 @@ export function useAI(): UseAI {
     recheck,
     recommend: useAsyncAction(requestRecommendations),
     refineSummary: useAsyncAction(requestSummaryFeedback),
+    enrichMaterial: useAsyncAction(requestMaterialDraft),
   };
 }
