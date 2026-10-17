@@ -35,7 +35,7 @@ export function BoardView() {
     neighbour
       ? () => {
           const index = columnItems(items, month, item.status).findIndex((candidate) => candidate.id === neighbour.id);
-          movePlanItem(item.id, { status: item.status, index });
+          movePlanItem(item.id, { status: item.status, index, month });
         }
       : undefined;
 
@@ -81,6 +81,7 @@ export function BoardView() {
                 <BoardCard
                   key={item.id}
                   item={item}
+                  boardMonth={month}
                   onMoveUp={moveNextTo(item, columns[status][index - 1])}
                   onMoveDown={moveNextTo(item, columns[status][index + 1])}
                   material={materials.get(item.materialId)}

@@ -5,13 +5,15 @@ import { MaterialTypeIcon } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { taskProgress } from "@/lib/domain/plan-items";
-import { BOARD_COLUMNS, type Material, type PlanItem, type Skill } from "@/lib/domain/types";
+import { BOARD_COLUMNS, type Material, type MonthKey, type PlanItem, type Skill } from "@/lib/domain/types";
 import { formatShortDate } from "@/lib/format";
 import { useActions } from "@/lib/store/hooks";
 import { STATUS_LABELS } from "./board-labels";
 
 interface BoardCardProps {
   item: PlanItem;
+  /** The board's month; items leaving the backlog are scheduled into it. */
+  boardMonth: MonthKey;
   /** Reorder within the column; undefined when the card is already first / last. */
   onMoveUp?: () => void;
   onMoveDown?: () => void;
@@ -20,7 +22,7 @@ interface BoardCardProps {
 }
 
 /** A plan item on the board (B-4), with button controls as the keyboard alternative to drag and drop. */
-export function BoardCard({ item, onMoveUp, onMoveDown, material, skills }: BoardCardProps) {
+export function BoardCard({ item, boardMonth, onMoveUp, onMoveDown, material, skills }: BoardCardProps) {
   const { movePlanItem, deletePlanItem } = useActions();
   const tasks = taskProgress(item);
   const columnIndex = BOARD_COLUMNS.indexOf(item.status);
@@ -51,7 +53,7 @@ export function BoardCard({ item, onMoveUp, onMoveDown, material, skills }: Boar
           variant="ghost"
           size="icon-xs"
           disabled={!previousStatus}
-          onClick={() => movePlanItem(item.id, { status: previousStatus })}
+          onClick={() => movePlanItem(item.id, { status: previousStatus, month: boardMonth })}
           aria-label={previousStatus ? `Move "${title}" to ${STATUS_LABELS[previousStatus]}` : undefined}
         >
           <ArrowLeftIcon />
@@ -78,7 +80,7 @@ export function BoardCard({ item, onMoveUp, onMoveDown, material, skills }: Boar
           variant="ghost"
           size="icon-xs"
           disabled={!nextStatus}
-          onClick={() => movePlanItem(item.id, { status: nextStatus })}
+          onClick={() => movePlanItem(item.id, { status: nextStatus, month: boardMonth })}
           aria-label={nextStatus ? `Move "${title}" to ${STATUS_LABELS[nextStatus]}` : undefined}
         >
           <ArrowRightIcon />

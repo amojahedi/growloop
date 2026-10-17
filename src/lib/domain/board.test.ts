@@ -99,6 +99,27 @@ describe("moveItem", () => {
     expect(result).toEqual(items);
   });
 
+  it("shows backlog items from earlier months and schedules them when they leave the backlog", () => {
+    const items = [
+      makeItem({ id: "old-backlog", month: "2026-09", status: "backlog", order: 0 }),
+      makeItem({ id: "new-backlog", month: "2026-10", status: "backlog", order: 1 }),
+      makeItem({ id: "future-backlog", month: "2026-11", status: "backlog", order: 0 }),
+      makeItem({ id: "todo", month: "2026-10", status: "todo", order: 0 }),
+    ];
+    expect(ids(boardColumns(items, "2026-10").backlog)).toEqual(["old-backlog", "new-backlog"]);
+
+    const moved = moveItem(items, "old-backlog", { status: "todo", index: 0, month: "2026-10" }, NOW);
+    expect(moved.find((item) => item.id === "old-backlog")).toMatchObject({ month: "2026-10", status: "todo", order: 0 });
+    expect(ids(columnItems(moved, "2026-10", "todo"))).toEqual(["old-backlog", "todo"]);
+    expect(orders(columnItems(moved, "2026-10", "backlog"))).toEqual([0]);
+  });
+
+  it("keeps an item's month when it is parked in the backlog", () => {
+    const items = [makeItem({ id: "a", month: "2026-10", status: "todo" })];
+    const moved = moveItem(items, "a", { status: "backlog", month: "2026-12" }, NOW);
+    expect(moved[0]).toMatchObject({ month: "2026-10", status: "backlog" });
+  });
+
   it("is a no-op for unknown ids and does not mutate the input", () => {
     const items = sampleBoard();
     const snapshot = structuredClone(items);

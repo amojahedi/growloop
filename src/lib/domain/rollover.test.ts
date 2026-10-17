@@ -10,6 +10,7 @@ function octoberLeftovers() {
     makeItem({ id: "progress", month: "2026-10", status: "in_progress", order: 0 }),
     makeItem({ id: "todo", month: "2026-10", status: "todo", order: 0 }),
     makeItem({ id: "older", month: "2026-09", status: "todo", order: 0, carriedFrom: ["2026-08"] }),
+    makeItem({ id: "parked", month: "2026-09", status: "backlog", order: 0 }),
     makeItem({ id: "current", month: "2026-11", status: "todo", order: 0 }),
   ];
 }
@@ -21,6 +22,12 @@ describe("pendingRollover", () => {
     expect(pending?.toMonth).toBe("2026-11");
     expect(pending?.fromMonths).toEqual(["2026-09", "2026-10"]);
     expect(pending?.items.map((item) => item.id)).toEqual(["older", "progress", "todo"]);
+  });
+
+  it("does not re-ask about backlog items", () => {
+    const pending = pendingRollover(octoberLeftovers(), "2026-11");
+    expect(pending?.items.map((item) => item.id)).not.toContain("parked");
+    expect(pendingRollover([makeItem({ month: "2026-09", status: "backlog" })], "2026-11")).toBeNull();
   });
 
   it("returns null when there is nothing to review", () => {
@@ -55,7 +62,7 @@ describe("applyRollover", () => {
     expect(next.planItems.find((item) => item.id === "progress")).toMatchObject({
       month: "2026-11",
       status: "backlog",
-      order: 0,
+      order: 1, // after the backlog item already in the pool
       carriedFrom: ["2026-10"],
     });
   });
@@ -65,15 +72,20 @@ describe("applyRollover", () => {
     const { data: next } = applyRollover(data, "2026-11", { todo: "drop" }, NOW);
 
     expect(next.planItems.map((item) => item.id)).not.toContain("todo");
-    expect(next.planItems).toHaveLength(4);
+    expect(next.planItems).toHaveLength(5);
   });
 
-  it("leaves undecided, finished and current-month items untouched", () => {
+  it("leaves undecided, finished, backlog and current-month items untouched", () => {
     const items = octoberLeftovers();
     const data = makeData({ planItems: items });
-    const { data: next } = applyRollover(data, "2026-11", { done: "drop", current: "drop", todo: "carry_over" }, NOW);
+    const { data: next } = applyRollover(
+      data,
+      "2026-11",
+      { done: "drop", current: "drop", parked: "drop", todo: "carry_over" },
+      NOW,
+    );
 
-    for (const id of ["done", "current", "progress", "older"]) {
+    for (const id of ["done", "current", "parked", "progress", "older"]) {
       expect(next.planItems.find((item) => item.id === id)).toBe(items.find((item) => item.id === id));
     }
   });

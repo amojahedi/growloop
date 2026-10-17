@@ -4,9 +4,11 @@ import { withStatus } from "./plan-items";
 import type { AppData, ID, MonthKey, PlanItem, RolloverDecision, RolloverRecord } from "./types";
 
 /**
- * Month-end review (ADR 002): unfinished items from earlier months are never
- * moved silently. The user decides per item to carry it over, park it in the
- * new month's backlog, or drop it.
+ * Month-end review (ADR 002): planned work left unfinished in earlier months
+ * (To do / In progress) is never moved silently. The user decides per item to
+ * carry it over, park it in the backlog, or drop it. Backlog items aren't
+ * planned work, so they are not re-asked every month; the board's backlog
+ * column keeps showing them (see board.ts).
  */
 
 export interface PendingRollover {
@@ -14,18 +16,19 @@ export interface PendingRollover {
   toMonth: MonthKey;
   /** Earlier months that still hold unfinished items, oldest first. */
   fromMonths: MonthKey[];
-  /** Unfinished items from those months, oldest month first, then by status and position. */
+  /** Items to review from those months, oldest month first, then by position. */
   items: PlanItem[];
 }
 
-export function isUnfinished(item: PlanItem): boolean {
-  return item.status !== "done";
+/** Planned-but-unfinished work that the month-end review asks about. */
+export function needsReview(item: PlanItem): boolean {
+  return item.status === "todo" || item.status === "in_progress";
 }
 
-/** Unfinished items planned before `currentMonth`, or `null` when there is nothing to review. */
+/** Items to review that were planned before `currentMonth`, or `null` when there is nothing to review. */
 export function pendingRollover(items: readonly PlanItem[], currentMonth: MonthKey): PendingRollover | null {
   const stale = items
-    .filter((item) => isUnfinished(item) && compareMonths(item.month, currentMonth) < 0)
+    .filter((item) => needsReview(item) && compareMonths(item.month, currentMonth) < 0)
     .sort((a, b) => compareMonths(a.month, b.month) || a.order - b.order);
 
   if (stale.length === 0) return null;
@@ -47,8 +50,8 @@ export interface ApplyRolloverResult {
 }
 
 /**
- * Applies review decisions. Items without a decision are left untouched, so a
- * review can be completed in several passes.
+ * Applies review decisions. Items without a decision (or that don't need
+ * review) are left untouched, so a review can be completed in several passes.
  * - carry_over: moves to `toMonth`, keeping its status; the old month is appended to `carriedFrom`.
  * - backlog: moves to `toMonth` with status "backlog"; also recorded in `carriedFrom`.
  * - drop: deletes the item.
@@ -68,7 +71,7 @@ export function applyRollover(
 
   for (const item of candidates) {
     const decision = decisions[item.id];
-    if (!decision || !isUnfinished(item) || compareMonths(item.month, toMonth) >= 0) continue;
+    if (!decision || !needsReview(item) || compareMonths(item.month, toMonth) >= 0) continue;
 
     counts[decision] += 1;
     sourceMonths.push(item.month);
