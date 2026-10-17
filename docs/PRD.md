@@ -129,6 +129,24 @@ Month Plan
 |---|---|---|
 | R-1 | When a new month starts and unfinished items exist, show a **review**: carry over / move to backlog / drop, per item or in bulk. | Must |
 
+### 5.8 Help & onboarding
+| ID | Requirement | Priority |
+|---|---|---|
+| H-1 | A persistent **Help** button in the app shell, reachable from every page. | Must |
+| H-2 | **Guided tour**: step-by-step highlights of the main areas (dashboard, skills, library, OKRs, board, card detail, month review). Skippable, with back/next and progress ("3 of 8"). Keyboard accessible. | Must |
+| H-3 | The tour starts automatically on the **first visit only**; afterwards it can be replayed from the Help button. Completion/skip is remembered locally. | Must |
+| H-4 | **Guide page** ("How Growloop works"): explains the loop — set quarterly OKRs → pick materials → plan the month → learn on the board → summarize in your own words → monthly review — with short visuals and links into each area. Also covers enabling AI via local Claude Code and data/privacy (local-first, export/import). | Must |
+| H-5 | Help content is written as data (not hard-coded into components) so it can be edited and extended without touching UI code. | Should |
+
+### 5.9 Appearance & themes
+| ID | Requirement | Priority |
+|---|---|---|
+| T-1 | MVP ships one style theme, **Linen** (warm & soft), from the design exploration in `design/directions/`. | Must |
+| T-2 | Light, dark and system mode; follows the system setting by default, with a quick toggle in the app shell. | Must |
+| T-3 | Theming is implemented as design tokens (CSS variables) only; components never hard-code theme values, so more style themes can be added later as token sets. | Must |
+| T-4 | Meets WCAG AA contrast in both modes. | Must |
+| T-5 | *Later phase:* additional style themes (**Graphite** — minimal, **Prism** — bold) selectable in **Settings → Theme** with live previews. | Later |
+
 ## 6. AI integration
 
 - AI runs on the **user's own machine via their installed Claude Code CLI** (headless `claude -p`), using their own Claude subscription. No API keys, no hosted LLM.
