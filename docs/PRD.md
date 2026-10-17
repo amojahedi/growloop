@@ -1,6 +1,6 @@
-# Learning OS — Product Requirements (MVP)
+# Growloop — Product Requirements (MVP)
 
-> Working name. Final product name TBD.
+> **Growloop** — a growth loop for yourself: plan → learn → reflect → repeat.
 
 | | |
 |---|---|

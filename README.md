@@ -1,10 +1,10 @@
-# Learning OS
+# Growloop
 
-> Plan, track and reflect on your self-development — built for product people.
+> A growth loop for yourself — plan, learn, reflect, repeat. Self-development planning built for product people.
 
-**Status:** 🚧 MVP in development · *working name*
+**Status:** 🚧 MVP in development
 
-Learning OS turns scattered courses, books and podcasts into a focused learning plan:
+Growloop turns scattered courses, books and podcasts into a focused learning plan:
 
 - **Quarterly OKRs → monthly plans** — tie every course and book to a goal.
 - **Curated PM library** — courses, books, articles and podcasts mapped to product skills like stakeholder management and roadmapping.
