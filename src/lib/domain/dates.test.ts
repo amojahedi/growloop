@@ -3,6 +3,7 @@ import { at } from "@/lib/testing/fixtures";
 import {
   addDays,
   addMonths,
+  monthsBetween,
   addQuarters,
   compareMonths,
   dayKey,
@@ -28,6 +29,12 @@ describe("month keys", () => {
     expect(prevMonth("2026-01")).toBe("2025-12");
     expect(addMonths("2026-10", 15)).toBe("2028-01");
     expect(addMonths("2026-10", -22)).toBe("2024-12");
+  });
+
+  it("counts months between keys", () => {
+    expect(monthsBetween("2026-10", "2027-01")).toBe(3);
+    expect(monthsBetween("2026-10", "2026-10")).toBe(0);
+    expect(monthsBetween("2026-10", "2025-12")).toBe(-10);
   });
 
   it("compares months chronologically", () => {
