@@ -2,6 +2,7 @@
 
 import { SparklesIcon } from "lucide-react";
 import { useId, useRef, useState } from "react";
+import { AISetupHint } from "@/components/app/ai-setup-hint";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,7 @@ import {
 import { OwnMaterialFields } from "./own-material-form";
 
 /**
- * "Add your own" (ML-2, flow d): paste a title or link; with Claude Code the
+ * "Add your own" (ML-2, flow d): paste a title or link; with AI (own key or Claude Code) the
  * details are drafted for review, without it the form is pre-filled from the
  * paste. Saved items are the user's own materials, which are always in My Library.
  */
@@ -87,7 +88,7 @@ function PasteStep({
   onReview: (review: Review) => void;
 }) {
   const inputId = useId();
-  const { status, enrichMaterial } = useAI();
+  const { status, recheck, enrichMaterial } = useAI();
   const materials = useMaterials();
   const skills = useSkills();
 
@@ -147,11 +148,9 @@ function PasteStep({
         </p>
       )}
 
-      {status.state === "checking" && <p className="text-xs text-muted-foreground">Checking for Claude Code…</p>}
+      {status.state === "checking" && <p className="text-xs text-muted-foreground">Checking AI…</p>}
       {status.state === "unavailable" && (
-        <p className="text-xs text-muted-foreground">
-          {status.reason ?? "Claude Code isn't available."} You can still fill in the details yourself.
-        </p>
+        <AISetupHint status={status} onRecheck={recheck} suffix="You can still fill in the details yourself." />
       )}
 
       <DialogFooter>

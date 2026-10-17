@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { AISetupHint } from "@/components/app/ai-setup-hint";
 import { Section } from "@/components/app/section";
 import { Button } from "@/components/ui/button";
+import type { AIProviderKind } from "@/lib/ai/provider";
 import type { RecommendRequest } from "@/lib/ai/schemas";
 import { useAI } from "@/lib/ai/use-ai";
 import { useActions } from "@/lib/store/hooks";
@@ -14,26 +16,23 @@ interface AIRecommendationsProps {
   skillIds?: string[];
 }
 
-/** "Recommend materials" via the local Claude Code CLI (L-6). Degrades to a setup hint when unavailable. */
+const DESCRIPTIONS: Record<AIProviderKind, string> = {
+  "own-key": "Suggested by Claude, using your API key",
+  local: "Suggested by Claude Code running on your machine",
+  off: "Suggested by Claude",
+};
+
+/** "Recommend materials" via the active AI provider (L-6). Degrades to a setup hint when AI is off. */
 export function AIRecommendations({ context, existingTitles, skillIds = [] }: AIRecommendationsProps) {
-  const { status, recheck, recommend } = useAI();
+  const { provider, status, recheck, recommend } = useAI();
   const { addCustomMaterial } = useActions();
   const [saved, setSaved] = useState<ReadonlySet<string>>(new Set());
 
   return (
-    <Section title="AI recommendations" description="Suggested by Claude Code running on your machine">
-      {status.state === "checking" && <p className="text-sm text-muted-foreground">Checking for Claude Code…</p>}
+    <Section title="AI recommendations" description={DESCRIPTIONS[provider]}>
+      {status.state === "checking" && <p className="text-sm text-muted-foreground">Checking AI…</p>}
 
-      {status.state === "unavailable" && (
-        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <span>{status.reason}</span>
-          {status.code !== "demo-mode" && status.code !== "disabled" && (
-            <Button variant="ghost" size="xs" onClick={recheck}>
-              Check again
-            </Button>
-          )}
-        </div>
-      )}
+      {status.state === "unavailable" && <AISetupHint status={status} onRecheck={recheck} />}
 
       {status.state === "available" && (
         <div className="flex flex-col gap-3">

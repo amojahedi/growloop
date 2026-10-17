@@ -6,12 +6,17 @@ import { Section } from "@/components/app/section";
 import { Button } from "@/components/ui/button";
 import { useActions } from "@/lib/store/hooks";
 import { useDataTransfer } from "@/lib/store/use-data-transfer";
+import { ClaudeSettings } from "./claude-settings";
 
 export function SettingsView() {
   return (
-    <DataGate>
-      <DataSettings />
-    </DataGate>
+    <div className="flex flex-col gap-6">
+      {/* Independent of workspace data: the key is stored separately. */}
+      <ClaudeSettings />
+      <DataGate>
+        <DataSettings />
+      </DataGate>
+    </div>
   );
 }
 
