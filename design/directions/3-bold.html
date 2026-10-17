@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="en" data-direction="bold">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Growloop · Prism</title>
+<meta name="description" content="Growloop visual direction mockup: Prism.">
+<script>(function(){var t;try{t=localStorage.getItem('growloop-theme')}catch(e){}if(t!=='light'&&t!=='dark'){t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.theme=t;})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+<style>:root{
+  --font-ui:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-display:"Bricolage Grotesque",var(--font-ui);--font-num:"Bricolage Grotesque",var(--font-ui);--font-brand:"Bricolage Grotesque",var(--font-ui);--font-card-title:"Bricolage Grotesque",var(--font-ui);
+  --font-obj:var(--font-ui);--font-bcard:var(--font-ui);--font-note:var(--font-ui);--font-tagline:"Bricolage Grotesque",var(--font-ui);
+  --note-style:normal;--tagline-style:normal;
+  --fs:14px;--fs-sm:13px;--fs-xs:12px;--fs-nav:14px;--fs-title:36px;--fs-kpi:36px;--fs-hero:80px;--fs-card-title:17px;--fs-obj:14.5px;--fs-bcard:14px;--fs-note:14px;--fs-dr-title:30px;--fs-dr-tag:18px;
+  --title-weight:700;--title-track:-0.03em;--card-title-weight:700;--card-title-track:-0.015em;--kpi-weight:700;--hero-weight:800;--num-track:-0.04em;--btn-weight:600;--chip-weight:600;
+  --brand-weight:800;--brand-size:19px;--brand-track:-0.03em;--heading-track:.06em;--heading-case:uppercase;
+  --sidebar-w:248px;--sb-pad:16px;--sb-gap:26px;--nav-h:40px;--topbar-h:64px;--pad:32px;--pad-y:30px;--content-max:1340px;--head-mb:26px;
+  --gap:18px;--card-pad:22px;--card-head-mb:18px;--obj-gap:20px;--col-pad:10px;--bcard-pad:14px;--bcard-gap:10px;--cell-gap:5px;--spark-gap:8px;--spark-w:24px;
+  --r-xs:7px;--r-sm:10px;--r-md:14px;--r-lg:22px;--r-btn:12px;--r-nav:12px;--r-chip:7px;--r-filter:10px;--r-cell:6px;--drawer-r:26px;--drawer-inset:12px;
+  --btn-h:36px;--chip-h:22px;--chip-px:8px;--bar-h:8px;--bar-h-sm:6px;--bar-h-lg:12px;--type-ic:24px;--lift:-3px;--icon-stroke:2;
+
+  --bg:#F4F3FA;--surface:#FFFFFF;--surface-2:#F4F2FB;--hover:#F4F2FB;--divider:#EEEBF6;--border:#E8E5F3;--border-strong:#D6D0EC;
+  --text:#14112B;--text-2:#46415F;--text-3:#655F80;
+  --accent:#6D28D9;--accent-text:#6D28D9;--accent-soft:#F0E8FE;--on-accent:#FFFFFF;--ring:#7C3AED;
+  --success:#047857;--success-soft:#DDF7EC;--soon-text:#BE185D;--soon-bg:#FDE8F2;--soon-border:#F9C7DE;
+  --sb-bg:#13102A;--sb-border:transparent;--sb-text:#F6F4FF;--sb-text-2:#C2BCE3;--sb-text-3:#9690BE;--sb-hover:rgba(255,255,255,.06);--sb-active:linear-gradient(110deg,#7C3AED,#C026D3);--sb-active-text:#FFFFFF;--sb-active-shadow:0 8px 20px -8px rgba(192,38,211,.7);
+  --sb-ring:#F472B6;--sb-ring-track:rgba(255,255,255,.12);--sb-foot-bg:rgba(255,255,255,.05);--sb-foot-border:rgba(255,255,255,.08);
+  --topbar-bg:rgba(244,243,250,.82);--topbar-border:transparent;--ctl-bg:#FFFFFF;--ctl-border:#E8E5F3;
+  --btn-primary-bg:linear-gradient(110deg,#7C3AED,#C026D3);--btn-primary-hover:linear-gradient(110deg,#6D28D9,#A21CAF);--btn-primary-shadow:0 8px 20px -8px rgba(124,58,237,.7),inset 0 1px 0 rgba(255,255,255,.2);--btn-ghost-bg:#FFFFFF;--btn-ghost-border:#E8E5F3;
+  --seg-bg:#F4F2FB;--seg-border:transparent;--seg-active:#FFFFFF;--seg-shadow:0 1px 3px rgba(20,17,43,.12);
+  --shadow-card:0 1px 0 rgba(20,17,43,.03),0 12px 32px -16px rgba(76,29,149,.18);--shadow-pop:0 30px 80px -20px rgba(46,16,101,.45),0 0 0 1px rgba(20,17,43,.05);
+  --track:#EEEBF6;--bar-fill:linear-gradient(90deg,#7C3AED,#DB2777);--grid:#E9E5F5;--kpi-icon:#FFFFFF;
+  --hero-bg:linear-gradient(125deg,#4C1D95 0%,#7C3AED 38%,#C026D3 72%,#E11D48 100%);--hero-text:#FFFFFF;--hero-text-2:rgba(255,255,255,.86);--hero-border:transparent;--hero-icon:#FFFFFF;
+  --delta-bg:rgba(255,255,255,.95);--delta-text:#6D28D9;--spark-bar:rgba(255,255,255,.28);--spark-bar-hover:rgba(255,255,255,.45);--spark-bar-current:#FFFFFF;
+  --s1:#8B5CF6;--s1-stroke:url(#radarStroke);--s1-fill:url(#radarFill);--s2:#A7A1C2;--grad-a:#7C3AED;--grad-b:#EC4899;
+  --code-bg:linear-gradient(110deg,#7C3AED,#C026D3);--code-text:#FFFFFF;
+  --note-ic-bg:#E0F7FE;--note-ic:#0369A1;--note-ic-bg-2:#F3E8FF;--note-ic-2:#7E22CE;
+  --cover-bg:linear-gradient(150deg,#7C3AED,#DB2777 70%,#F97316);--cover-text:#FFFFFF;--cover-shadow:0 12px 24px -10px rgba(124,58,237,.6);
+  --h0:#EFECF8;--h1:#DCCCFB;--h2:#BB98F7;--h3:#9061F2;--h4:#6D28D9;--cell-num:#655F80;--cell-num-strong:#FFFFFF;--today-ring:#DB2777;
+  --flame-bg:linear-gradient(110deg,#FFEDD5,#FCE7F3);--flame-text:#BE185D;--date-bg:#F4F2FB;--date-border:transparent;
+  --filter-bg:#FFFFFF;--filter-border:#E8E5F3;--filter-on-bg:#14112B;--filter-on-border:#14112B;--filter-on-text:#FFFFFF;
+  --col-bg:#ECEAF6;--col-border:transparent;--bcard-bg:#FFFFFF;--bcard-border:transparent;--bcard-shadow:0 1px 2px rgba(20,17,43,.06),0 4px 12px -6px rgba(76,29,149,.12);--bcard-shadow-hover:0 2px 4px rgba(20,17,43,.05),0 18px 32px -14px rgba(76,29,149,.35);
+  --drop-bg:rgba(124,58,237,.07);--drop-ring:rgba(124,58,237,.45);
+  --st-backlog:#A7A1C2;--st-todo:#0EA5E9;--st-progress:#F59E0B;--st-done:#10B981;
+  --type-bg:#F0E8FE;--type-fg:#6D28D9;--carried-bg:#FEF3C7;--carried-text:#92400E;
+  --scrim:rgba(20,17,43,.4);--drawer-bg:#FFFFFF;--drawer-foot-bg:#FAF9FE;--fact-bg:#F7F5FD;--fact-border:transparent;--tagline-bar:#EC4899;
+  --toast-bg:#14112B;--toast-text:#FFFFFF;--toast-icon:#34D399;--tip-bg:#14112B;--tip-text:#FFFFFF;
+  --sk-disc:#7C3AED;--sk-stake:#EC4899;--sk-road:#F59E0B;--sk-prio:#059669;--sk-anal:#0EA5E9;--sk-strat:#E11D48;
+--cn0:#655F80;--cn1:#46415F;--cn2:#14112B;--cn3:#14112B;--cn4:#FFFFFF;}
+html[data-theme="dark"]{
+  --bg:#0B0A18;--surface:#14122A;--surface-2:#1C1938;--hover:#1E1A3C;--divider:#221E44;--border:#26224A;--border-strong:#37315F;
+  --text:#F5F3FF;--text-2:#C6C0E6;--text-3:#9F98C9;
+  --accent:#A78BFA;--accent-text:#C4B5FD;--accent-soft:#2A2152;--on-accent:#FFFFFF;--ring:#C4B5FD;
+  --success:#34D399;--success-soft:#0E2E26;--soon-text:#F9A8D4;--soon-bg:#3A1530;--soon-border:#5C2048;
+  --sb-bg:#07061A;--sb-hover:rgba(255,255,255,.05);--sb-foot-bg:rgba(255,255,255,.04);--sb-foot-border:rgba(255,255,255,.07);
+  --topbar-bg:rgba(11,10,24,.8);--ctl-bg:#14122A;--ctl-border:#26224A;
+  --btn-ghost-bg:#14122A;--btn-ghost-border:#2D2856;
+  --seg-bg:#1C1938;--seg-active:#2D2856;--seg-shadow:none;
+  --shadow-card:0 0 0 1px rgba(255,255,255,.02),0 16px 40px -20px rgba(0,0,0,.8);--shadow-pop:0 30px 80px -20px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.06);
+  --track:#262150;--bar-fill:linear-gradient(90deg,#8B5CF6,#EC4899);--grid:#2A2552;
+  --hero-bg:radial-gradient(120% 140% at 0% 0%,#5B21B6 0%,#7C3AED 30%,#A21CAF 62%,#BE123C 100%);
+  --delta-text:#6D28D9;
+  --s1:#A78BFA;--s2:#6E6896;--grad-a:#A78BFA;--grad-b:#F472B6;
+  --note-ic-bg:#0C2A3A;--note-ic:#7DD3FC;--note-ic-bg-2:#2A1B4A;--note-ic-2:#D8B4FE;
+  --cover-shadow:0 12px 30px -10px rgba(236,72,153,.5);
+  --h0:#1C1938;--h1:#33275F;--h2:#5333A3;--h3:#7F4CEB;--h4:#B994FF;--cell-num:#9F98C9;--cell-num-strong:#0B0A18;--today-ring:#F472B6;
+  --flame-bg:linear-gradient(110deg,#3A1A0E,#3A1530);--flame-text:#FDBA74;--date-bg:#1C1938;
+  --filter-bg:#14122A;--filter-border:#2D2856;--filter-on-bg:#F5F3FF;--filter-on-border:#F5F3FF;--filter-on-text:#0B0A18;
+  --col-bg:#100E22;--col-border:#1E1A3C;--bcard-bg:#1A1734;--bcard-border:#28234F;--bcard-shadow:0 1px 2px rgba(0,0,0,.3);--bcard-shadow-hover:0 18px 36px -14px rgba(139,92,246,.45);
+  --drop-bg:rgba(167,139,250,.08);--drop-ring:rgba(167,139,250,.45);
+  --st-backlog:#6E6896;--st-todo:#38BDF8;--st-progress:#FBBF24;--st-done:#34D399;
+  --type-bg:#2A2152;--type-fg:#D8CCFF;--carried-bg:#3A2A0C;--carried-text:#FCD34D;
+  --scrim:rgba(4,3,12,.6);--drawer-bg:#14122A;--drawer-foot-bg:#110F25;--fact-bg:#1C1938;--tagline-bar:#F472B6;
+  --toast-bg:#F5F3FF;--toast-text:#0B0A18;--toast-icon:#047857;--tip-bg:#F5F3FF;--tip-text:#0B0A18;
+  --sk-disc:#8B5CF6;--sk-stake:#EC4899;--sk-road:#C98006;--sk-prio:#0E9F72;--sk-anal:#0B95D6;--sk-strat:#F43F5E;
+--cn0:#9F98C9;--cn1:#9F98C9;--cn2:#C6C0E6;--cn3:#FFFFFF;--cn4:#0B0A18;}
+@media (prefers-color-scheme:dark){html:not([data-theme]){
+  --bg:#0B0A18;--surface:#14122A;--surface-2:#1C1938;--hover:#1E1A3C;--divider:#221E44;--border:#26224A;--border-strong:#37315F;
+  --text:#F5F3FF;--text-2:#C6C0E6;--text-3:#9F98C9;
+  --accent:#A78BFA;--accent-text:#C4B5FD;--accent-soft:#2A2152;--on-accent:#FFFFFF;--ring:#C4B5FD;
+  --success:#34D399;--success-soft:#0E2E26;--soon-text:#F9A8D4;--soon-bg:#3A1530;--soon-border:#5C2048;
+  --sb-bg:#07061A;--sb-hover:rgba(255,255,255,.05);--sb-foot-bg:rgba(255,255,255,.04);--sb-foot-border:rgba(255,255,255,.07);
+  --topbar-bg:rgba(11,10,24,.8);--ctl-bg:#14122A;--ctl-border:#26224A;
+  --btn-ghost-bg:#14122A;--btn-ghost-border:#2D2856;
+  --seg-bg:#1C1938;--seg-active:#2D2856;--seg-shadow:none;
+  --shadow-card:0 0 0 1px rgba(255,255,255,.02),0 16px 40px -20px rgba(0,0,0,.8);--shadow-pop:0 30px 80px -20px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.06);
+  --track:#262150;--bar-fill:linear-gradient(90deg,#8B5CF6,#EC4899);--grid:#2A2552;
+  --hero-bg:radial-gradient(120% 140% at 0% 0%,#5B21B6 0%,#7C3AED 30%,#A21CAF 62%,#BE123C 100%);
+  --delta-text:#6D28D9;
+  --s1:#A78BFA;--s2:#6E6896;--grad-a:#A78BFA;--grad-b:#F472B6;
+  --note-ic-bg:#0C2A3A;--note-ic:#7DD3FC;--note-ic-bg-2:#2A1B4A;--note-ic-2:#D8B4FE;
+  --cover-shadow:0 12px 30px -10px rgba(236,72,153,.5);
+  --h0:#1C1938;--h1:#33275F;--h2:#5333A3;--h3:#7F4CEB;--h4:#B994FF;--cell-num:#9F98C9;--cell-num-strong:#0B0A18;--today-ring:#F472B6;
+  --flame-bg:linear-gradient(110deg,#3A1A0E,#3A1530);--flame-text:#FDBA74;--date-bg:#1C1938;
+  --filter-bg:#14122A;--filter-border:#2D2856;--filter-on-bg:#F5F3FF;--filter-on-border:#F5F3FF;--filter-on-text:#0B0A18;
+  --col-bg:#100E22;--col-border:#1E1A3C;--bcard-bg:#1A1734;--bcard-border:#28234F;--bcard-shadow:0 1px 2px rgba(0,0,0,.3);--bcard-shadow-hover:0 18px 36px -14px rgba(139,92,246,.45);
+  --drop-bg:rgba(167,139,250,.08);--drop-ring:rgba(167,139,250,.45);
+  --st-backlog:#6E6896;--st-todo:#38BDF8;--st-progress:#FBBF24;--st-done:#34D399;
+  --type-bg:#2A2152;--type-fg:#D8CCFF;--carried-bg:#3A2A0C;--carried-text:#FCD34D;
+  --scrim:rgba(4,3,12,.6);--drawer-bg:#14122A;--drawer-foot-bg:#110F25;--fact-bg:#1C1938;--tagline-bar:#F472B6;
+  --toast-bg:#F5F3FF;--toast-text:#0B0A18;--toast-icon:#047857;--tip-bg:#F5F3FF;--tip-text:#0B0A18;
+  --sk-disc:#8B5CF6;--sk-stake:#EC4899;--sk-road:#C98006;--sk-prio:#0E9F72;--sk-anal:#0B95D6;--sk-strat:#F43F5E;
+--cn0:#9F98C9;--cn1:#9F98C9;--cn2:#C6C0E6;--cn3:#FFFFFF;--cn4:#0B0A18;}}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;color-scheme:light}
+html[data-theme="dark"]{color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size:var(--fs);line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-feature-settings:"cv11","ss01";transition:background-color .2s ease,color .2s ease}
+h1,h2,h3,h4,p,ul,ol,dl,dd{margin:0}
+ul,ol{padding:0;list-style:none}
+button,select{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+a{color:inherit;text-decoration:none}
+[hidden]{display:none!important}
+.i{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:var(--icon-stroke,1.75);stroke-linecap:round;stroke-linejoin:round}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px;border-radius:var(--r-xs)}
+.num{font-variant-numeric:tabular-nums;font-family:var(--font-num)}
+::selection{background:var(--accent-soft)}
+
+/* ---------- shell ---------- */
+.app{display:grid;grid-template-columns:var(--sidebar-w) minmax(0,1fr);min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:var(--sb-gap);padding:var(--sb-pad);background:var(--sb-bg);color:var(--sb-text);border-right:1px solid var(--sb-border);overflow-y:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 4px 6px;min-height:36px}
+.logo{width:26px;height:26px;flex:none}
+.wordmark{font-family:var(--font-brand);font-weight:var(--brand-weight);font-size:var(--brand-size);letter-spacing:var(--brand-track)}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav-item{display:flex;align-items:center;gap:10px;height:var(--nav-h);padding:0 10px;border-radius:var(--r-nav);color:var(--sb-text-2);font-weight:500;font-size:var(--fs-nav);transition:background-color .15s,color .15s,box-shadow .15s}
+.nav-item:hover{background:var(--sb-hover);color:var(--sb-text)}
+.nav-item[aria-current="page"]{background:var(--sb-active);color:var(--sb-active-text);box-shadow:var(--sb-active-shadow)}
+.nav-ic{display:grid;place-items:center;flex:none}
+.nav-count{margin-left:auto;font-size:var(--fs-xs);font-weight:600;color:var(--sb-text-3);font-variant-numeric:tabular-nums}
+.nav-item[aria-current="page"] .nav-count{color:inherit;opacity:.8}
+.nav-section{display:flex;flex-direction:column;gap:2px}
+.nav-heading{display:flex;align-items:center;justify-content:space-between;padding:0 10px 6px;font-size:var(--fs-xs);font-weight:600;color:var(--sb-text-3);letter-spacing:var(--heading-track);text-transform:var(--heading-case)}
+.nav-obj{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:var(--r-nav);color:var(--sb-text-2);font-size:var(--fs-sm);line-height:1.3}
+.nav-obj:hover{background:var(--sb-hover);color:var(--sb-text)}
+.nav-obj-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-obj-pct{font-size:var(--fs-xs);color:var(--sb-text-3);font-variant-numeric:tabular-nums}
+.ring{width:18px;height:18px;flex:none}
+.ring-track{fill:none;stroke:var(--sb-ring-track);stroke-width:2.5}
+.ring-fill{fill:none;stroke:var(--sb-ring);stroke-width:2.5;stroke-linecap:round}
+.sidebar-foot{margin-top:auto;display:flex;align-items:center;gap:8px;padding:10px;border-radius:var(--r-md);background:var(--sb-foot-bg);border:1px solid var(--sb-foot-border)}
+.local-status{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 0 3px var(--success-soft);flex:none}
+.local-text{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.local-text strong{font-size:var(--fs-sm);font-weight:600;color:var(--sb-text)}
+.local-text span{font-size:var(--fs-xs);color:var(--sb-text-3)}
+.sb-export{color:var(--sb-text-2)}
+.sb-export:hover{background:var(--sb-hover);color:var(--sb-text)}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;height:var(--topbar-h);padding:0 var(--pad);background:var(--topbar-bg);border-bottom:1px solid var(--topbar-border);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px)}
+.crumbs{display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);min-width:0;flex:1}
+.crumb-root{color:var(--text-3)}
+.crumb-sep{color:var(--border-strong)}
+.crumb-current{font-weight:600;color:var(--text)}
+.month-switch{display:flex;align-items:center;gap:2px;padding:3px;border-radius:var(--r-btn);background:var(--ctl-bg);border:1px solid var(--ctl-border)}
+.month-label{display:flex;align-items:center;gap:8px;padding:0 10px;font-weight:600;font-size:var(--fs-sm);white-space:nowrap;font-variant-numeric:tabular-nums}
+.month-label .i{color:var(--text-3)}
+.topbar-actions{display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end}
+.search-btn{display:flex;align-items:center;gap:8px;height:var(--btn-h);padding:0 8px 0 12px;min-width:200px;border-radius:var(--r-btn);background:var(--ctl-bg);border:1px solid var(--ctl-border);color:var(--text-3);font-size:var(--fs-sm);transition:border-color .15s,background-color .15s}
+.search-btn:hover{border-color:var(--border-strong);color:var(--text-2)}
+.search-text{flex:1}
+kbd{font-family:var(--font-ui);font-size:11px;font-weight:600;padding:2px 6px;border-radius:5px;background:var(--surface-2);border:1px solid var(--border);color:var(--text-3)}
+.icon-btn{display:inline-grid;place-items:center;width:var(--btn-h);height:var(--btn-h);border-radius:var(--r-btn);color:var(--text-2);transition:background-color .15s,color .15s}
+.icon-btn:hover{background:var(--hover);color:var(--text)}
+.icon-btn.sm{width:26px;height:26px;border-radius:calc(var(--r-btn) - 2px)}
+.theme-toggle{border:1px solid var(--ctl-border);background:var(--ctl-bg)}
+.theme-toggle .ti-moon{display:none}
+html[data-theme="dark"] .theme-toggle .ti-sun{display:none}
+html[data-theme="dark"] .theme-toggle .ti-moon{display:grid}
+.theme-toggle span{display:grid}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:var(--btn-h);padding:0 14px;border-radius:var(--r-btn);font-weight:var(--btn-weight);font-size:var(--fs-sm);white-space:nowrap;transition:background-color .15s,border-color .15s,color .15s,box-shadow .15s,transform .15s;border:1px solid transparent}
+.btn.sm{height:28px;padding:0 10px;font-size:var(--fs-xs)}
+.btn.sm .i{width:14px;height:14px}
+.btn-lg{height:42px;padding:0 18px;font-size:var(--fs)}
+.btn-primary{background:var(--btn-primary-bg);color:var(--on-accent);box-shadow:var(--btn-primary-shadow)}
+.btn-primary:hover{background:var(--btn-primary-hover)}
+.btn-primary:active{transform:translateY(1px)}
+.btn-ghost{background:var(--btn-ghost-bg);border-color:var(--btn-ghost-border);color:var(--text)}
+.btn-ghost:hover{background:var(--hover);border-color:var(--border-strong)}
+.btn.is-added{background:var(--success-soft);color:var(--success);box-shadow:none;cursor:default}
+
+.content{width:100%;max-width:var(--content-max);margin:0 auto;padding:var(--pad-y) var(--pad) 64px}
+
+/* ---------- page head ---------- */
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:var(--head-mb)}
+.eyebrow{font-size:var(--fs-xs);font-weight:600;color:var(--text-3);letter-spacing:var(--heading-track);text-transform:var(--heading-case);margin-bottom:6px}
+.page-title{font-family:var(--font-display);font-size:var(--fs-title);font-weight:var(--title-weight);letter-spacing:var(--title-track);line-height:1.15}
+.page-sub{margin-top:6px;color:var(--text-2);font-size:var(--fs);max-width:62ch}
+.page-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ---------- cards ---------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-card);padding:var(--card-pad);min-width:0}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:var(--card-head-mb)}
+.card-title{font-family:var(--font-card-title);font-size:var(--fs-card-title);font-weight:var(--card-title-weight);letter-spacing:var(--card-title-track);line-height:1.3}
+.card-sub{margin-top:2px;font-size:var(--fs-sm);color:var(--text-3)}
+
+.chips{display:inline-flex;flex-wrap:wrap;gap:4px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:var(--chip-h);padding:0 var(--chip-px);border-radius:var(--r-chip);font-size:var(--fs-xs);font-weight:var(--chip-weight);white-space:nowrap;line-height:1}
+.bar{position:relative;height:var(--bar-h);border-radius:99px;background:var(--track);overflow:hidden}
+.bar>span{display:block;height:100%;width:var(--v);border-radius:inherit;background:var(--bar-fill)}
+.bar.sm{height:var(--bar-h-sm)}
+.bar.lg{height:var(--bar-h-lg)}
+.pill{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:99px;font-size:var(--fs-xs);font-weight:600;white-space:nowrap}
+.pill .i{width:14px;height:14px}
+.count-badge{display:inline-grid;place-items:center;min-width:24px;height:22px;padding:0 7px;border-radius:99px;background:var(--surface-2);color:var(--text-2);font-size:var(--fs-xs);font-weight:600}
+.link{color:var(--text);font-weight:600;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;transition:text-decoration-color .15s,color .15s}
+.link:hover{text-decoration-color:currentColor;color:var(--accent-text)}
+.seg{display:inline-flex;padding:3px;border-radius:var(--r-btn);background:var(--seg-bg);border:1px solid var(--seg-border);gap:2px}
+.seg button{height:24px;padding:0 10px;border-radius:calc(var(--r-btn) - 3px);font-size:var(--fs-xs);font-weight:600;color:var(--text-3);transition:background-color .15s,color .15s}
+.seg button:hover{color:var(--text)}
+.seg button[aria-selected="true"]{background:var(--seg-active);color:var(--text);box-shadow:var(--seg-shadow)}
+
+/* ---------- KPIs ---------- */
+.kpis{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:var(--gap);margin-bottom:var(--gap)}
+.kpi{display:flex;flex-direction:column;gap:10px}
+.kpi-label{display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:var(--fs-sm);font-weight:500;color:var(--text-2)}
+.kpi-label .i{color:var(--kpi-icon)}
+.kpi-value{display:flex;align-items:baseline;gap:6px;margin-top:auto}
+.kpi-value .num{font-size:var(--fs-kpi);font-weight:var(--kpi-weight);letter-spacing:var(--num-track);line-height:1}
+.kpi-value .unit{font-size:var(--fs);color:var(--text-3);font-weight:500}
+.kpi-foot{font-size:var(--fs-xs);color:var(--text-3)}
+.tag-optional{margin-left:auto;font-size:10.5px;font-weight:600;letter-spacing:.02em;padding:2px 7px;border-radius:99px;color:var(--text-3);border:1px dashed var(--border-strong)}
+.streak-dots{display:flex;gap:4px}
+.streak-dots i{flex:1;height:var(--bar-h);border-radius:99px;background:var(--track)}
+.streak-dots i.on{background:var(--bar-fill)}
+
+.kpi-hero{flex-direction:row;align-items:stretch;gap:24px;background:var(--hero-bg);color:var(--hero-text);border-color:var(--hero-border);position:relative;overflow:hidden}
+.kpi-hero-main{display:flex;flex-direction:column;gap:10px;flex:1;min-width:150px;position:relative;z-index:1}
+.kpi-hero .kpi-label{color:var(--hero-text-2)}
+.kpi-hero .kpi-label .i{color:var(--hero-icon)}
+.kpi-hero-value{display:flex;align-items:center;gap:12px;margin-top:auto}
+.kpi-hero-value .num{font-size:var(--fs-hero);font-weight:var(--hero-weight);letter-spacing:var(--num-track);line-height:.95}
+.delta{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:99px;font-size:var(--fs-xs);font-weight:600;white-space:nowrap}
+.delta .i{width:14px;height:14px}
+.delta.up{background:var(--delta-bg);color:var(--delta-text)}
+.kpi-hero .kpi-foot{color:var(--hero-text-2)}
+.spark{display:flex;align-items:flex-end;gap:var(--spark-gap);height:112px;align-self:flex-end;position:relative;z-index:1}
+.sbar-col{display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;width:var(--spark-w);cursor:default}
+.sbar-track{flex:1;width:100%;display:flex;align-items:flex-end}
+.sbar{position:relative;width:100%;border-radius:4px 4px 0 0;background:var(--spark-bar);transition:background-color .15s}
+.sbar-col:hover .sbar{background:var(--spark-bar-hover)}
+.sbar-col.is-current .sbar{background:var(--spark-bar-current)}
+.sbar-val{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);padding-bottom:4px;font-size:var(--fs-xs);font-weight:700;color:var(--hero-text);font-variant-numeric:tabular-nums}
+.sbar-label{font-size:10.5px;color:var(--hero-text-2);font-weight:500}
+.sbar-col.is-current .sbar-label{color:var(--hero-text);font-weight:700}
+
+/* ---------- dashboard rows ---------- */
+.dash-row{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--gap);margin-bottom:var(--gap)}
+.row-2>.radar-card{grid-column:span 5}
+.row-2>.okr-card{grid-column:span 7}
+.row-3>.stack:first-child{grid-column:span 7}
+.row-3>.stack:last-child{grid-column:span 5}
+.stack{display:flex;flex-direction:column;gap:var(--gap);min-width:0}
+
+/* radar */
+.radar-body{display:flex;flex-direction:column;gap:12px}
+.radar-wrap{position:relative}
+.radar{display:block;width:100%;max-width:400px;height:auto;margin:0 auto;overflow:visible}
+.r-ring{fill:none;stroke:var(--grid);stroke-width:1}
+.r-spoke{stroke:var(--grid);stroke-width:1}
+.r-tick{font-size:9.5px;fill:var(--text-3);font-family:var(--font-ui);font-variant-numeric:tabular-nums}
+.r-label{font-size:11.5px;fill:var(--text-2);font-family:var(--font-ui);font-weight:500}
+.r-sep{fill:none;stroke:var(--s2);stroke-width:1.5;stroke-dasharray:4 3;stroke-linejoin:round}
+.r-oct{fill:var(--s1-fill);stroke:var(--s1-stroke);stroke-width:2;stroke-linejoin:round}
+.r-dot{fill:var(--s1);stroke:var(--surface);stroke-width:2;transition:r .15s}
+.r-hit{fill:transparent}
+.r-pt{cursor:default;outline:none}
+.r-pt:hover .r-dot,.r-pt:focus-visible .r-dot{r:6}
+.legend{display:flex;justify-content:center;gap:18px;margin-top:4px;font-size:var(--fs-xs);color:var(--text-2)}
+.lgd{display:inline-flex;align-items:center;gap:7px}
+.lgd i{display:inline-block;width:16px;height:0;border-top:2px solid var(--s1)}
+.lgd-sep i{border-top:1.5px dashed var(--s2)}
+.sk-list{display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;border-top:1px solid var(--divider);padding-top:12px}
+.sk-row{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:var(--fs-sm);min-width:0}
+.sk-dot{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none}
+.sk-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2)}
+.sk-val{font-weight:600;font-variant-numeric:tabular-nums}
+.sk-delta{font-size:var(--fs-xs);font-variant-numeric:tabular-nums;min-width:38px;text-align:right;color:var(--text-3)}
+.sk-delta.up{color:var(--success)}
+.sk-delta.down{color:var(--text-3)}
+
+/* OKR */
+.objs{display:flex;flex-direction:column;gap:var(--obj-gap)}
+.obj+.obj{padding-top:var(--obj-gap);border-top:1px solid var(--divider)}
+.obj-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.obj-code{display:grid;place-items:center;flex:none;min-width:30px;height:24px;padding:0 6px;border-radius:var(--r-xs);background:var(--code-bg);color:var(--code-text);font-size:var(--fs-xs);font-weight:700;font-variant-numeric:tabular-nums}
+.obj-titles{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.obj-title{font-size:var(--fs-obj);font-weight:600;line-height:1.35;font-family:var(--font-obj)}
+.obj-pct{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+.obj-pct .num{font-size:22px;font-weight:var(--kpi-weight);line-height:1;letter-spacing:var(--num-track)}
+.status{display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-xs);font-weight:600;white-space:nowrap}
+.status .i{width:13px;height:13px;stroke-width:2.25}
+.status.ok{color:var(--success)}
+.obj-track{position:relative;margin-bottom:12px}
+.elapsed{position:absolute;top:-4px;bottom:-4px;left:var(--e);width:2px;border-radius:2px;background:var(--text);opacity:.55;cursor:default}
+.elapsed::before{content:"";position:absolute;inset:-6px -8px}
+.krs{display:flex;flex-direction:column;gap:2px}
+.kr{display:grid;grid-template-columns:auto minmax(0,1fr) auto 84px 38px;align-items:center;gap:12px;padding:6px 8px;margin:0 -8px;border-radius:var(--r-sm);font-size:var(--fs-sm);transition:background-color .15s}
+.kr:hover{background:var(--hover)}
+.kr-code{font-size:var(--fs-xs);font-weight:600;color:var(--text-3);font-variant-numeric:tabular-nums;min-width:40px}
+.kr-title{color:var(--text);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.kr-meta{display:inline-flex;align-items:center;gap:5px;font-size:var(--fs-xs);color:var(--text-3);white-space:nowrap}
+.kr-meta .i{width:13px;height:13px}
+.kr-pct{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;font-size:var(--fs-sm)}
+
+/* feed */
+.feed{display:flex;flex-direction:column}
+.note{display:flex;gap:14px;padding:14px 0}
+.note+.note{border-top:1px solid var(--divider)}
+.note:first-child{padding-top:2px}
+.note:last-child{padding-bottom:0}
+.note-ic{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:var(--r-sm);background:var(--note-ic-bg);color:var(--note-ic)}
+.note-ic.summary{background:var(--note-ic-bg-2);color:var(--note-ic-2)}
+.note-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.note-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:var(--fs-sm)}
+.note-kind{font-weight:500;color:var(--text-3)}
+.sep{color:var(--text-3)}
+.note-date{margin-left:auto;font-size:var(--fs-xs);color:var(--text-3);font-variant-numeric:tabular-nums}
+.note-text{color:var(--text-2);font-size:var(--fs-note);line-height:1.6;font-family:var(--font-note);font-style:var(--note-style)}
+.note-foot{display:flex;align-items:center;gap:8px}
+.refined{display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-xs);font-weight:500;color:var(--accent-text)}
+.refined .i{width:13px;height:13px}
+
+/* recommendation */
+.rec-card{display:flex;align-items:center;gap:16px}
+.rec-cover{position:relative;flex:none;width:52px;height:68px;border-radius:6px 8px 8px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:var(--cover-bg);color:var(--cover-text);box-shadow:var(--cover-shadow);font-size:10px;font-weight:800;letter-spacing:.06em}
+.rec-cover::before{content:"";position:absolute;left:4px;top:0;bottom:0;width:1px;background:rgba(255,255,255,.25)}
+.rec-cover .i{width:18px;height:18px}
+.rec-body{flex:1;min-width:0}
+.rec-kicker{display:flex;align-items:center;gap:6px;font-size:var(--fs-xs);font-weight:600;color:var(--accent-text);margin-bottom:4px}
+.rec-kicker .i{width:13px;height:13px}
+.rec-title{font-size:var(--fs-card-title);font-weight:600;font-family:var(--font-card-title);line-height:1.3}
+.rec-meta{font-size:var(--fs-sm);color:var(--text-3);margin-top:2px}
+
+/* streak calendar */
+.streak-body{display:flex;gap:24px;align-items:flex-start}
+.cal-wrap{flex:0 1 272px;min-width:0}
+.streak-stats{flex:1;display:grid;grid-template-columns:1fr;gap:0;align-self:stretch;align-content:start}
+.streak-stats div{padding:9px 0;border-bottom:1px solid var(--divider)}
+.streak-stats div:first-child{padding-top:0}
+.streak-stats div:last-child{border-bottom:0}
+.streak-stats dt{font-size:var(--fs-xs);color:var(--text-3)}
+.streak-stats dd{display:flex;align-items:baseline;gap:5px;margin-top:2px}
+.streak-stats .num{font-size:18px;font-weight:var(--kpi-weight);letter-spacing:var(--num-track);line-height:1.1}
+.streak-stats small{font-size:var(--fs-xs);color:var(--text-3)}
+.cal{display:flex;flex-direction:column;gap:6px}
+.cal-head,.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:var(--cell-gap)}
+.cal-head span{text-align:center;font-size:10.5px;font-weight:600;color:var(--text-3)}
+.cell{position:relative;aspect-ratio:1;border-radius:var(--r-cell);background:var(--h0);display:block;outline-offset:1px}
+.cell.blank{background:transparent}
+.cell.future{background:transparent;box-shadow:inset 0 0 0 1px var(--divider)}
+.cell.l1{background:var(--h1)}.cell.l2{background:var(--h2)}.cell.l3{background:var(--h3)}.cell.l4{background:var(--h4)}
+.cell.is-today{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--today-ring)}
+.cell-day{position:absolute;top:3px;left:4px;font-size:9.5px;font-weight:600;line-height:1;color:var(--cn0);font-variant-numeric:tabular-nums}
+.cell.l1 .cell-day{color:var(--cn1)}.cell.l2 .cell-day{color:var(--cn2)}.cell.l3 .cell-day{color:var(--cn3)}.cell.l4 .cell-day{color:var(--cn4)}
+.cell.future .cell-day{color:var(--text-3);opacity:.75}
+.cell:not(.blank):not(.future):hover{transform:scale(1.06)}
+.cell{transition:transform .12s}
+.cal-legend{display:flex;align-items:center;justify-content:flex-start;gap:4px;margin-top:12px;font-size:10.5px;color:var(--text-3)}
+.cal-legend .cell{width:12px;height:12px;aspect-ratio:auto;border-radius:3px}
+.cal-legend span:first-child{margin-right:4px}.cal-legend span:last-child{margin-left:4px}
+.pill-flame{background:var(--flame-bg);color:var(--flame-text)}
+
+/* reminders */
+.rems{display:flex;flex-direction:column}
+.rem{display:flex;align-items:center;gap:14px;padding:10px 0}
+.rem+.rem{border-top:1px solid var(--divider)}
+.rem:first-child{padding-top:0}.rem:last-child{padding-bottom:0}
+.rem-date{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;width:44px;height:46px;border-radius:var(--r-sm);background:var(--date-bg);border:1px solid var(--date-border);line-height:1}
+.rem-mon{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.rem-day{font-size:17px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums;font-family:var(--font-num)}
+.rem.is-soon .rem-date{background:var(--soon-bg);border-color:var(--soon-border)}
+.rem.is-soon .rem-mon{color:var(--soon-text)}
+.rem-body{flex:1;min-width:0}
+.rem-title{font-size:var(--fs-sm);display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rem-note{font-size:var(--fs-xs);color:var(--text-3);margin-top:2px;line-height:1.45}
+.rem-rel{display:inline-flex;align-items:center;gap:5px;flex:none;font-size:var(--fs-xs);color:var(--text-3);white-space:nowrap}
+.rem-rel .i{width:13px;height:13px}
+.rem.is-soon .rem-rel{color:var(--soon-text);font-weight:600}
+
+/* ---------- board ---------- */
+.filters{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:var(--gap)}
+.filter{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:var(--r-filter);border:1px solid var(--filter-border);background:var(--filter-bg);font-size:var(--fs-sm);font-weight:500;color:var(--text-2);transition:background-color .15s,border-color .15s,color .15s}
+.filter .i{width:14px;height:14px;color:var(--text-3)}
+.filter:hover{border-color:var(--border-strong);color:var(--text)}
+.filter.is-on{background:var(--filter-on-bg);border-color:var(--filter-on-border);color:var(--filter-on-text)}
+.filter.is-on .i{color:inherit}
+.filter-count{font-size:var(--fs-xs);color:var(--text-3);font-variant-numeric:tabular-nums}
+.filter.is-on .filter-count{color:inherit;opacity:.75}
+.filters-spacer{flex:1}
+.filters-meta{font-size:var(--fs-sm);color:var(--text-3);font-variant-numeric:tabular-nums}
+.board{display:grid;grid-template-columns:repeat(4,minmax(224px,1fr));gap:var(--gap);align-items:start;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x proximity}
+.col{display:flex;flex-direction:column;gap:10px;padding:var(--col-pad);border-radius:var(--r-lg);background:var(--col-bg);border:1px solid var(--col-border);min-height:420px;scroll-snap-align:start}
+.col-head{display:flex;align-items:center;gap:8px;padding:2px 4px 2px 6px}
+.col-head h3{font-size:var(--fs-sm);font-weight:600}
+.col-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.col[data-status="backlog"] .col-dot{background:var(--st-backlog)}
+.col[data-status="todo"] .col-dot{background:var(--st-todo)}
+.col[data-status="in_progress"] .col-dot{background:var(--st-progress)}
+.col[data-status="done"] .col-dot{background:var(--st-done)}
+.col-count{font-size:var(--fs-xs);color:var(--text-3);font-weight:600;font-variant-numeric:tabular-nums}
+.col-add{margin-left:auto;color:var(--text-3)}
+.col-list{display:flex;flex-direction:column;gap:var(--bcard-gap);min-height:60px;border-radius:var(--r-md);transition:background-color .15s,box-shadow .15s}
+.col-list.is-over{background:var(--drop-bg);box-shadow:inset 0 0 0 2px var(--drop-ring)}
+.col-more{padding:8px;border-radius:var(--r-sm);font-size:var(--fs-sm);color:var(--text-3);font-weight:500;text-align:center}
+.col-more:hover{background:var(--hover);color:var(--text)}
+.bcard{display:flex;flex-direction:column;gap:8px;padding:var(--bcard-pad);border-radius:var(--r-md);background:var(--bcard-bg);border:1px solid var(--bcard-border);box-shadow:var(--bcard-shadow);cursor:grab;transition:border-color .15s,box-shadow .2s,transform .2s;outline-offset:2px}
+.bcard:hover{border-color:var(--border-strong);box-shadow:var(--bcard-shadow-hover);transform:translateY(var(--lift))}
+.bcard.is-dragging{opacity:.45;transform:rotate(1.5deg)}
+.bcard-top{display:flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--text-3)}
+.type-ic{display:inline-grid;place-items:center;width:var(--type-ic);height:var(--type-ic);border-radius:var(--r-xs);background:var(--type-bg);color:var(--type-fg);flex:none}
+.type-ic .i{width:13px;height:13px}
+.type-label{font-weight:500}
+.carried{display:inline-flex;align-items:center;gap:4px;padding:1px 6px;border-radius:99px;background:var(--carried-bg);color:var(--carried-text);font-weight:600;font-size:10.5px}
+.carried .i{width:11px;height:11px}
+.grip{margin-left:auto;opacity:0;transition:opacity .15s;display:grid;color:var(--text-3)}
+.grip .i{width:14px;height:14px}
+.bcard:hover .grip{opacity:1}
+.bcard-title{font-size:var(--fs-bcard);font-weight:600;line-height:1.35;font-family:var(--font-bcard)}
+.bcard-author{font-size:var(--fs-xs);color:var(--text-3);margin-top:-5px}
+.bcard-chips{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.kr-link{display:inline-flex;align-items:center;gap:4px;height:var(--chip-h);padding:0 7px;border-radius:var(--r-chip);font-size:var(--fs-xs);font-weight:600;color:var(--text-2);border:1px dashed var(--border-strong)}
+.kr-link .i{width:11px;height:11px}
+.bcard-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:8px;border-top:1px solid var(--divider);font-size:var(--fs-xs);color:var(--text-3)}
+.tasks{display:inline-flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums;font-weight:500}
+.tasks .i{width:14px;height:14px}
+.tasks.is-complete{color:var(--success)}
+.mini-bar{display:inline-block;width:40px;height:4px;border-radius:99px;background:var(--track);overflow:hidden}
+.mini-bar>span{display:block;height:100%;width:var(--v);background:var(--bar-fill);border-radius:inherit}
+.tasks.is-complete .mini-bar>span{background:var(--success)}
+.due,.est,.summary-ok,.summary-missing{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.due .i,.est .i,.summary-ok .i,.summary-missing .i{width:13px;height:13px}
+.due.is-soon{color:var(--soon-text);font-weight:600}
+.summary-ok{color:var(--success);font-weight:500}
+
+/* ---------- library ---------- */
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:var(--gap)}
+.lcard{display:flex;flex-direction:column;gap:8px;padding:var(--card-pad);border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-card);cursor:pointer;transition:border-color .15s,box-shadow .2s,transform .2s}
+.lcard:hover{border-color:var(--border-strong);box-shadow:var(--bcard-shadow-hover);transform:translateY(var(--lift))}
+.lcard-top{display:flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--text-3);margin-bottom:4px}
+.spacer{flex:1}
+.badge{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:99px;font-size:10.5px;font-weight:600;white-space:nowrap}
+.badge .i{width:12px;height:12px}
+.badge-rec{background:var(--accent-soft);color:var(--accent-text)}
+.badge-plan{background:var(--surface-2);color:var(--text-2)}
+.lcard-title{font-size:var(--fs-card-title);font-weight:600;line-height:1.3;font-family:var(--font-card-title)}
+.lcard-author{font-size:var(--fs-sm);color:var(--text-3);margin-top:-4px}
+.lcard-tagline{font-size:var(--fs-sm);color:var(--text-2);line-height:1.5;flex:1}
+.lcard-chips{display:flex}
+.lcard-foot{display:flex;gap:14px;padding-top:10px;margin-top:2px;border-top:1px solid var(--divider);font-size:var(--fs-xs);color:var(--text-3)}
+.lcard-foot span{display:inline-flex;align-items:center;gap:5px}
+.lcard-foot .i{width:13px;height:13px}
+
+/* ---------- empty ---------- */
+.empty{max-width:520px;margin:10vh auto 0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;padding:48px 40px}
+.empty-ic{display:grid;place-items:center;width:52px;height:52px;border-radius:var(--r-md);background:var(--accent-soft);color:var(--accent-text)}
+.empty-ic .i{width:24px;height:24px}
+.empty-title{font-family:var(--font-display);font-size:24px;font-weight:var(--title-weight);letter-spacing:var(--title-track)}
+.empty-text{color:var(--text-2);max-width:42ch}
+.empty-actions{display:flex;gap:8px;margin-top:8px}
+
+/* ---------- drawer ---------- */
+.scrim{position:fixed;inset:0;z-index:60;background:var(--scrim);opacity:0;transition:opacity .25s ease}
+.scrim.is-open{opacity:1}
+.drawer{position:fixed;z-index:70;top:var(--drawer-inset);right:var(--drawer-inset);bottom:var(--drawer-inset);width:min(520px,calc(100vw - 2 * var(--drawer-inset)));display:flex;flex-direction:column;background:var(--drawer-bg);border:1px solid var(--border);border-radius:var(--drawer-r);box-shadow:var(--shadow-pop);transform:translateX(calc(100% + 40px));transition:transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s linear .32s;visibility:hidden;outline:none}
+.drawer.is-open{transform:none;visibility:visible;transition:transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s}
+.dr-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px 14px 24px;border-bottom:1px solid var(--divider)}
+.dr-kicker{font-size:var(--fs-xs);font-weight:600;color:var(--text-3);letter-spacing:var(--heading-track);text-transform:var(--heading-case)}
+.dr-head-actions{display:flex;gap:4px}
+.dr-body{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px}
+.dr-hero{display:flex;gap:18px;align-items:flex-end}
+.dr-cover{position:relative;flex:none;width:84px;height:112px;border-radius:6px 10px 10px 6px;display:flex;flex-direction:column;justify-content:space-between;padding:10px 10px 10px 14px;background:var(--cover-bg);color:var(--cover-text);box-shadow:var(--cover-shadow);overflow:hidden}
+.dr-cover::before{content:"";position:absolute;left:6px;top:0;bottom:0;width:1px;background:rgba(255,255,255,.28)}
+.dr-cover .i{width:18px;height:18px}
+.dr-cover b{font-size:10px;line-height:1.2;font-weight:700;letter-spacing:.01em}
+.dr-hero-text{min-width:0}
+.dr-title{font-family:var(--font-display);font-size:var(--fs-dr-title);font-weight:var(--title-weight);letter-spacing:var(--title-track);line-height:1.15}
+.dr-author{margin-top:6px;color:var(--text-2);font-size:var(--fs)}
+.dr-tagline{font-size:var(--fs-dr-tag);line-height:1.45;color:var(--text);font-family:var(--font-tagline);font-style:var(--tagline-style);padding-left:14px;border-left:3px solid var(--tagline-bar)}
+.dr-facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.dr-facts div{padding:10px 12px;border-radius:var(--r-md);background:var(--fact-bg);border:1px solid var(--fact-border)}
+.dr-facts dt{display:flex;align-items:center;gap:5px;font-size:var(--fs-xs);color:var(--text-3)}
+.dr-facts dt .i{width:12px;height:12px}
+.dr-facts dd{margin-top:2px;font-weight:600;font-size:var(--fs-sm)}
+.dr-skills{display:flex;flex-wrap:wrap;gap:6px}
+.dr-sec h3{font-size:var(--fs-xs);font-weight:600;color:var(--text-3);letter-spacing:var(--heading-track);text-transform:var(--heading-case);margin-bottom:8px}
+.dr-sec p{color:var(--text-2);line-height:1.65}
+.takeaways{display:flex;flex-direction:column;gap:8px}
+.takeaways li{display:flex;gap:10px;color:var(--text);line-height:1.5}
+.takeaways .i{width:16px;height:16px;margin-top:2px;color:var(--success);stroke-width:2.25}
+.milestones{display:flex;flex-direction:column;gap:0;counter-reset:ms}
+.milestones li{counter-increment:ms;display:flex;align-items:center;gap:12px;padding:8px 0;color:var(--text-2);font-size:var(--fs-sm)}
+.milestones li+li{border-top:1px dashed var(--divider)}
+.milestones li::before{content:counter(ms);display:grid;place-items:center;width:22px;height:22px;flex:none;border-radius:50%;border:1px solid var(--border-strong);font-size:11px;font-weight:600;color:var(--text-3)}
+.dr-tasknote{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:var(--r-md);background:var(--accent-soft);color:var(--text);font-size:var(--fs-sm)}
+.dr-tasknote .i{color:var(--accent-text);margin-top:2px}
+.dr-foot{display:flex;align-items:flex-end;gap:12px;padding:16px 24px;border-top:1px solid var(--divider);background:var(--drawer-foot-bg);border-radius:0 0 var(--drawer-r) var(--drawer-r)}
+.field{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.field-label{font-size:var(--fs-xs);font-weight:600;color:var(--text-2)}
+.field-label em{font-style:normal;font-weight:400;color:var(--text-3);margin-left:4px}
+.select-wrap{position:relative;display:flex}
+.select-wrap select{appearance:none;-webkit-appearance:none;width:100%;height:42px;padding:0 34px 0 12px;border-radius:var(--r-btn);border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:var(--fs-sm);cursor:pointer;text-overflow:ellipsis}
+.select-wrap select:hover{border-color:var(--text-3)}
+.select-wrap .i{position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-3)}
+
+/* ---------- toast & tooltip ---------- */
+.toast{position:fixed;left:50%;bottom:24px;z-index:90;display:flex;align-items:center;gap:10px;padding:10px 14px 10px 12px;border-radius:var(--r-md);background:var(--toast-bg);color:var(--toast-text);font-size:var(--fs-sm);font-weight:500;box-shadow:var(--shadow-pop);transform:translate(-50%,20px);opacity:0;pointer-events:none;transition:transform .25s cubic-bezier(.2,.8,.2,1),opacity .2s;max-width:calc(100vw - 32px)}
+.toast.is-on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast .i{color:var(--toast-icon)}
+.toast button{font-weight:600;text-decoration:underline;text-underline-offset:3px;margin-left:6px}
+.tip{position:fixed;z-index:100;padding:6px 9px;border-radius:7px;background:var(--tip-bg);color:var(--tip-text);font-size:12px;font-weight:500;line-height:1.3;pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.tip.is-on{opacity:1;transform:none}
+
+/* ---------- responsive ---------- */
+@media (max-width:1240px){
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .kpi-hero{grid-column:1/-1}
+  .row-2>.radar-card,.row-2>.okr-card,.row-3>.stack:first-child,.row-3>.stack:last-child{grid-column:1/-1}
+  .row-2 .radar-body{flex-direction:row;align-items:center;gap:24px}
+  .row-2 .radar-wrap{flex:1.2}
+  .row-2 .sk-list{flex:1;grid-template-columns:1fr;border-top:0;padding-top:0}
+  .row-3>.stack:last-child{display:grid;grid-template-columns:1fr 1fr;align-items:start}
+}
+@media (max-width:900px){
+  :root{--sidebar-w:68px}
+  .sidebar{padding:14px 10px;align-items:center}
+  .wordmark,.nav-label,.nav-count,.nav-section,.local-text,.sidebar-foot .local-status{display:none}
+  .brand{padding:4px 0;justify-content:center}
+  .nav-item{width:44px;justify-content:center;padding:0}
+  .sidebar-foot{padding:6px;background:transparent;border:0}
+  .search-btn{min-width:0}
+  .search-text,.search-btn kbd{display:none}
+  .crumb-root,.crumb-sep{display:none}
+  .row-3>.stack:last-child{display:flex}
+  .streak-body{flex-direction:column}
+  .cal-wrap{flex:none;width:100%;max-width:340px}
+  .streak-stats{grid-template-columns:repeat(4,1fr);gap:12px;width:100%}
+  .streak-stats div{border:0;padding:0}
+  .row-2 .radar-body{flex-direction:column}
+  .row-2 .sk-list{grid-template-columns:1fr 1fr;border-top:1px solid var(--divider);padding-top:12px;width:100%}
+  .kr{grid-template-columns:auto minmax(0,1fr) 64px 38px}
+  .kr-meta{display:none}
+  .page-head{flex-direction:column;align-items:flex-start}
+}
+@media (max-width:640px){
+  :root{--pad:16px}
+  .kpis{grid-template-columns:1fr 1fr}
+  .kpi-hero{flex-direction:column}
+  .spark{align-self:stretch;justify-content:space-between}
+  .topbar .btn-primary span,.page-actions .btn span{display:none}
+  .month-label .i{display:none}
+  .crumbs{display:none}
+  .sk-list{grid-template-columns:1fr!important}
+  .dr-foot{flex-direction:column;align-items:stretch}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+
+/* ---- direction flavor ---- */
+
+.chip{background:color-mix(in oklab,var(--c) 13%,var(--surface));color:color-mix(in oklab,var(--c) 58%,var(--text))}
+.chip::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--c);flex:none}
+html[data-theme="dark"] .chip{background:color-mix(in oklab,var(--c) 24%,var(--surface));color:color-mix(in oklab,var(--c) 40%,#FFFFFF)}
+.btn-primary{background-image:var(--btn-primary-bg);background-color:#7C3AED;border:0}
+.btn-primary:hover{background-image:var(--btn-primary-hover)}
+.nav-item[aria-current="page"]{background-image:var(--sb-active)}
+.nav-item:not([aria-current="page"]) .nav-ic{color:var(--sb-text-3)}
+.nav-item:hover .nav-ic{color:var(--sb-text)}
+.nav-count{background:rgba(255,255,255,.1);padding:1px 7px;border-radius:99px;color:var(--sb-text-2)}
+.nav-item[aria-current="page"] .nav-count{background:rgba(255,255,255,.22);color:#fff;opacity:1}
+.sidebar{border-right:0}
+.brand .wordmark{background:linear-gradient(90deg,#fff 40%,#F9A8D4);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sidebar::after{content:"";position:absolute;right:-120px;top:-110px;width:260px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(192,38,211,.28),transparent 65%);pointer-events:none}
+.sidebar{position:sticky;overflow:hidden}
+.grad-text{background:linear-gradient(95deg,#7C3AED,#DB2777);-webkit-background-clip:text;background-clip:text;color:transparent}
+html[data-theme="dark"] .grad-text{background:linear-gradient(95deg,#C4B5FD,#F9A8D4 60%,#FDBA74);-webkit-background-clip:text;background-clip:text}
+.page-title{font-variation-settings:"opsz" 96}
+.kpi-hero{padding:24px 26px;box-shadow:0 24px 48px -20px rgba(124,58,237,.55)}
+.kpi-hero::before{content:"";position:absolute;right:-80px;top:-90px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(251,146,60,.55),transparent 62%);pointer-events:none}
+.kpi-hero::after{content:"";position:absolute;left:30%;bottom:-120px;width:260px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 65%);pointer-events:none}
+.kpi-hero-value .num{font-variation-settings:"opsz" 96;text-shadow:0 6px 30px rgba(46,16,101,.35)}
+.kpi:not(.kpi-hero) .kpi-label .i{width:28px;height:28px;padding:6px;border-radius:9px;color:#fff;background:linear-gradient(135deg,#7C3AED,#C026D3)}
+.kpis>.kpi:nth-child(3) .kpi-label .i{background:linear-gradient(135deg,#0EA5E9,#6366F1)}
+.kpis>.kpi:nth-child(4) .kpi-label .i{background:linear-gradient(135deg,#F97316,#DB2777)}
+.kpis>.kpi:nth-child(2) .kpi-label .i{background:linear-gradient(135deg,#10B981,#0EA5E9)}
+.bar>span,.mini-bar>span,.streak-dots i.on{background-image:var(--bar-fill)}
+.okr-card .obj:nth-child(2) .bar>span{background-image:linear-gradient(90deg,#0EA5E9,#10B981)}
+html[data-theme="dark"] .okr-card .obj:nth-child(2) .bar>span{background-image:linear-gradient(90deg,#38BDF8,#34D399)}
+.obj-code{background-image:var(--code-bg);border-radius:8px;min-width:34px;height:26px}
+.okr-card .obj:nth-child(2) .obj-code{background-image:linear-gradient(110deg,#0EA5E9,#10B981)}
+.obj-pct .num{font-family:"Bricolage Grotesque",var(--font-ui);font-size:26px;font-weight:800}
+.card-title{font-variation-settings:"opsz" 48}
+.r-oct{fill-opacity:.32;stroke-width:2.5}
+html[data-theme="dark"] .r-oct{fill-opacity:.38}
+.r-dot{stroke-width:2.5}
+.lgd-oct i{border-top:3px solid;border-image:linear-gradient(90deg,var(--grad-a),var(--grad-b)) 1}
+.sk-dot{width:10px;height:10px;border-radius:3px}
+.cell{border-radius:6px}
+.cell.l4{background:linear-gradient(135deg,#7C3AED,#DB2777)}
+html[data-theme="dark"] .cell.l4{background:linear-gradient(135deg,#B994FF,#F9A8D4)}
+.pill-flame{background-image:var(--flame-bg)}
+.col{border-radius:22px}
+.col-head h3{font-family:"Bricolage Grotesque",var(--font-ui);font-size:15px;font-weight:700}
+.col-dot{width:10px;height:10px;border-radius:3px}
+.bcard{border-radius:16px;position:relative;overflow:hidden}
+.bcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--card-accent,transparent)}
+.col[data-status="in_progress"] .bcard{--card-accent:linear-gradient(#F59E0B,#DB2777)}
+.col[data-status="done"] .bcard{--card-accent:linear-gradient(#10B981,#0EA5E9)}
+.lcard{border-radius:22px}
+.lcard-title{font-size:18px}
+.lcard:hover{border-color:transparent;box-shadow:0 0 0 2px #A78BFA,0 18px 36px -16px rgba(124,58,237,.45)}
+.badge-rec{background:linear-gradient(110deg,#7C3AED,#DB2777);color:#fff}
+.dr-cover{width:92px;height:120px}
+.dr-cover b{font-family:"Bricolage Grotesque",var(--font-ui);font-size:12px;font-weight:700}
+.dr-cover[data-type="article"]{background:linear-gradient(150deg,#0EA5E9,#6366F1)}
+.dr-cover[data-type="course"]{background:linear-gradient(150deg,#10B981,#0EA5E9)}
+.dr-cover[data-type="podcast"]{background:linear-gradient(150deg,#F97316,#DB2777)}
+.dr-title{font-variation-settings:"opsz" 96}
+.rec-card{position:relative;overflow:hidden;border:0;background:linear-gradient(var(--surface),var(--surface)) padding-box,linear-gradient(110deg,#7C3AED,#EC4899,#F97316) border-box;border:1.5px solid transparent}
+.filter.is-on{box-shadow:0 6px 16px -8px rgba(20,17,43,.6)}
+.empty-ic{background:linear-gradient(135deg,#7C3AED,#DB2777);color:#fff;border-radius:16px}
+.month-label{font-family:"Bricolage Grotesque",var(--font-ui);font-weight:700;font-size:14px}
+.rem-day{font-weight:800}
+.rem.is-soon .rem-date{background:linear-gradient(135deg,#FCE7F3,#F3E8FF);border-color:transparent}
+html[data-theme="dark"] .rem.is-soon .rem-date{background:linear-gradient(135deg,#3A1530,#2A1B4A)}
+.status-dot{background:#34D399;box-shadow:0 0 0 3px rgba(52,211,153,.18),0 0 12px rgba(52,211,153,.6)}
+.tag-optional{border-style:solid;border-color:var(--border)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar" aria-label="Primary">
+  <div class="brand"><svg class="logo" viewBox="0 0 28 28" aria-hidden="true"><defs><linearGradient id="lg-prism" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8B5CF6"/><stop offset=".55" stop-color="#EC4899"/><stop offset="1" stop-color="#F97316"/></linearGradient></defs><rect width="28" height="28" rx="9" fill="url(#lg-prism)"/><path d="M19.6 10.2a7 7 0 1 0 1.3 5.3" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M16.4 9.6l3.6.9.7-3.7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="wordmark">Growloop</span></div>
+  <nav class="nav" aria-label="Main">
+    <a href="#dashboard" class="nav-item" data-view="dashboard"><span class="nav-ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span><span class="nav-label">Dashboard</span></a><a href="#board" class="nav-item" data-view="board"><span class="nav-ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/></svg></span><span class="nav-label">Board</span><span class="nav-count">14</span></a><a href="#library" class="nav-item" data-view="library"><span class="nav-ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg></span><span class="nav-label">Library</span></a><a href="#skills" class="nav-item" data-view="skills"><span class="nav-ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span><span class="nav-label">Skills</span></a><a href="#okrs" class="nav-item" data-view="okrs"><span class="nav-ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span><span class="nav-label">OKRs</span></a>
+  </nav>
+  <div class="nav-section">
+    <div class="nav-heading"><span>Q4 objectives</span></div>
+    <a href="#okrs" class="nav-obj" data-view="okrs" data-tip="O1 · 49% complete"><svg class="ring" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7" class="ring-track"/><circle cx="9" cy="9" r="7" class="ring-fill" stroke-dasharray="21.55 43.98" transform="rotate(-90 9 9)"/></svg><span class="nav-obj-title">Lead roadmap conversations with confidence</span><span class="nav-obj-pct">49%</span></a><a href="#okrs" class="nav-obj" data-view="okrs" data-tip="O2 · 50% complete"><svg class="ring" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7" class="ring-track"/><circle cx="9" cy="9" r="7" class="ring-fill" stroke-dasharray="21.99 43.98" transform="rotate(-90 9 9)"/></svg><span class="nav-obj-title">Make customer discovery a weekly habit</span><span class="nav-obj-pct">50%</span></a>
+  </div>
+  <div class="sidebar-foot">
+    <div class="local-status" data-tip="Your data never leaves this device">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span class="local-text"><strong>Local workspace</strong><span>Saved on this device</span></span>
+    </div>
+    <button class="icon-btn sb-export" type="button" data-toast="Exported growloop-2026-10-17.json" aria-label="Export data as JSON" data-tip="Export JSON"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg></button>
+  </div>
+</aside>
+<div class="main">
+
+<header class="topbar">
+  <div class="crumbs"><span class="crumb-root">Growloop</span><span class="crumb-sep" aria-hidden="true">/</span><span class="crumb-current" id="crumb">Dashboard</span></div>
+  <div class="month-switch" role="group" aria-label="Month">
+    <button class="icon-btn sm" type="button" data-month="-1" aria-label="Previous month"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+    <span class="month-label"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg><span id="month-label">October 2026</span></span>
+    <button class="icon-btn sm" type="button" data-month="1" aria-label="Next month"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+  </div>
+  <div class="topbar-actions">
+    <button class="search-btn" type="button" data-toast="Search opens a command palette in the real app"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span class="search-text">Search materials</span><kbd>⌘K</kbd></button>
+    <button class="icon-btn theme-toggle" type="button" id="theme-toggle" aria-label="Switch to dark theme">
+      <span class="ti-sun"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg></span><span class="ti-moon"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span>
+    </button>
+    <button class="btn btn-primary" type="button" data-view-go="library"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span>Add material</span></button>
+  </div>
+</header>
+<main class="content" id="main">
+
+<section class="view" id="view-dashboard" data-view-panel="dashboard" aria-labelledby="dash-title">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">Q4 2026 · Week 3 of 5</p>
+      <h1 class="page-title" id="dash-title">October, <span class="grad-text">in motion</span></h1>
+      <p class="page-sub">7 finished, 3 in progress. You’re well ahead of September’s pace.</p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="btn btn-ghost" data-view-go="board"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/></svg><span>Open board</span></button>
+      <button type="button" class="btn btn-ghost" data-toast="Month review opens on Nov 1"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg><span>Month review</span></button>
+    </div>
+  </div>
+  
+<div class="kpis">
+  
+<section class="card kpi kpi-hero" aria-labelledby="kpi-done-label">
+  <div class="kpi-hero-main">
+    <div class="kpi-label" id="kpi-done-label"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg><span>Items completed</span></div>
+    <div class="kpi-hero-value"><span class="num">7</span><span class="delta up"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 7 13.5 15.5 8.5 10.5 2 17"/><path d="M16 7h6v6"/></svg>+3 vs Sep</span></div>
+    <p class="kpi-foot">3 books · 2 articles · 2 other</p>
+  </div>
+  <div class="spark" role="img" aria-label="Items completed per month: May 3, June 5, July 2, August 6, September 4, October 7">
+    <div class="sbar-col" data-tip="May 2026 · 3 completed"><div class="sbar-track"><div class="sbar" style="height:42.9%"></div></div><span class="sbar-label">May</span></div><div class="sbar-col" data-tip="Jun 2026 · 5 completed"><div class="sbar-track"><div class="sbar" style="height:71.4%"></div></div><span class="sbar-label">Jun</span></div><div class="sbar-col" data-tip="Jul 2026 · 2 completed"><div class="sbar-track"><div class="sbar" style="height:28.6%"></div></div><span class="sbar-label">Jul</span></div><div class="sbar-col" data-tip="Aug 2026 · 6 completed"><div class="sbar-track"><div class="sbar" style="height:85.7%"></div></div><span class="sbar-label">Aug</span></div><div class="sbar-col" data-tip="Sep 2026 · 4 completed"><div class="sbar-track"><div class="sbar" style="height:57.1%"></div></div><span class="sbar-label">Sep</span></div><div class="sbar-col is-current" data-tip="Oct 2026 · 7 completed"><div class="sbar-track"><div class="sbar" style="height:100.0%"><span class="sbar-val">7</span></div></div><span class="sbar-label">Oct</span></div>
+  </div>
+</section>
+  <section class="card kpi">
+    <div class="kpi-label"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>Hours learned</span><span class="tag-optional" data-tip="Shown because you log time. Hide it in settings.">Optional</span></div>
+    <div class="kpi-value"><span class="num">18.5</span><span class="unit">h</span></div>
+    <div class="bar" role="progressbar" aria-label="Hours learned versus estimate" aria-valuenow="77" aria-valuemin="0" aria-valuemax="100"><span style="--v:77%"></span></div>
+    <p class="kpi-foot">of 24 h estimated for done and active items</p>
+  </section>
+  <section class="card kpi">
+    <div class="kpi-label"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z"/></svg><span>Summaries written</span></div>
+    <div class="kpi-value"><span class="num">5</span><span class="unit">/ 7</span></div>
+    <div class="bar" role="progressbar" aria-label="Summaries written" aria-valuenow="71" aria-valuemin="0" aria-valuemax="100"><span style="--v:71%"></span></div>
+    <p class="kpi-foot">71% of finished items reflected on</p>
+  </section>
+  <section class="card kpi">
+    <div class="kpi-label"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg><span>Learning streak</span></div>
+    <div class="kpi-value"><span class="num">5</span><span class="unit">days</span></div>
+    <div class="streak-dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+    <p class="kpi-foot">Best run: 8 days in August</p>
+  </section>
+</div>
+  <div class="dash-row row-2">
+    
+<section class="card radar-card" aria-labelledby="radar-title">
+  <div class="card-head">
+    <div><h2 class="card-title" id="radar-title">Skill focus</h2><p class="card-sub">Where your time went · October vs September</p></div>
+    <div class="seg" role="tablist" aria-label="Radar measure">
+      <button type="button" role="tab" aria-selected="true" data-radar="hours">Hours</button>
+      <button type="button" role="tab" aria-selected="false" data-radar="items">Items</button>
+    </div>
+  </div>
+  <div class="radar-body">
+    <div class="radar-wrap">
+      <svg class="radar" viewBox="0 0 360 300" role="img" aria-label="Radar chart of hours per skill in October compared with September">
+        <defs>
+          <linearGradient id="radarFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--grad-a)"/><stop offset="1" stop-color="var(--grad-b)"/></linearGradient>
+          <linearGradient id="radarStroke" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--grad-a)"/><stop offset="1" stop-color="var(--grad-b)"/></linearGradient>
+        </defs>
+        <g class="radar-set" data-set="hours"><polygon class="r-ring" points="180.0,121.5 201.2,133.8 201.2,158.2 180.0,170.5 158.8,158.2 158.8,133.8"/><polygon class="r-ring" points="180.0,97.0 222.4,121.5 222.4,170.5 180.0,195.0 137.6,170.5 137.6,121.5"/><polygon class="r-ring" points="180.0,72.5 243.7,109.2 243.7,182.8 180.0,219.5 116.3,182.8 116.3,109.2"/><polygon class="r-ring" points="180.0,48.0 264.9,97.0 264.9,195.0 180.0,244.0 95.1,195.0 95.1,97.0"/><line class="r-spoke" x1="180" y1="146" x2="180.0" y2="48.0"/><line class="r-spoke" x1="180" y1="146" x2="264.9" y2="97.0"/><line class="r-spoke" x1="180" y1="146" x2="264.9" y2="195.0"/><line class="r-spoke" x1="180" y1="146" x2="180.0" y2="244.0"/><line class="r-spoke" x1="180" y1="146" x2="95.1" y2="195.0"/><line class="r-spoke" x1="180" y1="146" x2="95.1" y2="97.0"/><text class="r-tick" x="141.6" y="149.0">3h</text><text class="r-tick" x="99.1" y="149.0">6h</text><polygon class="r-sep" points="180.0,97.0 201.2,133.8 208.3,162.3 180.0,203.2 151.7,162.3 158.8,133.8"/><polygon class="r-oct" points="180.0,56.2 229.5,117.4 243.7,182.8 180.0,178.7 165.9,154.2 151.7,129.7"/><g class="r-pt" tabindex="0" data-tip="Product Discovery · Oct 5.5h · Sep 3h"><circle class="r-hit" cx="180.0" cy="56.2" r="12"/><circle class="r-dot" cx="180.0" cy="56.2" r="4"/></g><g class="r-pt" tabindex="0" data-tip="Stakeholder Management · Oct 3.5h · Sep 1.5h"><circle class="r-hit" cx="229.5" cy="117.4" r="12"/><circle class="r-dot" cx="229.5" cy="117.4" r="4"/></g><g class="r-pt" tabindex="0" data-tip="Roadmapping · Oct 4.5h · Sep 2h"><circle class="r-hit" cx="243.7" cy="182.8" r="12"/><circle class="r-dot" cx="243.7" cy="182.8" r="4"/></g><g class="r-pt" tabindex="0" data-tip="Prioritization · Oct 2h · Sep 3.5h"><circle class="r-hit" cx="180.0" cy="178.7" r="12"/><circle class="r-dot" cx="180.0" cy="178.7" r="4"/></g><g class="r-pt" tabindex="0" data-tip="Product Analytics · Oct 1h · Sep 2h"><circle class="r-hit" cx="165.9" cy="154.2" r="12"/><circle class="r-dot" cx="165.9" cy="154.2" r="4"/></g><g class="r-pt" tabindex="0" data-tip="Product Strategy · Oct 2h · Sep 1.5h"><circle class="r-hit" cx="151.7" cy="129.7" r="12"/><circle class="r-dot" cx="151.7" cy="129.7" r="4"/></g><text class="r-label" x="180.0" y="30.0" text-anchor="middle">Discovery</text><text class="r-label" x="278.7" y="93.0" text-anchor="start">Stakeholders</text><text class="r-label" x="278.7" y="207.0" text-anchor="start">Roadmapping</text><text class="r-label" x="180.0" y="272.0" text-anchor="middle">Prioritization</text><text class="r-label" x="81.3" y="207.0" text-anchor="end">Analytics</text><text class="r-label" x="81.3" y="93.0" text-anchor="end">Strategy</text></g>
+        <g class="radar-set" data-set="items" hidden><polygon class="r-ring" points="180.0,121.5 201.2,133.8 201.2,158.2 180.0,170.5 158.8,158.2 158.8,133.8"/><polygon class="r-ring" points="180.0,97.0 222.4,121.5 222.4,170.5 180.0,195.0 137.6,170.5 137.6,121.5"/><polygon class="r-ring" points="180.0,72.5 243.7,109.2 243.7,182.8 180.0,219.5 116.3,182.8 116.3,109.2"/><polygon class="r-ring" points="180.0,48.0 264.9,97.0 264.9,195.0 180.0,244.0 95.1,195.0 95.1,97.0"/><line class="r-spoke" x1="180" y1="146" x2="180.0" y2="48.0"/><line class="r-spoke" x1="180" y1="146" x2="264.9" y2="97.0"/><line class="r-spoke" x1="180" y1="146" x2="264.9" y2="195.0"/><line class="r-spoke" x1="180" y1="146" x2="180.0" y2="244.0"/><line class="r-spoke" x1="180" y1="146" x2="95.1" y2="195.0"/><line class="r-spoke" x1="180" y1="146" x2="95.1" y2="97.0"/><text class="r-tick" x="141.6" y="149.0">2</text><text class="r-tick" x="99.1" y="149.0">4</text><polygon class="r-sep" points="180.0,97.0 201.2,133.8 222.4,170.5 180.0,219.5 158.8,158.2 158.8,133.8"/><polygon class="r-oct" points="180.0,72.5 243.7,109.2 264.9,195.0 180.0,195.0 158.8,158.2 116.3,109.2"/><g class="r-pt" tabindex="0" data-tip="Product Discovery · Oct 3 items · Sep 2"><circle class="r-hit" cx="180.0" cy="72.5" r="12"/><circle class="r-dot" cx="180.0" cy="72.5" r="4"/></g><g class="r-pt" tabindex="0" data-tip="Stakeholder Management · Oct 3 items · Sep 1"><circle class="r-hit" cx="243.7" cy="109.2" r="12"/><circle class="r-dot" cx="243.7" cy="109.2" r="4"/></g><g class="r-pt" tabindex="0" data-tip="Roadmapping · Oct 4 items · Sep 2"><circle class="r-hit" cx="264.9" cy="195.0" r="12"/><circle class="r-dot" cx="264.9" cy="195.0" r="4"/></g><g class="r-pt" tabindex="0" data-tip="Prioritization · Oct 2 items · Sep 3"><circle class="r-hit" cx="180.0" cy="195.0" r="12"/><circle class="r-dot" cx="180.0" cy="195.0" r="4"/></g><g class="r-pt" tabindex="0" data-tip="Product Analytics · Oct 1 item · Sep 1"><circle class="r-hit" cx="158.8" cy="158.2" r="12"/><circle class="r-dot" cx="158.8" cy="158.2" r="4"/></g><g class="r-pt" tabindex="0" data-tip="Product Strategy · Oct 3 items · Sep 1"><circle class="r-hit" cx="116.3" cy="109.2" r="12"/><circle class="r-dot" cx="116.3" cy="109.2" r="4"/></g><text class="r-label" x="180.0" y="30.0" text-anchor="middle">Discovery</text><text class="r-label" x="278.7" y="93.0" text-anchor="start">Stakeholders</text><text class="r-label" x="278.7" y="207.0" text-anchor="start">Roadmapping</text><text class="r-label" x="180.0" y="272.0" text-anchor="middle">Prioritization</text><text class="r-label" x="81.3" y="207.0" text-anchor="end">Analytics</text><text class="r-label" x="81.3" y="93.0" text-anchor="end">Strategy</text></g>
+      </svg>
+      <div class="legend" aria-hidden="true"><span class="lgd lgd-oct"><i></i>October</span><span class="lgd lgd-sep"><i></i>September</span></div>
+    </div>
+    <ul class="sk-list" aria-label="Per skill this month"><li class="sk-row"><span class="sk-dot" style="--c:var(--sk-disc)"></span><span class="sk-name">Discovery</span><span class="sk-val" data-h="5.5h" data-i="3">5.5h</span><span class="sk-delta up" data-h="+2.5h" data-i="+1" data-hc="up" data-ic="up">+2.5h</span></li><li class="sk-row"><span class="sk-dot" style="--c:var(--sk-stake)"></span><span class="sk-name">Stakeholders</span><span class="sk-val" data-h="3.5h" data-i="3">3.5h</span><span class="sk-delta up" data-h="+2h" data-i="+2" data-hc="up" data-ic="up">+2h</span></li><li class="sk-row"><span class="sk-dot" style="--c:var(--sk-road)"></span><span class="sk-name">Roadmapping</span><span class="sk-val" data-h="4.5h" data-i="4">4.5h</span><span class="sk-delta up" data-h="+2.5h" data-i="+2" data-hc="up" data-ic="up">+2.5h</span></li><li class="sk-row"><span class="sk-dot" style="--c:var(--sk-prio)"></span><span class="sk-name">Prioritization</span><span class="sk-val" data-h="2h" data-i="2">2h</span><span class="sk-delta down" data-h="−1.5h" data-i="−1" data-hc="down" data-ic="down">−1.5h</span></li><li class="sk-row"><span class="sk-dot" style="--c:var(--sk-anal)"></span><span class="sk-name">Analytics</span><span class="sk-val" data-h="1h" data-i="1">1h</span><span class="sk-delta down" data-h="−1h" data-i="±0" data-hc="down" data-ic="flat">−1h</span></li><li class="sk-row"><span class="sk-dot" style="--c:var(--sk-strat)"></span><span class="sk-name">Strategy</span><span class="sk-val" data-h="2h" data-i="3">2h</span><span class="sk-delta up" data-h="+0.5h" data-i="+2" data-hc="up" data-ic="up">+0.5h</span></li></ul>
+  </div>
+</section>
+    
+<section class="card okr-card" aria-labelledby="okr-title">
+  <div class="card-head">
+    <div><h2 class="card-title" id="okr-title">Q4 2026 objectives</h2><p class="card-sub">2 objectives · 6 key results · quarter 18% elapsed</p></div>
+    <a href="#okrs" class="btn btn-ghost sm" data-view="okrs">Open OKRs<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+  </div>
+  <div class="objs">
+    <article class="obj">
+      <div class="obj-head">
+        <span class="obj-code">O1</span>
+        <div class="obj-titles"><h3 class="obj-title">Lead roadmap conversations with confidence</h3><span class="chips"><span class="chip" style="--c:var(--sk-road)">Roadmapping</span><span class="chip" style="--c:var(--sk-stake)">Stakeholders</span></span></div>
+        <div class="obj-pct"><span class="num">49%</span><span class="status ok"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Ahead of pace</span></div>
+      </div>
+      <div class="obj-track">
+        <div class="bar lg" role="progressbar" aria-label="Lead roadmap conversations with confidence" aria-valuenow="49" aria-valuemin="0" aria-valuemax="100"><span style="--v:49%"></span></div>
+        <i class="elapsed" style="--e:18%" data-tip="Quarter 18% elapsed (Oct 17)"></i>
+      </div>
+      <ul class="krs"><li class="kr"><span class="kr-code">KR 1.1</span><span class="kr-title">Finish 2 roadmapping materials</span><span class="kr-meta" data-tip="Progress from linked plan items"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>1 of 2 items</span><span class="bar sm" role="progressbar" aria-label="Finish 2 roadmapping materials" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"><span style="--v:50%"></span></span><span class="kr-pct">50%</span></li><li class="kr"><span class="kr-code">KR 1.2</span><span class="kr-title">Present the Q1 roadmap to leadership</span><span class="kr-meta" data-tip="Progress set manually"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 11V6a2 2 0 0 0-4 0v1"/><path d="M14 10V4a2 2 0 0 0-4 0v2"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>Set manually</span><span class="bar sm" role="progressbar" aria-label="Present the Q1 roadmap to leadership" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"><span style="--v:30%"></span></span><span class="kr-pct">30%</span></li><li class="kr"><span class="kr-code">KR 1.3</span><span class="kr-title">Run 3 stakeholder alignment 1:1s</span><span class="kr-meta" data-tip="Progress from linked plan items"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>2 of 3 items</span><span class="bar sm" role="progressbar" aria-label="Run 3 stakeholder alignment 1:1s" aria-valuenow="67" aria-valuemin="0" aria-valuemax="100"><span style="--v:67%"></span></span><span class="kr-pct">67%</span></li></ul>
+    </article>
+    <article class="obj">
+      <div class="obj-head">
+        <span class="obj-code">O2</span>
+        <div class="obj-titles"><h3 class="obj-title">Make customer discovery a weekly habit</h3><span class="chips"><span class="chip" style="--c:var(--sk-disc)">Discovery</span><span class="chip" style="--c:var(--sk-anal)">Analytics</span></span></div>
+        <div class="obj-pct"><span class="num">50%</span><span class="status ok"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Ahead of pace</span></div>
+      </div>
+      <div class="obj-track">
+        <div class="bar lg" role="progressbar" aria-label="Make customer discovery a weekly habit" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"><span style="--v:50%"></span></div>
+        <i class="elapsed" style="--e:18%" data-tip="Quarter 18% elapsed (Oct 17)"></i>
+      </div>
+      <ul class="krs"><li class="kr"><span class="kr-code">KR 2.1</span><span class="kr-title">Finish 3 discovery materials</span><span class="kr-meta" data-tip="Progress from linked plan items"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>2 of 3 items</span><span class="bar sm" role="progressbar" aria-label="Finish 3 discovery materials" aria-valuenow="67" aria-valuemin="0" aria-valuemax="100"><span style="--v:67%"></span></span><span class="kr-pct">67%</span></li><li class="kr"><span class="kr-code">KR 2.2</span><span class="kr-title">Interview 12 customers</span><span class="kr-meta" data-tip="Progress set manually"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 11V6a2 2 0 0 0-4 0v1"/><path d="M14 10V4a2 2 0 0 0-4 0v2"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>7 of 12 · manual</span><span class="bar sm" role="progressbar" aria-label="Interview 12 customers" aria-valuenow="58" aria-valuemin="0" aria-valuemax="100"><span style="--v:58%"></span></span><span class="kr-pct">58%</span></li><li class="kr"><span class="kr-code">KR 2.3</span><span class="kr-title">Ship 1 experiment from an opportunity tree</span><span class="kr-meta" data-tip="Progress set manually"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 11V6a2 2 0 0 0-4 0v1"/><path d="M14 10V4a2 2 0 0 0-4 0v2"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>Set manually</span><span class="bar sm" role="progressbar" aria-label="Ship 1 experiment from an opportunity tree" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"><span style="--v:25%"></span></span><span class="kr-pct">25%</span></li></ul>
+    </article>
+  </div>
+</section>
+  </div>
+  <div class="dash-row row-3">
+    <div class="stack">
+      
+<section class="card feed-card" aria-labelledby="feed-title">
+  <div class="card-head">
+    <div><h2 class="card-title" id="feed-title">Latest summaries &amp; notes</h2><p class="card-sub">Written in your own words</p></div>
+    <button type="button" class="btn btn-ghost sm" data-toast="The notes archive is outside this mockup">View all</button>
+  </div>
+  <div class="feed">
+    <article class="note">
+      <div class="note-ic summary"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z"/></svg></div>
+      <div class="note-body">
+        <div class="note-meta"><span class="note-kind">Summary</span><span class="sep" aria-hidden="true">·</span><button type="button" class="link" data-open="inspired">Inspired</button><span class="note-date">Oct 15</span></div>
+        <p class="note-text">Good teams are handed problems, not feature lists. Discovery is where you kill weak ideas cheaply, before engineering time makes them expensive. For us: test value and usability before a single ticket is written.</p>
+        <div class="note-foot"><span class="chip" style="--c:var(--sk-disc)">Discovery</span><span class="refined" data-tip="Refined with feedback from your local AI"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.13-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.13a.5.5 0 0 1-.96 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg>Refined</span></div>
+      </div>
+    </article>
+    <article class="note">
+      <div class="note-ic note"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></svg></div>
+      <div class="note-body">
+        <div class="note-meta"><span class="note-kind">Note</span><span class="sep" aria-hidden="true">·</span><button type="button" class="link" data-open="buildtrap">Escaping the Build Trap</button><span class="note-date">Oct 13</span></div>
+        <p class="note-text">Try rewriting our Q1 roadmap themes as outcomes (“reduce time to first report”) instead of features before the leadership review.</p>
+        <div class="note-foot"><span class="chip" style="--c:var(--sk-road)">Roadmapping</span></div>
+      </div>
+    </article>
+    <article class="note">
+      <div class="note-ic summary"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z"/></svg></div>
+      <div class="note-body">
+        <div class="note-meta"><span class="note-kind">Summary</span><span class="sep" aria-hidden="true">·</span><button type="button" class="link" data-open="rice">RICE: Simple prioritization for product managers</button><span class="note-date">Oct 9</span></div>
+        <p class="note-text">Reach × Impact × Confidence ÷ Effort. Confidence is the honest part: it forces you to price in how little you actually know.</p>
+        <div class="note-foot"><span class="chip" style="--c:var(--sk-prio)">Prioritization</span></div>
+      </div>
+    </article>
+    <article class="note">
+      <div class="note-ic note"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></svg></div>
+      <div class="note-body">
+        <div class="note-meta"><span class="note-kind">Note</span><span class="sep" aria-hidden="true">·</span><button type="button" class="link" data-open="lenny">Lenny&#x27;s Podcast</button><span class="note-date">Oct 6</span></div>
+        <p class="note-text">Pre-wire big roadmap changes in 1:1s before the group meeting. Nobody should be surprised in the room.</p>
+        <div class="note-foot"><span class="chip" style="--c:var(--sk-stake)">Stakeholders</span></div>
+      </div>
+    </article>
+  </div>
+</section>
+      
+<section class="card rec-card" aria-labelledby="rec-title">
+  <div class="rec-cover" aria-hidden="true"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg><span>CDH</span></div>
+  <div class="rec-body">
+    <p class="rec-kicker"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.13-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.13a.5.5 0 0 1-.96 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg>Suggested for KR 2.1 · Finish 3 discovery materials</p>
+    <h2 class="rec-title" id="rec-title">Continuous Discovery Habits</h2>
+    <p class="rec-meta">Teresa Torres · Book · ~8 h</p>
+  </div>
+  <button type="button" class="btn btn-ghost" data-open="cdh">View brief<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
+</section>
+    </div>
+    <div class="stack">
+      
+<section class="card streak-card" aria-labelledby="streak-title">
+  <div class="card-head">
+    <div><h2 class="card-title" id="streak-title">Learning streak</h2><p class="card-sub">14 active days so far in October</p></div>
+    <span class="pill pill-flame"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>5-day streak</span>
+  </div>
+  <div class="streak-body">
+    <div class="cal-wrap">
+      <div class="cal" role="group" aria-label="October 2026 activity">
+        <div class="cal-head" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+        <div class="cal-grid"><span class="cell blank"></span><span class="cell blank"></span><span class="cell blank"></span><span class="cell l2" tabindex="0" data-tip="Oct 1 · 1 h · 1 item"><span class="cell-day">1</span></span><span class="cell l1" tabindex="0" data-tip="Oct 2 · 0.5 h · 1 item"><span class="cell-day">2</span></span><span class="cell l0" tabindex="0" data-tip="Oct 3 · No activity"><span class="cell-day">3</span></span><span class="cell l1" tabindex="0" data-tip="Oct 4 · 0.5 h · 1 item"><span class="cell-day">4</span></span><span class="cell l3" tabindex="0" data-tip="Oct 5 · 2 h · 2 items"><span class="cell-day">5</span></span><span class="cell l2" tabindex="0" data-tip="Oct 6 · 1 h · 1 item"><span class="cell-day">6</span></span><span class="cell l0" tabindex="0" data-tip="Oct 7 · No activity"><span class="cell-day">7</span></span><span class="cell l1" tabindex="0" data-tip="Oct 8 · 0.5 h · 1 item"><span class="cell-day">8</span></span><span class="cell l3" tabindex="0" data-tip="Oct 9 · 2.5 h · 2 items"><span class="cell-day">9</span></span><span class="cell l2" tabindex="0" data-tip="Oct 10 · 1 h · 1 item"><span class="cell-day">10</span></span><span class="cell l1" tabindex="0" data-tip="Oct 11 · 0.5 h · 1 item"><span class="cell-day">11</span></span><span class="cell l0" tabindex="0" data-tip="Oct 12 · No activity"><span class="cell-day">12</span></span><span class="cell l2" tabindex="0" data-tip="Oct 13 · 1 h · 1 item"><span class="cell-day">13</span></span><span class="cell l3" tabindex="0" data-tip="Oct 14 · 2.5 h · 2 items"><span class="cell-day">14</span></span><span class="cell l4" tabindex="0" data-tip="Oct 15 · 3.5 h · 3 items"><span class="cell-day">15</span></span><span class="cell l1" tabindex="0" data-tip="Oct 16 · 0.5 h · 1 item"><span class="cell-day">16</span></span><span class="cell l2 is-today" tabindex="0" data-tip="Oct 17 · 1.5 h · 1 item"><span class="cell-day">17</span></span><span class="cell future" data-tip="Oct 18"><span class="cell-day">18</span></span><span class="cell future" data-tip="Oct 19"><span class="cell-day">19</span></span><span class="cell future" data-tip="Oct 20"><span class="cell-day">20</span></span><span class="cell future" data-tip="Oct 21"><span class="cell-day">21</span></span><span class="cell future" data-tip="Oct 22"><span class="cell-day">22</span></span><span class="cell future" data-tip="Oct 23"><span class="cell-day">23</span></span><span class="cell future" data-tip="Oct 24"><span class="cell-day">24</span></span><span class="cell future" data-tip="Oct 25"><span class="cell-day">25</span></span><span class="cell future" data-tip="Oct 26"><span class="cell-day">26</span></span><span class="cell future" data-tip="Oct 27"><span class="cell-day">27</span></span><span class="cell future" data-tip="Oct 28"><span class="cell-day">28</span></span><span class="cell future" data-tip="Oct 29"><span class="cell-day">29</span></span><span class="cell future" data-tip="Oct 30"><span class="cell-day">30</span></span><span class="cell future" data-tip="Oct 31"><span class="cell-day">31</span></span><span class="cell blank"></span></div>
+      </div>
+      <div class="cal-legend" aria-hidden="true"><span>Less</span><i class="cell l0"></i><i class="cell l1"></i><i class="cell l2"></i><i class="cell l3"></i><i class="cell l4"></i><span>More</span></div>
+    </div>
+    <dl class="streak-stats">
+      <div><dt>Active days</dt><dd><span class="num">14</span><small>/ 17</small></dd></div>
+      <div><dt>Current run</dt><dd><span class="num">5</span><small>days</small></dd></div>
+      <div><dt>Best run</dt><dd><span class="num">8</span><small>days · Aug</small></dd></div>
+      <div><dt>Busiest day</dt><dd><span class="num">3.5</span><small>h · Oct 15</small></dd></div>
+    </dl>
+  </div>
+</section>
+      
+<section class="card rem-card" aria-labelledby="rem-title">
+  <div class="card-head">
+    <div><h2 class="card-title" id="rem-title">Upcoming reminders</h2><p class="card-sub">Next two weeks</p></div>
+    <span class="count-badge">4</span>
+  </div>
+  <ul class="rems">
+    <li class="rem is-soon">
+      <div class="rem-date"><span class="rem-mon">Oct</span><span class="rem-day">20</span></div>
+      <div class="rem-body">
+        <button type="button" class="rem-title link" data-open="momtest">The Mom Test</button>
+        <p class="rem-note">Write my summary before Thursday&#x27;s discovery sync</p>
+      </div>
+      <span class="rem-rel"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>in 3 days</span>
+    </li>
+    <li class="rem">
+      <div class="rem-date"><span class="rem-mon">Oct</span><span class="rem-day">24</span></div>
+      <div class="rem-body">
+        <button type="button" class="rem-title link" data-open="buildtrap">Escaping the Build Trap</button>
+        <p class="rem-note">Finish the strategy section; bring outcome ideas to roadmap prep</p>
+      </div>
+      <span class="rem-rel"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>in 7 days</span>
+    </li>
+    <li class="rem">
+      <div class="rem-date"><span class="rem-mon">Oct</span><span class="rem-day">28</span></div>
+      <div class="rem-body">
+        <button type="button" class="rem-title link" data-open="crucial">Crucial Conversations</button>
+        <p class="rem-note">Practise the key steps before the roadmap dry run with Priya</p>
+      </div>
+      <span class="rem-rel"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>in 11 days</span>
+    </li>
+    <li class="rem">
+      <div class="rem-date"><span class="rem-mon">Oct</span><span class="rem-day">30</span></div>
+      <div class="rem-body">
+        <button type="button" class="rem-title link" data-open="goodbad">Good Product Manager / Bad Product Manager</button>
+        <p class="rem-note">Discuss two points with my manager in our 1:1</p>
+      </div>
+      <span class="rem-rel"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>in 13 days</span>
+    </li>
+  </ul>
+</section>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="view-board" data-view-panel="board" aria-labelledby="board-title" hidden>
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">October 2026 · 14 items</p>
+      <h1 class="page-title" id="board-title">Board</h1>
+      <p class="page-sub">Drag cards between columns, or focus a card and press Enter to open it.</p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="btn btn-primary" data-view-go="library"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span>Add item</span></button>
+    </div>
+  </div>
+  <div class="filters" role="toolbar" aria-label="Board filters">
+    <button type="button" class="filter is-on"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>October 2026<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button type="button" class="filter"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>All skills<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button type="button" class="filter"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>All objectives<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button type="button" class="filter"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>Type<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <span class="filters-spacer"></span>
+    <span class="filters-meta">7 of 14 done · 50%</span>
+  </div>
+  <div class="board">
+    <section class="col" data-status="backlog" aria-label="Backlog">
+      <header class="col-head"><span class="col-dot" aria-hidden="true"></span><h3>Backlog</h3><span class="col-count">3</span>
+        <button type="button" class="icon-btn sm col-add" aria-label="Add to Backlog" data-view-go="library"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button></header>
+      <div class="col-list" data-drop="backlog">
+        <article class="bcard" draggable="true" tabindex="0" data-open="shapeup" aria-label="Shape Up, Book, 0 of 3 tasks">
+          <div class="bcard-top"><span class="type-ic" data-type="book"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span><span class="type-label">Book</span><span class="grip" aria-hidden="true"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></span></div>
+          <h4 class="bcard-title">Shape Up</h4>
+          <p class="bcard-author">Ryan Singer</p>
+          <div class="bcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-road)">Roadmapping</span><span class="chip" style="--c:var(--sk-prio)">Prioritization</span></span></div>
+          <div class="bcard-foot">
+            <span class="tasks"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg><span>0/3</span><span class="mini-bar"><span style="--v:0%"></span></span></span>
+            <span class="est"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>5 h</span>
+          </div>
+        </article>
+        <article class="bcard" draggable="true" tabindex="0" data-open="leananalytics" aria-label="Lean Analytics, Book, 0 of 3 tasks">
+          <div class="bcard-top"><span class="type-ic" data-type="book"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span><span class="type-label">Book</span><span class="grip" aria-hidden="true"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></span></div>
+          <h4 class="bcard-title">Lean Analytics</h4>
+          <p class="bcard-author">Alistair Croll &amp; Benjamin Yoskovitz</p>
+          <div class="bcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-anal)">Analytics</span></span></div>
+          <div class="bcard-foot">
+            <span class="tasks"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg><span>0/3</span><span class="mini-bar"><span style="--v:0%"></span></span></span>
+            <span class="est"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>9 h</span>
+          </div>
+        </article>
+        <article class="bcard" draggable="true" tabindex="0" data-open="dpm" aria-label="Digital Product Management, Course, 0 of 4 tasks">
+          <div class="bcard-top"><span class="type-ic" data-type="course"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg></span><span class="type-label">Course</span><span class="grip" aria-hidden="true"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></span></div>
+          <h4 class="bcard-title">Digital Product Management</h4>
+          <p class="bcard-author">University of Virginia · Coursera</p>
+          <div class="bcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-strat)">Strategy</span><span class="chip" style="--c:var(--sk-road)">Roadmapping</span></span></div>
+          <div class="bcard-foot">
+            <span class="tasks"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg><span>0/4</span><span class="mini-bar"><span style="--v:0%"></span></span></span>
+            <span class="est"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>20 h</span>
+          </div>
+        </article>
+      </div>
+      
+    </section>
+    <section class="col" data-status="todo" aria-label="To Do">
+      <header class="col-head"><span class="col-dot" aria-hidden="true"></span><h3>To Do</h3><span class="col-count">2</span>
+        <button type="button" class="icon-btn sm col-add" aria-label="Add to To Do" data-view-go="library"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button></header>
+      <div class="col-list" data-drop="todo">
+        <article class="bcard" draggable="true" tabindex="0" data-open="momtest" aria-label="The Mom Test, Book, 0 of 3 tasks">
+          <div class="bcard-top"><span class="type-ic" data-type="book"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span><span class="type-label">Book</span><span class="grip" aria-hidden="true"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></span></div>
+          <h4 class="bcard-title">The Mom Test</h4>
+          <p class="bcard-author">Rob Fitzpatrick</p>
+          <div class="bcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-disc)">Discovery</span></span></div>
+          <div class="bcard-foot">
+            <span class="tasks"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg><span>0/3</span><span class="mini-bar"><span style="--v:0%"></span></span></span>
+            <span class="due is-soon" data-tip="Reminder"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Oct 20</span>
+          </div>
+        </article>
+        <article class="bcard" draggable="true" tabindex="0" data-open="goodbad" aria-label="Good Product Manager / Bad Product Manager, Article, 0 of 2 tasks">
+          <div class="bcard-top"><span class="type-ic" data-type="article"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></span><span class="type-label">Article</span><span class="grip" aria-hidden="true"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></span></div>
+          <h4 class="bcard-title">Good Product Manager / Bad Product Manager</h4>
+          <p class="bcard-author">Ben Horowitz</p>
+          <div class="bcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-stake)">Stakeholders</span><span class="chip" style="--c:var(--sk-strat)">Strategy</span></span></div>
+          <div class="bcard-foot">
+            <span class="tasks"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg><span>0/2</span><span class="mini-bar"><span style="--v:0%"></span></span></span>
+            <span class="due" data-tip="Reminder"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Oct 30</span>
+          </div>
+        </article>
+      </div>
+      
+    </section>
+    <section class="col" data-status="in_progress" aria-label="In Progress">
+      <header class="col-head"><span class="col-dot" aria-hidden="true"></span><h3>In Progress</h3><span class="col-count">2</span>
+        <button type="button" class="icon-btn sm col-add" aria-label="Add to In Progress" data-view-go="library"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button></header>
+      <div class="col-list" data-drop="in_progress">
+        <article class="bcard" draggable="true" tabindex="0" data-open="buildtrap" aria-label="Escaping the Build Trap, Book, 3 of 5 tasks">
+          <div class="bcard-top"><span class="type-ic" data-type="book"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span><span class="type-label">Book</span><span class="carried" data-tip="Carried over from September"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>From Sep</span><span class="grip" aria-hidden="true"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></span></div>
+          <h4 class="bcard-title">Escaping the Build Trap</h4>
+          <p class="bcard-author">Melissa Perri</p>
+          <div class="bcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-road)">Roadmapping</span><span class="chip" style="--c:var(--sk-strat)">Strategy</span></span><span class="kr-link" data-tip="Linked key result"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>KR 1.1</span></div>
+          <div class="bcard-foot">
+            <span class="tasks"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg><span>3/5</span><span class="mini-bar"><span style="--v:60%"></span></span></span>
+            <span class="due" data-tip="Reminder"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Oct 24</span>
+          </div>
+        </article>
+        <article class="bcard" draggable="true" tabindex="0" data-open="crucial" aria-label="Crucial Conversations, Book, 1 of 4 tasks">
+          <div class="bcard-top"><span class="type-ic" data-type="book"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span><span class="type-label">Book</span><span class="grip" aria-hidden="true"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></span></div>
+          <h4 class="bcard-title">Crucial Conversations</h4>
+          <p class="bcard-author">Patterson, Grenny, McMillan &amp; Switzler</p>
+          <div class="bcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-stake)">Stakeholders</span></span><span class="kr-link" data-tip="Linked key result"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>KR 1.3</span></div>
+          <div class="bcard-foot">
+            <span class="tasks"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg><span>1/4</span><span class="mini-bar"><span style="--v:25%"></span></span></span>
+            <span class="due" data-tip="Reminder"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Oct 28</span>
+          </div>
+        </article>
+      </div>
+      
+    </section>
+    <section class="col" data-status="done" aria-label="Done">
+      <header class="col-head"><span class="col-dot" aria-hidden="true"></span><h3>Done</h3><span class="col-count">7</span>
+        <button type="button" class="icon-btn sm col-add" aria-label="Add to Done" data-view-go="library"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button></header>
+      <div class="col-list" data-drop="done">
+        <article class="bcard" draggable="true" tabindex="0" data-open="inspired" aria-label="Inspired, Book, 4 of 4 tasks">
+          <div class="bcard-top"><span class="type-ic" data-type="book"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span><span class="type-label">Book</span><span class="grip" aria-hidden="true"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></span></div>
+          <h4 class="bcard-title">Inspired</h4>
+          <p class="bcard-author">Marty Cagan</p>
+          <div class="bcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-disc)">Discovery</span><span class="chip" style="--c:var(--sk-strat)">Strategy</span></span><span class="kr-link" data-tip="Linked key result"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>KR 2.1</span></div>
+          <div class="bcard-foot">
+            <span class="tasks is-complete"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg><span>4/4</span><span class="mini-bar"><span style="--v:100%"></span></span></span>
+            <span class="summary-ok"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z"/></svg>Summary</span>
+          </div>
+        </article>
+        <article class="bcard" draggable="true" tabindex="0" data-open="rice" aria-label="RICE: Simple prioritization for product managers, Article, 2 of 2 tasks">
+          <div class="bcard-top"><span class="type-ic" data-type="article"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></span><span class="type-label">Article</span><span class="grip" aria-hidden="true"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></span></div>
+          <h4 class="bcard-title">RICE: Simple prioritization for product managers</h4>
+          <p class="bcard-author">Sean McBride · Intercom</p>
+          <div class="bcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-prio)">Prioritization</span></span></div>
+          <div class="bcard-foot">
+            <span class="tasks is-complete"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg><span>2/2</span><span class="mini-bar"><span style="--v:100%"></span></span></span>
+            <span class="summary-ok"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z"/></svg>Summary</span>
+          </div>
+        </article>
+        <article class="bcard" draggable="true" tabindex="0" data-open="lenny" aria-label="Lenny&#x27;s Podcast, Podcast, 2 of 2 tasks">
+          <div class="bcard-top"><span class="type-ic" data-type="podcast"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg></span><span class="type-label">Podcast</span><span class="grip" aria-hidden="true"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg></span></div>
+          <h4 class="bcard-title">Lenny&#x27;s Podcast</h4>
+          <p class="bcard-author">Lenny Rachitsky</p>
+          <div class="bcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-road)">Roadmapping</span><span class="chip" style="--c:var(--sk-stake)">Stakeholders</span></span></div>
+          <div class="bcard-foot">
+            <span class="tasks is-complete"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg><span>2/2</span><span class="mini-bar"><span style="--v:100%"></span></span></span>
+            <span class="summary-missing" data-tip="No summary yet"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z"/></svg>Add summary</span>
+          </div>
+        </article>
+      </div>
+      <button type="button" class="col-more" data-toast="Showing 3 of 7 done items in this mockup">+ 4 more done</button>
+    </section>
+  </div>
+</section>
+
+<section class="view" id="view-library" data-view-panel="library" aria-labelledby="lib-title" hidden>
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">Curated for product people</p>
+      <h1 class="page-title" id="lib-title">Library</h1>
+      <p class="page-sub">Open any material to read its brief and add it to your October plan.</p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="btn btn-ghost" data-toast="AI recommendations run through your local install"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.13-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.13a.5.5 0 0 1-.96 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg><span>Recommend for O2</span></button>
+      <button type="button" class="btn btn-primary" data-toast="Custom material form is outside this mockup"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span>Add your own</span></button>
+    </div>
+  </div>
+  <div class="filters" role="toolbar" aria-label="Library filters">
+    <button type="button" class="filter is-on" data-lib="all" aria-pressed="true">All<span class="filter-count">11</span></button><button type="button" class="filter" data-lib="book" aria-pressed="false">Books<span class="filter-count">7</span></button><button type="button" class="filter" data-lib="course" aria-pressed="false">Courses<span class="filter-count">1</span></button><button type="button" class="filter" data-lib="article" aria-pressed="false">Articles<span class="filter-count">2</span></button><button type="button" class="filter" data-lib="podcast" aria-pressed="false">Podcasts<span class="filter-count">1</span></button>
+    <span class="filters-spacer"></span>
+    <button type="button" class="filter"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>All skills<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button type="button" class="filter"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M8 10v4"/><path d="M16 18v4"/></svg>Any length<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+  </div>
+  <div class="lib-grid">
+      <article class="lcard" tabindex="0" role="button" data-open="cdh" data-type="book" aria-label="Open brief: Continuous Discovery Habits">
+        <div class="lcard-top"><span class="type-ic" data-type="book"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span><span class="type-label">Book</span><span class="spacer"></span><span class="badge badge-rec"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.13-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.13a.5.5 0 0 1-.96 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg>Recommended</span></div>
+        <h3 class="lcard-title">Continuous Discovery Habits</h3>
+        <p class="lcard-author">Teresa Torres</p>
+        <p class="lcard-tagline">Turn customer discovery from a quarterly project into a weekly team habit.</p>
+        <div class="lcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-disc)">Discovery</span><span class="chip" style="--c:var(--sk-prio)">Prioritization</span></span></div>
+        <div class="lcard-foot"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>8 h</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Intermediate</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>Paid</span></div>
+      </article>
+      <article class="lcard" tabindex="0" role="button" data-open="inspired" data-type="book" aria-label="Open brief: Inspired">
+        <div class="lcard-top"><span class="type-ic" data-type="book"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span><span class="type-label">Book</span><span class="spacer"></span><span class="badge badge-plan"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Done</span></div>
+        <h3 class="lcard-title">Inspired</h3>
+        <p class="lcard-author">Marty Cagan</p>
+        <p class="lcard-tagline">How strong product teams decide what is worth building.</p>
+        <div class="lcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-disc)">Discovery</span><span class="chip" style="--c:var(--sk-strat)">Strategy</span></span></div>
+        <div class="lcard-foot"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>10 h</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Beginner</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>Paid</span></div>
+      </article>
+      <article class="lcard" tabindex="0" role="button" data-open="momtest" data-type="book" aria-label="Open brief: The Mom Test">
+        <div class="lcard-top"><span class="type-ic" data-type="book"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span><span class="type-label">Book</span><span class="spacer"></span><span class="badge badge-plan"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>To Do</span></div>
+        <h3 class="lcard-title">The Mom Test</h3>
+        <p class="lcard-author">Rob Fitzpatrick</p>
+        <p class="lcard-tagline">Run customer conversations that produce facts, not compliments.</p>
+        <div class="lcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-disc)">Discovery</span></span></div>
+        <div class="lcard-foot"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>3 h</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Beginner</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>Paid</span></div>
+      </article>
+      <article class="lcard" tabindex="0" role="button" data-open="buildtrap" data-type="book" aria-label="Open brief: Escaping the Build Trap">
+        <div class="lcard-top"><span class="type-ic" data-type="book"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span><span class="type-label">Book</span><span class="spacer"></span><span class="badge badge-plan"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In progress</span></div>
+        <h3 class="lcard-title">Escaping the Build Trap</h3>
+        <p class="lcard-author">Melissa Perri</p>
+        <p class="lcard-tagline">Swap a feature factory for outcome-driven product management.</p>
+        <div class="lcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-road)">Roadmapping</span><span class="chip" style="--c:var(--sk-strat)">Strategy</span></span></div>
+        <div class="lcard-foot"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>6 h</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Intermediate</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>Paid</span></div>
+      </article>
+      <article class="lcard" tabindex="0" role="button" data-open="crucial" data-type="book" aria-label="Open brief: Crucial Conversations">
+        <div class="lcard-top"><span class="type-ic" data-type="book"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span><span class="type-label">Book</span><span class="spacer"></span><span class="badge badge-plan"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In progress</span></div>
+        <h3 class="lcard-title">Crucial Conversations</h3>
+        <p class="lcard-author">Patterson, Grenny, McMillan &amp; Switzler</p>
+        <p class="lcard-tagline">Stay productive when stakes are high and opinions differ.</p>
+        <div class="lcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-stake)">Stakeholders</span></span></div>
+        <div class="lcard-foot"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>7 h</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Beginner</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>Paid</span></div>
+      </article>
+      <article class="lcard" tabindex="0" role="button" data-open="shapeup" data-type="book" aria-label="Open brief: Shape Up">
+        <div class="lcard-top"><span class="type-ic" data-type="book"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span><span class="type-label">Book</span><span class="spacer"></span><span class="badge badge-plan"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Backlog</span></div>
+        <h3 class="lcard-title">Shape Up</h3>
+        <p class="lcard-author">Ryan Singer</p>
+        <p class="lcard-tagline">Fixed time, variable scope: shape the work, then bet on it.</p>
+        <div class="lcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-road)">Roadmapping</span><span class="chip" style="--c:var(--sk-prio)">Prioritization</span></span></div>
+        <div class="lcard-foot"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>5 h</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Intermediate</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>Free</span></div>
+      </article>
+      <article class="lcard" tabindex="0" role="button" data-open="leananalytics" data-type="book" aria-label="Open brief: Lean Analytics">
+        <div class="lcard-top"><span class="type-ic" data-type="book"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></span><span class="type-label">Book</span><span class="spacer"></span><span class="badge badge-plan"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Backlog</span></div>
+        <h3 class="lcard-title">Lean Analytics</h3>
+        <p class="lcard-author">Alistair Croll &amp; Benjamin Yoskovitz</p>
+        <p class="lcard-tagline">Pick the one metric that matters for your stage, and ignore the rest.</p>
+        <div class="lcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-anal)">Analytics</span></span></div>
+        <div class="lcard-foot"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>9 h</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Intermediate</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>Paid</span></div>
+      </article>
+      <article class="lcard" tabindex="0" role="button" data-open="goodbad" data-type="article" aria-label="Open brief: Good Product Manager / Bad Product Manager">
+        <div class="lcard-top"><span class="type-ic" data-type="article"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></span><span class="type-label">Article</span><span class="spacer"></span><span class="badge badge-plan"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>To Do</span></div>
+        <h3 class="lcard-title">Good Product Manager / Bad Product Manager</h3>
+        <p class="lcard-author">Ben Horowitz</p>
+        <p class="lcard-tagline">A blunt, classic checklist of what separates great PMs from the rest.</p>
+        <div class="lcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-stake)">Stakeholders</span><span class="chip" style="--c:var(--sk-strat)">Strategy</span></span></div>
+        <div class="lcard-foot"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>30 min</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Beginner</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>Free</span></div>
+      </article>
+      <article class="lcard" tabindex="0" role="button" data-open="rice" data-type="article" aria-label="Open brief: RICE: Simple prioritization for product managers">
+        <div class="lcard-top"><span class="type-ic" data-type="article"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></span><span class="type-label">Article</span><span class="spacer"></span><span class="badge badge-plan"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Done</span></div>
+        <h3 class="lcard-title">RICE: Simple prioritization for product managers</h3>
+        <p class="lcard-author">Sean McBride · Intercom</p>
+        <p class="lcard-tagline">Score ideas by reach, impact, confidence and effort.</p>
+        <div class="lcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-prio)">Prioritization</span></span></div>
+        <div class="lcard-foot"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>30 min</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Beginner</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>Free</span></div>
+      </article>
+      <article class="lcard" tabindex="0" role="button" data-open="dpm" data-type="course" aria-label="Open brief: Digital Product Management">
+        <div class="lcard-top"><span class="type-ic" data-type="course"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg></span><span class="type-label">Course</span><span class="spacer"></span><span class="badge badge-plan"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Backlog</span></div>
+        <h3 class="lcard-title">Digital Product Management</h3>
+        <p class="lcard-author">University of Virginia · Coursera</p>
+        <p class="lcard-tagline">A structured intro to modern product practice, from discovery to agile delivery.</p>
+        <div class="lcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-strat)">Strategy</span><span class="chip" style="--c:var(--sk-road)">Roadmapping</span></span></div>
+        <div class="lcard-foot"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>20 h</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Beginner</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>Freemium</span></div>
+      </article>
+      <article class="lcard" tabindex="0" role="button" data-open="lenny" data-type="podcast" aria-label="Open brief: Lenny&#x27;s Podcast">
+        <div class="lcard-top"><span class="type-ic" data-type="podcast"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg></span><span class="type-label">Podcast</span><span class="spacer"></span><span class="badge badge-plan"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Done</span></div>
+        <h3 class="lcard-title">Lenny&#x27;s Podcast</h3>
+        <p class="lcard-author">Lenny Rachitsky</p>
+        <p class="lcard-tagline">Long-form conversations with product leaders on how they actually work.</p>
+        <div class="lcard-chips"><span class="chips"><span class="chip" style="--c:var(--sk-road)">Roadmapping</span><span class="chip" style="--c:var(--sk-stake)">Stakeholders</span></span></div>
+        <div class="lcard-foot"><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>2 h</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Beginner</span><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>Free</span></div>
+      </article>
+  </div>
+</section>
+
+<section class="view" id="view-placeholder" data-view-panel="placeholder" hidden>
+  <div class="empty card">
+    <div class="empty-ic" id="ph-icon"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
+    <h1 class="empty-title" id="ph-title">Skills</h1>
+    <p class="empty-text">This screen is outside the scope of the direction mockup, which covers the dashboard, board, library and material brief.</p>
+    <div class="empty-actions"><button type="button" class="btn btn-primary" data-view-go="dashboard">Back to dashboard</button><button type="button" class="btn btn-ghost" data-view-go="library">Browse library</button></div>
+  </div>
+</section>
+</main>
+</div>
+</div>
+
+<div class="scrim" id="scrim" data-close hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title" aria-hidden="true" tabindex="-1">
+  <div class="dr-head">
+    <span class="dr-kicker" id="dr-kicker">Material brief</span>
+    <div class="dr-head-actions">
+      <a class="icon-btn" id="dr-link" href="#" aria-label="Open source link" data-tip="Open link"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></a>
+      <button type="button" class="icon-btn" data-close aria-label="Close brief"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+    </div>
+  </div>
+  <div class="dr-body">
+    <div class="dr-hero">
+      <div class="dr-cover" id="dr-cover" aria-hidden="true"></div>
+      <div class="dr-hero-text">
+        <h2 class="dr-title" id="dr-title"></h2>
+        <p class="dr-author" id="dr-author"></p>
+      </div>
+    </div>
+    <p class="dr-tagline" id="dr-tagline"></p>
+    <dl class="dr-facts">
+      <div><dt><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Est. time</dt><dd id="dr-hours"></dd></div>
+      <div><dt><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Level</dt><dd id="dr-level"></dd></div>
+      <div><dt><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>Cost</dt><dd id="dr-cost"></dd></div>
+    </dl>
+    <div class="dr-skills" id="dr-skills"></div>
+    <section class="dr-sec"><h3>What it covers</h3><p id="dr-summary"></p></section>
+    <section class="dr-sec"><h3>Who it&rsquo;s for</h3><p id="dr-audience"></p></section>
+    <section class="dr-sec"><h3>Key takeaways</h3><ul class="takeaways" id="dr-takeaways"></ul></section>
+    <section class="dr-sec" id="dr-ms-sec"><h3>Milestones</h3><ol class="milestones" id="dr-milestones"></ol></section>
+    <div class="dr-tasknote"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg><span>Adding it creates a suggested task: <strong>Summarize in my words</strong>.</span></div>
+  </div>
+  <div class="dr-foot">
+    <label class="field"><span class="field-label">Link to key result <em>optional</em></span>
+      <span class="select-wrap"><select id="dr-kr">
+        <option value="">No key result</option>
+        <option>KR 1.1 · Finish 2 roadmapping materials</option>
+        <option>KR 1.3 · Run 3 stakeholder alignment 1:1s</option>
+        <option selected>KR 2.1 · Finish 3 discovery materials</option>
+        <option>KR 2.3 · Ship 1 experiment from an opportunity tree</option>
+      </select><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+    </label>
+    <button type="button" class="btn btn-primary btn-lg" id="dr-add"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span>Add to October plan</span></button>
+  </div>
+</aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="tip" id="tip" role="tooltip"></div>
+<script>window.MATERIALS={"cdh": {"type": "book", "title": "Continuous Discovery Habits", "author": "Teresa Torres", "year": "2021", "skills": ["disc", "prio"], "tagline": "Turn customer discovery from a quarterly project into a weekly team habit.", "summary": "A practical operating system for product trios: talk to customers every week, map what you hear onto an opportunity solution tree, and test the riskiest assumptions before committing to build. It ties research directly to the outcome your team is measured on, so discovery stops being a side project.", "audience": "PMs, designers and tech leads on empowered teams who want discovery to be continuous rather than a phase. Most useful once you have run a few interviews and want a repeatable system.", "takeaways": ["Start from one clear outcome, then map the opportunity space beneath it.", "Small weekly interviews beat big, rare research projects.", "An opportunity solution tree makes your reasoning visible to stakeholders.", "Compare several solutions side by side instead of falling for the first idea.", "Test individual assumptions, not whole ideas."], "hours": 8, "level": "Intermediate", "cost": "Paid", "milestones": ["Part 1 · The case for continuous discovery", "Part 2 · Outcomes and opportunity mapping", "Part 3 · Interviewing every week", "Part 4 · Assumption testing"], "recommended": true, "status": "", "typeLabel": "Book", "skillNames": [["disc", "Product Discovery"], ["prio", "Prioritization"]]}, "inspired": {"type": "book", "title": "Inspired", "author": "Marty Cagan", "year": "2017 · 2nd ed.", "skills": ["disc", "strat"], "tagline": "How strong product teams decide what is worth building.", "summary": "A tour of how high-performing product organisations work: empowered cross-functional teams, a clear split between discovery and delivery, and product managers who own value and viability rather than a feature list. Heavy on real patterns and anti-patterns from tech companies.", "audience": "New and mid-level PMs, and leaders reshaping how their product teams operate.", "takeaways": ["Give teams problems to solve, not features to ship.", "Discovery exists to kill weak ideas cheaply.", "The PM owns value and business viability.", "Prototypes are for learning, not for specs."], "hours": 10, "level": "Beginner", "cost": "Paid", "milestones": ["Lessons from top tech companies", "The right people", "The right product", "The right process", "The right culture"], "status": "Done", "typeLabel": "Book", "skillNames": [["disc", "Product Discovery"], ["strat", "Product Strategy"]]}, "momtest": {"type": "book", "title": "The Mom Test", "author": "Rob Fitzpatrick", "year": "2013", "skills": ["disc"], "tagline": "Run customer conversations that produce facts, not compliments.", "summary": "A short, punchy guide to customer interviews. It shows why asking people whether they like your idea is useless, and how to ask about their past behaviour and real problems instead so you leave every conversation with something you can act on.", "audience": "Anyone who talks to customers: PMs, founders, designers. Ideal before your first round of interviews.", "takeaways": ["Ask about their life and past behaviour, not your idea.", "Compliments and hypotheticals are noise.", "Push for commitment to separate interest from intent."], "hours": 3, "level": "Beginner", "cost": "Paid", "milestones": ["The Mom Test", "Avoiding bad data", "Keeping it casual", "Commitment and advancement"], "status": "To Do", "typeLabel": "Book", "skillNames": [["disc", "Product Discovery"]]}, "buildtrap": {"type": "book", "title": "Escaping the Build Trap", "author": "Melissa Perri", "year": "2018", "skills": ["road", "strat"], "tagline": "Swap a feature factory for outcome-driven product management.", "summary": "Explains how companies get stuck measuring success by shipped features, and lays out how to reorganise around outcomes: a clear strategy cascade, a product manager role focused on value, and roadmaps that communicate intent rather than dates.", "audience": "PMs and product leaders who feel busy but unsure whether their work moves the business.", "takeaways": ["Output is not outcome; measure the change you create.", "Strategy should cascade from vision to team-level intents.", "Roadmaps communicate themes and problems, not just dates."], "hours": 6, "level": "Intermediate", "cost": "Paid", "milestones": ["The build trap", "The product manager", "Strategy", "Product management process", "The product-led organisation"], "status": "In progress", "typeLabel": "Book", "skillNames": [["road", "Roadmapping"], ["strat", "Product Strategy"]]}, "shapeup": {"type": "book", "title": "Shape Up", "author": "Ryan Singer", "year": "2019", "skills": ["road", "prio"], "tagline": "Fixed time, variable scope: shape the work, then bet on it.", "summary": "Describes a product development approach built around six-week cycles, deliberately shaped pitches and a betting table instead of a backlog. A useful counterpoint to sprint-based planning and a source of practical techniques for scoping.", "audience": "PMs and leads frustrated with endless backlogs who want a different planning model to borrow from.", "takeaways": ["Set appetite first, then shape scope to fit it.", "Bet on a few shaped pitches; let the rest go.", "Track uncertainty with hill charts, not task counts."], "hours": 5, "level": "Intermediate", "cost": "Free", "milestones": ["Shaping", "Betting", "Building"], "status": "Backlog", "typeLabel": "Book", "skillNames": [["road", "Roadmapping"], ["prio", "Prioritization"]]}, "leananalytics": {"type": "book", "title": "Lean Analytics", "author": "Alistair Croll & Benjamin Yoskovitz", "year": "2013", "skills": ["anal"], "tagline": "Pick the one metric that matters for your stage, and ignore the rest.", "summary": "A framework for choosing metrics based on business model and company stage, with benchmarks and case studies. Helps PMs move past vanity metrics toward numbers that actually drive decisions.", "audience": "PMs who own a product area and want a sharper, stage-appropriate set of metrics.", "takeaways": ["Good metrics are comparable, understandable and change behaviour.", "Focus on one metric that matters at a time.", "Your business model shapes which metrics count."], "hours": 9, "level": "Intermediate", "cost": "Paid", "milestones": ["Stop lying to yourself", "Finding the right metric", "Lines in the sand", "Putting it to work"], "status": "Backlog", "typeLabel": "Book", "skillNames": [["anal", "Product Analytics"]]}, "goodbad": {"type": "article", "title": "Good Product Manager / Bad Product Manager", "author": "Ben Horowitz", "year": "Essay", "skills": ["stake", "strat"], "tagline": "A blunt, classic checklist of what separates great PMs from the rest.", "summary": "A short essay contrasting the habits of effective and ineffective product managers: owning the 'what', communicating crisply, defining the target and taking responsibility. Dated in places, still sharp.", "audience": "Aspiring and early-career PMs, or anyone calibrating what good looks like.", "takeaways": ["Good PMs define the target and own the outcome.", "Clarity in writing is a core PM skill.", "Excuses are a signal; responsibility is the job."], "hours": 0.5, "level": "Beginner", "cost": "Free", "milestones": [], "status": "To Do", "typeLabel": "Article", "skillNames": [["stake", "Stakeholder Management"], ["strat", "Product Strategy"]]}, "rice": {"type": "article", "title": "RICE: Simple prioritization for product managers", "author": "Sean McBride · Intercom", "year": "Article", "skills": ["prio"], "tagline": "Score ideas by reach, impact, confidence and effort.", "summary": "Introduces the RICE scoring model and shows how to estimate each factor. The value is less in the number than in the conversation it forces about evidence and effort.", "audience": "PMs who need a lightweight, explainable way to rank a messy backlog.", "takeaways": ["Make your assumptions explicit and comparable.", "Confidence keeps optimism in check.", "Use the score to start debate, not to end it."], "hours": 0.5, "level": "Beginner", "cost": "Free", "milestones": [], "status": "Done", "typeLabel": "Article", "skillNames": [["prio", "Prioritization"]]}, "crucial": {"type": "book", "title": "Crucial Conversations", "author": "Patterson, Grenny, McMillan & Switzler", "year": "3rd ed.", "skills": ["stake"], "tagline": "Stay productive when stakes are high and opinions differ.", "summary": "A toolkit for difficult conversations: noticing when a discussion turns crucial, keeping it safe for everyone to contribute, and moving from talk to decisions. Directly applicable to roadmap trade-offs and stakeholder pushback.", "audience": "PMs who regularly negotiate priorities with leaders, sales or engineering.", "takeaways": ["Notice when safety drops and restore it first.", "Share facts before stories and conclusions.", "End with clear decisions and owners."], "hours": 7, "level": "Beginner", "cost": "Paid", "milestones": ["What is a crucial conversation", "Start with heart", "Make it safe", "Move to action"], "status": "In progress", "typeLabel": "Book", "skillNames": [["stake", "Stakeholder Management"]]}, "dpm": {"type": "course", "title": "Digital Product Management", "author": "University of Virginia · Coursera", "year": "Course", "skills": ["strat", "road"], "tagline": "A structured intro to modern product practice, from discovery to agile delivery.", "summary": "A multi-course programme covering the PM role, hypothesis-driven development, agile delivery and running product experiments. Good for filling gaps systematically rather than reading around.", "audience": "Career switchers and new PMs who want a guided, end-to-end curriculum.", "takeaways": ["Frame work as testable hypotheses.", "Connect agile rituals to product outcomes.", "Build a habit of small, cheap experiments."], "hours": 20, "level": "Beginner", "cost": "Freemium", "milestones": ["Modern product management", "Product discovery", "Agile delivery", "Running experiments"], "status": "Backlog", "typeLabel": "Course", "skillNames": [["strat", "Product Strategy"], ["road", "Roadmapping"]]}, "lenny": {"type": "podcast", "title": "Lenny's Podcast", "author": "Lenny Rachitsky", "year": "Podcast", "skills": ["road", "stake"], "tagline": "Long-form conversations with product leaders on how they actually work.", "summary": "Interviews with operators from well-known product companies on planning, growth, career and craft. Best used by picking a few episodes on the skill you are working on and taking notes.", "audience": "PMs at every level who learn well from stories and concrete examples.", "takeaways": ["Pick episodes by skill, not by guest fame.", "Write down one tactic per episode to try at work."], "hours": 2, "level": "Beginner", "cost": "Free", "milestones": [], "status": "Done", "typeLabel": "Podcast", "skillNames": [["road", "Roadmapping"], ["stake", "Stakeholder Management"]]}};</script>
+<script>
+(function(){
+  var root=document.documentElement;
+  var KEY='growloop-theme';
+  var tgl=document.getElementById('theme-toggle');
+  function label(){var d=root.dataset.theme==='dark';tgl.setAttribute('aria-label',d?'Switch to light theme':'Switch to dark theme');tgl.dataset.tip=d?'Light theme':'Dark theme';}
+  label();
+  tgl.addEventListener('click',function(){var t=root.dataset.theme==='dark'?'light':'dark';root.dataset.theme=t;try{localStorage.setItem(KEY,t)}catch(e){}label();});
+
+  /* toast */
+  var toast=document.getElementById('toast'),tt;
+  function showToast(msg,action){
+    toast.innerHTML='<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg><span></span>';
+    toast.querySelector('span').textContent=msg;
+    if(action){var b=document.createElement('button');b.type='button';b.textContent=action.label;b.onclick=action.fn;toast.appendChild(b);}
+    toast.classList.add('is-on');clearTimeout(tt);tt=setTimeout(function(){toast.classList.remove('is-on')},3400);
+  }
+  document.addEventListener('click',function(e){var t=e.target.closest('[data-toast]');if(t){showToast(t.dataset.toast)}});
+
+  /* views */
+  var NAMES={dashboard:'Dashboard',board:'Board',library:'Library',skills:'Skills',okrs:'OKRs'};
+  var crumb=document.getElementById('crumb');
+  function show(v){
+    if(!NAMES[v])v='dashboard';
+    var panel=(v==='skills'||v==='okrs')?'placeholder':v;
+    document.querySelectorAll('[data-view-panel]').forEach(function(p){p.hidden=p.dataset.viewPanel!==panel});
+    document.querySelectorAll('.nav-item').forEach(function(a){if(a.dataset.view===v)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+    if(panel==='placeholder'){document.getElementById('ph-title').textContent=NAMES[v];
+      document.getElementById('ph-icon').innerHTML=document.querySelector('.nav-item[data-view="'+v+'"] .nav-ic').innerHTML;}
+    crumb.textContent=NAMES[v];
+    if(location.hash.slice(1)!==v){try{history.replaceState(null,'','#'+v)}catch(e){location.hash=v}}
+    window.scrollTo(0,0);
+  }
+  document.addEventListener('click',function(e){
+    var a=e.target.closest('[data-view]');
+    if(a&&a.tagName!=='SECTION'){e.preventDefault();show(a.dataset.view);return}
+    var g=e.target.closest('[data-view-go]');
+    if(g){e.preventDefault();show(g.dataset.viewGo)}
+  });
+  show(location.hash.slice(1)||'dashboard');
+  window.addEventListener('hashchange',function(){show(location.hash.slice(1))});
+
+  /* month switcher */
+  document.querySelectorAll('[data-month]').forEach(function(b){b.addEventListener('click',function(){
+    showToast((b.dataset.month==='-1'?'September':'November')+' 2026 has no sample data in this mockup');
+  })});
+
+  /* radar measure toggle */
+  document.querySelectorAll('[data-radar]').forEach(function(b){b.addEventListener('click',function(){
+    var m=b.dataset.radar;
+    document.querySelectorAll('[data-radar]').forEach(function(x){x.setAttribute('aria-selected',x===b?'true':'false')});
+    document.querySelectorAll('.radar-set').forEach(function(g){g.hidden=g.dataset.set!==m});
+    var k=m==='hours'?'h':'i';
+    document.querySelectorAll('.sk-val').forEach(function(s){s.textContent=s.dataset[k]});
+    document.querySelectorAll('.sk-delta').forEach(function(s){s.textContent=s.dataset[k];s.className='sk-delta '+s.dataset[k+'c']});
+    document.getElementById('radar-title').nextElementSibling.textContent=m==='hours'?'Where your time went · October vs September':'Items worked on per skill · October vs September';
+  })});
+
+  /* tooltip */
+  var tip=document.getElementById('tip');
+  function place(el){var r=el.getBoundingClientRect();tip.textContent=el.dataset.tip;tip.classList.add('is-on');
+    var w=tip.offsetWidth,h=tip.offsetHeight;var x=Math.min(Math.max(8,r.left+r.width/2-w/2),innerWidth-w-8);var y=r.top-h-8;if(y<8)y=r.bottom+8;
+    tip.style.left=x+'px';tip.style.top=y+'px';}
+  function hide(){tip.classList.remove('is-on')}
+  document.addEventListener('mouseover',function(e){var el=e.target.closest('[data-tip]');if(el)place(el);else hide()});
+  document.addEventListener('focusin',function(e){var el=e.target.closest('[data-tip]');if(el)place(el);else hide()});
+  document.addEventListener('scroll',hide,true);
+
+  /* drawer */
+  var M=window.MATERIALS,drawer=document.getElementById('drawer'),scrim=document.getElementById('scrim'),lastFocus=null,current=null;
+  var added={};
+  var ICON={book:'<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>',article:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/>',podcast:'<path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/>',course:'<path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>'};
+  var CHECK='<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  var PLUS='<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>';
+  function $(id){return document.getElementById(id)}
+  function setAdd(){
+    var b=$('dr-add'),m=M[current];
+    if(added[current]){b.classList.add('is-added');b.disabled=true;b.innerHTML=CHECK+'<span>Added to October · Backlog</span>';}
+    else if(m.status){b.classList.add('is-added');b.disabled=true;b.innerHTML=CHECK+'<span>In October plan · '+m.status+'</span>';}
+    else{b.classList.remove('is-added');b.disabled=false;b.innerHTML=PLUS+'<span>Add to October plan</span>';}
+  }
+  function open(id,src){
+    var m=M[id];if(!m)return;current=id;lastFocus=src||document.activeElement;
+    $('dr-kicker').textContent=m.typeLabel+' · '+m.year;
+    $('dr-title').textContent=m.title;$('dr-author').textContent=m.author;$('dr-tagline').textContent=m.tagline;
+    $('dr-hours').textContent=m.hours>=1?('~'+m.hours+' h'):(Math.round(m.hours*60)+' min');
+    $('dr-level').textContent=m.level;$('dr-cost').textContent=m.cost;
+    $('dr-summary').textContent=m.summary;$('dr-audience').textContent=m.audience;
+    $('dr-cover').innerHTML='<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+ICON[m.type]+'</svg><b></b>';
+    $('dr-cover').querySelector('b').textContent=m.title;
+    $('dr-cover').dataset.type=m.type;
+    $('dr-skills').innerHTML='';m.skillNames.forEach(function(s){var c=document.createElement('span');c.className='chip';c.style.setProperty('--c','var(--sk-'+s[0]+')');c.textContent=s[1];$('dr-skills').appendChild(c)});
+    $('dr-takeaways').innerHTML='';m.takeaways.forEach(function(t){var li=document.createElement('li');li.innerHTML=CHECK;var s=document.createElement('span');s.textContent=t;li.appendChild(s);$('dr-takeaways').appendChild(li)});
+    $('dr-milestones').innerHTML='';(m.milestones||[]).forEach(function(t){var li=document.createElement('li');li.textContent=t;$('dr-milestones').appendChild(li)});
+    $('dr-ms-sec').hidden=!(m.milestones&&m.milestones.length);
+    setAdd();
+    scrim.hidden=false;requestAnimationFrame(function(){scrim.classList.add('is-open');drawer.classList.add('is-open')});
+    drawer.setAttribute('aria-hidden','false');drawer.querySelector('.dr-body').scrollTop=0;
+    setTimeout(function(){drawer.focus()},50);hide();
+  }
+  function close(){
+    drawer.classList.remove('is-open');scrim.classList.remove('is-open');drawer.setAttribute('aria-hidden','true');
+    setTimeout(function(){scrim.hidden=true},250);
+    if(lastFocus&&lastFocus.focus)lastFocus.focus();
+  }
+  document.addEventListener('click',function(e){
+    if(e.target.closest('[data-close]')){close();return}
+    var o=e.target.closest('[data-open]');
+    if(o&&!dragged){e.preventDefault();open(o.dataset.open,o)}
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&drawer.classList.contains('is-open'))close();
+    if((e.key==='Enter'||e.key===' ')&&e.target.matches('.bcard,.lcard,.r-pt')===true&&e.target.dataset.open){e.preventDefault();open(e.target.dataset.open,e.target)}
+    if(e.key==='Tab'&&drawer.classList.contains('is-open')){
+      var f=drawer.querySelectorAll('a[href],button:not([disabled]),select');var first=f[0],last=f[f.length-1];
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+    }
+  });
+  $('dr-link').addEventListener('click',function(e){e.preventDefault();showToast('Opens the source in a new tab')});
+  $('dr-add').addEventListener('click',function(){
+    if(added[current])return;added[current]=true;setAdd();
+    var t=M[current].title;
+    showToast('Added “'+t+'” to October',{label:'View board',fn:function(){close();show('board')}});
+  });
+
+  /* library filter */
+  document.querySelectorAll('[data-lib]').forEach(function(b){b.addEventListener('click',function(){
+    document.querySelectorAll('[data-lib]').forEach(function(x){x.classList.toggle('is-on',x===b);x.setAttribute('aria-pressed',x===b?'true':'false')});
+    var k=b.dataset.lib;document.querySelectorAll('.lcard').forEach(function(c){c.hidden=!(k==='all'||c.dataset.type===k)});
+  })});
+
+  /* board drag & drop */
+  var dragEl=null,dragged=false;
+  document.querySelectorAll('.bcard').forEach(function(c){
+    c.addEventListener('dragstart',function(e){dragEl=c;dragged=true;c.classList.add('is-dragging');e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',c.dataset.open)}catch(_){} hide();});
+    c.addEventListener('dragend',function(){c.classList.remove('is-dragging');document.querySelectorAll('.col-list').forEach(function(l){l.classList.remove('is-over')});setTimeout(function(){dragged=false},50);counts();});
+  });
+  document.querySelectorAll('.col-list').forEach(function(list){
+    list.addEventListener('dragover',function(e){if(!dragEl)return;e.preventDefault();list.classList.add('is-over');
+      var after=null;list.querySelectorAll('.bcard:not(.is-dragging)').forEach(function(c){var r=c.getBoundingClientRect();if(after===null&&e.clientY<r.top+r.height/2)after=c});
+      if(after)list.insertBefore(dragEl,after);else list.appendChild(dragEl);});
+    list.addEventListener('dragleave',function(e){if(!list.contains(e.relatedTarget))list.classList.remove('is-over')});
+    list.addEventListener('drop',function(e){e.preventDefault();list.classList.remove('is-over');
+      var col=list.closest('.col').querySelector('h3').textContent;showToast('Moved to '+col);});
+  });
+  function counts(){document.querySelectorAll('.col').forEach(function(col){var n=col.querySelectorAll('.bcard').length+(col.dataset.status==='done'?4:0);col.querySelector('.col-count').textContent=n})}
+})();
+</script>
+</body>
+</html>
