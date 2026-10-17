@@ -85,7 +85,7 @@ Notebook ◄── free notes + summaries/notes collected from plan items
 |---|---|---|
 | S-1 | Ship with 12 curated PM skills. | Must |
 | S-2 | Users can add, rename and hide skills. | Must |
-| S-3 | Skill page: description, linked KRs, related resources, progress. | Must |
+| S-3 | **Skill sheet** opens from any skill chip or radar axis: description, linked KRs, related resources, progress. Skills are managed in Settings (no nav item). | Must |
 
 ### 5.3 Resources (curated)
 | ID | Requirement | Priority |
@@ -108,9 +108,10 @@ Notebook ◄── free notes + summaries/notes collected from plan items
 |---|---|---|
 | O-1 | Plannable quarters: the rest of the current year plus next year (e.g. in Oct 2026: Q4 2026 and Q1–Q4 2027). | Must |
 | O-2 | When a year ends, it can be **archived** (read-only, still viewable). | Must |
-| O-3 | **OKR wizard**: Claude asks a fixed set of questions, then proposes 3–4 objectives with 2–3 KRs each, spread across quarters and covering the user's skills. User edits and accepts. Without Claude, a manual form. | Must |
+| O-3 | **OKR wizard**: a fixed set of 8 questions (including current vs target level per focus skill); Claude, or simple rules without Claude, proposes 3–4 objectives with 2–3 KRs each, spread across quarters and covering the user's skills. User edits and accepts. Without Claude, a manual form. | Must |
 | O-4 | Each KR targets one skill with a measurable type: earn a certification, finish a specific material, or complete N items in the skill. | Must |
-| O-5 | KR progress is automatic from linked plan items. | Must |
+| O-5 | KR progress is automatic: material/certification KRs from their linked item (certifications need an "earned?" confirmation); count KRs from done items tagged with the skill within the objective's quarter. | Must |
+| O-6 | Setting objectives is a **soft gate**: skippable, with a "Set your year" prompt until done. An unfinished objective closes at quarter end with its score and can be moved once to the next quarter. | Must |
 
 ### 5.6 My Board
 | ID | Requirement | Priority |
@@ -147,7 +148,7 @@ Notebook ◄── free notes + summaries/notes collected from plan items
 | ID | Requirement | Priority |
 |---|---|---|
 | H-1 | A persistent **Help** button in the app shell, reachable from every page. | Must |
-| H-2 | **Guided tour**: step-by-step highlights of the main areas (dashboard, skills, library, OKRs, board, card detail, month review). Skippable, with back/next and progress ("3 of 8"). Keyboard accessible. | Must |
+| H-2 | **Guided tour**: step-by-step highlights of the main areas (dashboard, resources, library, board, OKRs, notebook). Skippable, with back/next and progress ("3 of 8"). Keyboard accessible. | Must |
 | H-3 | The tour starts automatically on the **first visit only**; afterwards it can be replayed from the Help button. Completion/skip is remembered locally. | Must |
 | H-4 | **Guide page** ("How Growloop works"): explains the loop — set quarterly OKRs → pick materials → plan the month → learn on the board → summarize in your own words → monthly review — with short visuals and links into each area. Also covers enabling AI via local Claude Code and data/privacy (local-first, export/import). | Must |
 | H-5 | Help content is written as data (not hard-coded into components) so it can be edited and extended without touching UI code. | Should |

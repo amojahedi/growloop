@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Growloop Flows</title>
+<meta name="description" content="Growloop information architecture and user flows for review. Source: docs/design/ux-flows.md.">
+<script>(function(){var t;try{t=localStorage.getItem('growloop-theme')}catch(e){}if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t}})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+<style>
+:root{
+  --font-ui:"DM Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-display:"Fraunces",Georgia,serif;
+  --r-sm:10px;--r-md:14px;--r-lg:20px;--r-btn:999px;
+  --bg:#F6F1E9;--surface:#FFFDF9;--surface-2:#F5EFE6;--divider:#EFE8DC;--border:#ECE4D7;--border-strong:#DCD0BE;
+  --text:#2E2823;--text-2:#5A5047;--text-3:#73685D;
+  --accent:#B4532A;--accent-text:#A34A24;--accent-soft:#F9E9DE;--ring:#B4532A;
+  --success:#356C2F;--success-soft:#E6F1E1;
+  --sb-bg:#F0E9DE;--sb-hover:rgba(94,74,50,.07);--sb-active:#FFFDF9;
+  --shadow-card:0 1px 2px rgba(80,55,30,.04),0 8px 24px -12px rgba(80,55,30,.10);
+  --hero-bg:linear-gradient(135deg,#FCEBDD 0%,#FDF4EA 55%,#F4F1E4 100%);--hero-border:#F3DCC9;
+  --carried-bg:#F3EAFB;--carried-text:#6A4FB0;
+  --line:#A39684;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1A1815;--surface:#23201C;--surface-2:#2B2722;--divider:#2F2A24;--border:#332E28;--border-strong:#463F36;
+  --text:#F3EDE4;--text-2:#CDC2B4;--text-3:#A69A8C;
+  --accent:#E58F66;--accent-text:#F0A47F;--accent-soft:#3A271D;--ring:#F0A47F;
+  --success:#93C987;--success-soft:#22301F;
+  --sb-bg:#151310;--sb-hover:rgba(255,240,220,.05);--sb-active:#23201C;
+  --shadow-card:0 1px 2px rgba(0,0,0,.2);
+  --hero-bg:linear-gradient(135deg,#3A2519 0%,#2B231C 55%,#25261D 100%);--hero-border:#46302A;
+  --carried-bg:#2E2640;--carried-text:#C7B6F2;
+  --line:#7D7266;
+}}
+:root[data-theme="dark"]{
+  --bg:#1A1815;--surface:#23201C;--surface-2:#2B2722;--divider:#2F2A24;--border:#332E28;--border-strong:#463F36;
+  --text:#F3EDE4;--text-2:#CDC2B4;--text-3:#A69A8C;
+  --accent:#E58F66;--accent-text:#F0A47F;--accent-soft:#3A271D;--ring:#F0A47F;
+  --success:#93C987;--success-soft:#22301F;
+  --sb-bg:#151310;--sb-hover:rgba(255,240,220,.05);--sb-active:#23201C;
+  --shadow-card:0 1px 2px rgba(0,0,0,.2);
+  --hero-bg:linear-gradient(135deg,#3A2519 0%,#2B231C 55%,#25261D 100%);--hero-border:#46302A;
+  --carried-bg:#2E2640;--carried-text:#C7B6F2;
+  --line:#7D7266;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,p,ul,ol{margin:0}
+a{color:var(--accent-text)}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px;border-radius:6px}
+
+.top{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--divider)}
+.top-in{max-width:1180px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:16px}
+.brand{font-family:var(--font-display);font-weight:600;font-size:18px;letter-spacing:-.02em;white-space:nowrap}
+.brand span{color:var(--text-3);font-family:var(--font-ui);font-weight:500;font-size:13px;margin-left:6px}
+.toc{display:flex;gap:2px;overflow-x:auto;flex:1;scrollbar-width:none}
+.toc::-webkit-scrollbar{display:none}
+.toc a{color:var(--text-2);text-decoration:none;font-size:13.5px;font-weight:500;padding:6px 10px;border-radius:var(--r-btn);white-space:nowrap}
+.toc a:hover{background:var(--sb-hover);color:var(--text)}
+.theme{border:1px solid var(--border);background:var(--surface);color:var(--text-2);border-radius:var(--r-btn);height:32px;padding:0 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.theme:hover{border-color:var(--border-strong);color:var(--text)}
+
+main{max-width:1180px;margin:0 auto;padding:36px 24px 80px}
+.hero{background:var(--hero-bg);border:1px solid var(--hero-border);border-radius:var(--r-lg);padding:32px}
+.eyebrow{font-size:12.5px;font-weight:600;color:var(--text-3);margin-bottom:6px}
+.hero h1{font-family:var(--font-display);font-weight:500;font-size:clamp(28px,4vw,38px);letter-spacing:-.02em;line-height:1.15}
+.hero p{color:var(--text-2);margin-top:10px;max-width:68ch}
+.change{display:inline-flex;gap:8px;align-items:center;margin-top:16px;font-size:13px;font-weight:600;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-btn);padding:5px 12px;color:var(--text-2)}
+.change b{color:var(--accent-text)}
+
+section{margin-top:56px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+h2{font-family:var(--font-display);font-weight:500;font-size:26px;letter-spacing:-.015em}
+h3{font-family:var(--font-display);font-weight:500;font-size:20px;letter-spacing:-.01em}
+.lede{color:var(--text-2);max-width:72ch}
+.muted{color:var(--text-3);font-size:13.5px}
+
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--shadow-card);padding:20px}
+.card h3{font-size:17px;margin-bottom:6px}
+.card p{color:var(--text-2);font-size:14px}
+.num{font-family:var(--font-display);color:var(--accent-text);font-size:14px;font-weight:600;margin-bottom:6px}
+
+.diagram{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--shadow-card);padding:20px;overflow-x:auto}
+.diagram svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.diagram pre{margin:0;font-size:12px;color:var(--text-3);white-space:pre-wrap}
+.diagram.wide svg{max-width:none;min-width:640px}
+
+.flow{display:grid;grid-template-columns:1fr;gap:16px;padding:32px 0;border-top:1px solid var(--divider)}
+.flow-meta{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 32px;align-items:start}
+.flow-meta>.tag,.flow-meta>h3,.flow-meta>p{grid-column:1}
+.flow-meta>ul{grid-column:2;grid-row:1 / span 3;margin-top:0!important}
+.flow:first-of-type{border-top:0;padding-top:4px}
+.flow-meta h3{margin-bottom:8px}
+.flow-meta .tag{justify-self:start;display:inline-block;font-size:12px;font-weight:600;color:var(--accent-text);background:var(--accent-soft);border-radius:var(--r-btn);padding:2px 9px;margin-bottom:10px}
+.flow-meta .tag.new{color:var(--carried-text);background:var(--carried-bg)}
+.flow-meta p{color:var(--text-2);font-size:14px}
+.flow-meta ul{margin-top:12px;padding-left:18px;color:var(--text-2);font-size:13.5px}
+.flow-meta li{margin-top:4px}
+.flow-meta li::marker{color:var(--text-3)}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+.tbl{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--shadow-card);overflow-x:auto}
+th,td{text-align:left;padding:11px 14px;border-top:1px solid var(--divider);vertical-align:top}
+thead th{border-top:0;font-size:12.5px;color:var(--text-3);font-weight:600;background:var(--surface-2)}
+td:first-child{font-weight:600;white-space:nowrap}
+td{color:var(--text-2)}
+td:first-child{color:var(--text)}
+
+.qs{counter-reset:q;display:grid;gap:12px}
+.q{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px 20px 16px 56px;position:relative}
+.q::before{counter-increment:q;content:counter(q);position:absolute;left:18px;top:15px;width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent-text);display:grid;place-items:center;font-weight:700;font-size:13px}
+.q b{display:block}
+.q span{display:block;color:var(--text-2);font-size:14px;margin-top:4px}
+.q span::before{content:"Recommend: ";font-weight:600;color:var(--success)}
+
+.ext{border:1px dashed var(--border-strong);border-radius:var(--r-md);padding:20px;background:transparent}
+.ext .tag{display:inline-block;font-size:12px;font-weight:600;color:var(--carried-text);background:var(--carried-bg);border-radius:var(--r-btn);padding:2px 9px;margin-bottom:8px}
+.ext p{color:var(--text-2);font-size:14px;margin-top:6px;max-width:80ch}
+
+footer{margin-top:64px;color:var(--text-3);font-size:13px}
+
+@media (max-width:860px){
+  .flow-meta{grid-template-columns:1fr}
+  .flow-meta>ul{grid-column:1;grid-row:auto;margin-top:10px!important}
+  .top-in{padding:10px 16px}
+  main{padding:24px 16px 64px}
+  .hero{padding:22px}
+  .brand span{display:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">Growloop<span>IA &amp; flows</span></div>
+    <nav class="toc" aria-label="Sections">
+      <a href="#decisions">Decisions</a>
+      <a href="#loop">Loop</a>
+      <a href="#sitemap">Sitemap</a>
+      <a href="#flows">Flows</a>
+      <a href="#rules">Rules</a>
+      <a href="#questions">Open questions</a>
+    </nav>
+    <button class="theme" id="theme" type="button" aria-label="Toggle light or dark">Dark</button>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="eyebrow">Senior product design · 17 Oct 2026</div>
+    <h1>How Growloop fits together</h1>
+    <p>Sitemap, nine end-to-end flows and the rules that tie OKRs, skills, resources and the board together. Full detail lives in <code>docs/design/ux-flows.md</code>.</p>
+    <div class="change"><b>Updated</b> Monthly board only · one-click Add to this month</div>
+  </div>
+
+  <section id="decisions">
+    <div class="sec-head"><h2>Key decisions</h2></div>
+    <div class="grid">
+      <div class="card"><div class="num">01</div><h3>One verb: Add</h3><p>Add puts an item in this month's To Do. Save to library is the someday list. No "Add to backlog" button: Backlog is just a column for committed-but-not-now.</p></div>
+      <div class="card"><div class="num">02</div><h3>Wizard with two engines</h3><p>The same questions always run. Claude drafts when available; a rules-based starter plan drafts otherwise. Both land on one review screen.</p></div>
+      <div class="card"><div class="num">03</div><h3>Count KRs count by skill</h3><p>Done items tagged with the skill in that quarter count automatically, so the optional KR link never costs progress. Material KRs are linked by the wizard.</p></div>
+      <div class="card"><div class="num">04</div><h3>Writing has one home</h3><p>A card's summary and notes are Notebook notes, not copies. Archiving freezes plans and results, never knowledge.</p></div>
+      <div class="card"><div class="num">05</div><h3>Objectives first, softly</h3><p>Skippable at onboarding; one calm "Set your year" prompt stays where objectives would show. Nothing is locked.</p></div>
+    </div>
+  </section>
+
+  <section id="loop">
+    <div class="sec-head"><h2>Core loop</h2><p class="muted">The year anchors it; the month is the rhythm.</p></div>
+    <div class="diagram"><pre data-src="loop">flowchart LR
+  okr[&quot;Set the year&lt;br/&gt;Personal OKRs&quot;] --&gt; disc[&quot;Discover&lt;br/&gt;Resources · Library&quot;]
+  disc --&gt;|&quot;Add&quot;| plan[&quot;This month&lt;br/&gt;To Do&quot;]
+  plan --&gt; learn[&quot;Learn&lt;br/&gt;My Board&quot;]
+  learn --&gt; sum[&quot;Summarize&lt;br/&gt;Card → Notebook&quot;]
+  sum --&gt; rev[&quot;Month-end review&lt;br/&gt;carry · backlog · drop&quot;]
+  rev --&gt; plan
+  sum -.-&gt; revisit[&quot;Revisit&lt;br/&gt;review-later notes&quot;]
+  learn -.-&gt; prog[&quot;Evidence&lt;br/&gt;KR progress · Dashboard&quot;]
+  prog -.-&gt;|&quot;quarter / year end&quot;| okr
+</pre></div>
+  </section>
+
+  <section id="sitemap">
+    <div class="sec-head"><h2>Sitemap</h2><p class="muted">Slanted boxes are drawers or dialogs, not pages.</p></div>
+    <div class="diagram wide"><pre data-src="sitemap">flowchart LR
+  shell[&quot;App shell&lt;br/&gt;sidebar: nav · this year&#x27;s objectives as rings · Claude + local status&lt;br/&gt;topbar: crumbs · month switcher · search · Add · theme · Help&quot;]
+  shell --&gt; dash[&quot;Dashboard&quot;]
+  shell --&gt; res[&quot;Resources&quot;]
+  shell --&gt; lib[&quot;My Library&quot;]
+  shell --&gt; board[&quot;My Board&quot;]
+  shell --&gt; okr[&quot;Personal OKRs&quot;]
+  shell --&gt; nb[&quot;Notebook&quot;]
+  shell --&gt; set[&quot;Settings&quot;]
+  shell --&gt; help[&quot;Help&quot;]
+
+  dash --&gt; dash1[&quot;Greeting + momentum line&lt;br/&gt;Hero: items completed this month, delta, month bars&quot;]
+  dash --&gt; dash2[&quot;Widgets: OKR progress · skill radar · streak&lt;br/&gt;due for review · reminders · latest notes · hours (hidden)&quot;]
+  res --&gt; res1[&quot;Search + filters · &#x27;For my KRs&#x27; chip · Recommend&lt;br/&gt;every item: Add · Save to library&quot;]
+  res --&gt; brief[/&quot;Brief drawer&lt;br/&gt;Add · Save to library&quot;/]
+  lib --&gt; lib1[&quot;All · From Resources · Added by me · status badges&lt;br/&gt;every item: Add&quot;]
+  lib --&gt; paste[/&quot;Paste to add dialog&quot;/]
+  board --&gt; board1[&quot;Opens on the current month · month switcher to look back&lt;br/&gt;Backlog · To Do · In Progress · Done&quot;]
+  board --&gt; card[/&quot;Card detail drawer&quot;/]
+  board --&gt; review[/&quot;Month-end review&quot;/]
+  okr --&gt; okr1[&quot;Year switcher: 2026 · 2027 · archived&lt;br/&gt;Quarter lanes → objective → KRs → linked items&quot;]
+  okr --&gt; wiz[/&quot;OKR wizard&quot;/]
+  okr --&gt; wrap[/&quot;Year wrap + archive&quot;/]
+  nb --&gt; nb1[&quot;List + editor · filters: source, tag, skill, Due&lt;br/&gt;New note · Review later&quot;]
+  set --&gt; set1[&quot;Profile · Skills · Appearance&lt;br/&gt;Claude status · Data export/import&quot;]
+  help --&gt; help1[&quot;How Growloop works · Replay tour · Enable Claude&quot;]
+  skill[/&quot;Skill sheet&lt;br/&gt;opens from any skill chip or radar axis&quot;/]
+</pre></div>
+  </section>
+
+  <section id="flows">
+    <div class="sec-head"><h2>Flows</h2><p class="muted">Diamond = decision · double bar = sub-flow · dotted = optional</p></div>
+
+    <div class="flow" id="flow-a">
+      <div class="flow-meta"><span class="tag">a · updated</span><h3>First run</h3><p>Two steps, then the tour. Objectives are asked for, not forced.</p>
+        <ul><li>Name is optional; greeting drops it if blank.</li><li>Closed midway: resumes at the same step.</li><li>Hosted demo skips onboarding, loads sample data.</li></ul></div>
+      <div class="diagram"><pre data-src="onboarding">flowchart TD
+  start([&quot;First open · empty workspace&quot;]) --&gt; s1[&quot;Step 1 · Welcome&lt;br/&gt;one-line pitch · &#x27;What should we call you?&#x27; optional&quot;]
+  s1 --&gt; s2[&quot;Step 2 · Set your growth objectives&quot;]
+  s2 --&gt; how{&quot;How?&quot;}
+  how --&gt;|&quot;Plan with Claude&quot;| ai{&quot;Claude available?&quot;}
+  ai --&gt;|&quot;yes&quot;| wiz[[&quot;OKR wizard · flow b&quot;]]
+  ai --&gt;|&quot;no&quot;| hint[&quot;Inline: how to enable Claude&lt;br/&gt;Continue without it&quot;]
+  hint --&gt; wizm[[&quot;OKR wizard, starter-plan engine · flow b&quot;]]
+  how --&gt;|&quot;Set up myself&quot;| wizm
+  how --&gt;|&quot;Later&quot;| skip[&quot;Remember &#x27;objectives skipped&#x27;&quot;]
+  wiz --&gt; acc[&quot;Objectives saved&lt;br/&gt;KR-linked items waiting in Backlog&quot;]
+  wizm --&gt; acc
+  acc --&gt; tour[&quot;Guided tour starts on Dashboard&lt;br/&gt;8 steps · Skip on every step&quot;]
+  skip --&gt; tour
+  tour --&gt; has{&quot;Objectives set?&quot;}
+  has --&gt;|&quot;no&quot;| soft[&quot;Dashboard hero = &#x27;Set your year&#x27; card&lt;br/&gt;sidebar slot = Set your year · OKR widget empty state&quot;]
+  has --&gt;|&quot;yes&quot;| first[&quot;First-month empty state&lt;br/&gt;&#x27;Pick 3 things for October&#x27; → Board&quot;]
+</pre></div>
+    </div>
+
+    <div class="flow" id="flow-b">
+      <div class="flow-meta"><span class="tag">b</span><h3>OKR wizard</h3><p>Eight fixed questions (plus one optional for Claude): role, 12-month goal, 2–4 focus skills, level now vs target, weekly time, formats, certification, light quarters.</p>
+        <ul><li>Output: 3–4 objectives per year, one quarter each, 2–3 KRs each with one skill, a type and a target.</li><li>Claude picks materials from catalog ids only.</li><li>Material and certification KRs create linked Backlog items.</li></ul></div>
+      <div class="diagram"><pre data-src="wizard">flowchart TD
+  e([&quot;Start wizard&quot;]) --&gt; scope[&quot;Scope · default &#x27;Rest of 2026 + 2027&#x27;&lt;br/&gt;or &#x27;2027 only&#x27;&quot;]
+  scope --&gt; qs[&quot;Questions 1–8, one per screen&lt;br/&gt;&#x27;3 of 8&#x27; · Back · answers kept if closed&quot;]
+  qs --&gt; eng{&quot;Claude available?&quot;}
+  eng --&gt;|&quot;yes&quot;| q9[&quot;Q9 optional: anything else Claude should know&quot;]
+  q9 --&gt; draft[&quot;Claude drafts 3–4 objectives × 2–3 KRs&lt;br/&gt;materials chosen from catalog ids only&quot;]
+  draft --&gt; ok{&quot;Valid draft?&quot;}
+  ok --&gt;|&quot;no / timeout&quot;| retry[&quot;&#x27;Couldn&#x27;t draft this time&#x27;&lt;br/&gt;Retry · Use starter plan&quot;]
+  retry --&gt; rules
+  eng --&gt;|&quot;no&quot;| rules[&quot;Starter plan from rules&lt;br/&gt;one objective per focus skill, spread over quarters&lt;br/&gt;KRs: top catalog material + count N from weekly time&quot;]
+  ok --&gt;|&quot;yes&quot;| rev
+  rules --&gt; rev[&quot;Review · objectives as cards in quarter lanes&lt;br/&gt;edit title, quarter, KR type, target · add/remove · Start blank&quot;]
+  rev --&gt; chk{&quot;Rules met?&quot;}
+  chk --&gt;|&quot;no&quot;| fix[&quot;Inline error on the card&lt;br/&gt;≤4 objectives per year · 2–3 KRs each&lt;br/&gt;each KR: one skill + target · plannable quarter&quot;] --&gt; rev
+  chk --&gt;|&quot;yes&quot;| accept[&quot;Accept&quot;]
+  accept --&gt; out[&quot;Save objectives&lt;br/&gt;material and certification KRs → item in Library + Backlog, linked&lt;br/&gt;count KRs → &#x27;Find resources&#x27; on the KR&quot;]
+  out --&gt; page[&quot;Personal OKRs · year view&quot;]
+</pre></div>
+    </div>
+
+    <div class="flow" id="flow-c">
+      <div class="flow-meta"><span class="tag">c · updated</span><h3>Discover → plan</h3><p>Add goes straight to this month. The KR link is offered in the toast, never required.</p>
+        <ul><li>From a KR's "Find resources", Add links to that KR automatically.</li><li>No objectives yet: toast offers "Set your year".</li><li>Already done before: "Do it again this month?"</li></ul></div>
+      <div class="diagram"><pre data-src="discover">flowchart TD
+  e1([&quot;Resources&quot;]) --&gt; f[&quot;Search + filters&lt;br/&gt;skill · type · level · cost · length · &#x27;For my KRs&#x27;&quot;]
+  e2([&quot;KR → Find resources&quot;]) --&gt; f
+  f --&gt; any{&quot;Results?&quot;}
+  any --&gt;|&quot;none&quot;| none[&quot;&#x27;Nothing matches&#x27; · Clear filters · Paste your own → flow d&quot;]
+  any --&gt;|&quot;yes&quot;| grid[&quot;Cards with badges: In library · On board · Fits KR 1.2&lt;br/&gt;each: Add · Save to library&quot;]
+  grid -.-&gt; recq{&quot;Recommend&quot;}
+  recq -.-&gt;|&quot;Claude&quot;| rec[&quot;Top 3 marked &#x27;Recommended&#x27; + one-line reason&quot;]
+  recq -.-&gt;|&quot;no Claude&quot;| reco[&quot;Setup hint · list stays in gold-standard order&quot;]
+  grid -.-&gt;|&quot;want details&quot;| br[&quot;Brief drawer · same two actions&quot;]
+  grid --&gt; act{&quot;Action&quot;}
+  br --&gt; act
+  act --&gt;|&quot;Save to library&quot;| saved[&quot;Saved · badge In library · toast with Undo&quot;]
+  act --&gt;|&quot;Add&quot;| add[&quot;Card in To Do of the current month&lt;br/&gt;+ saved to Library if new&quot;]
+  add --&gt; kr{&quot;KR match?&quot;}
+  kr --&gt;|&quot;exactly one&quot;| t1[&quot;Toast: &#x27;Added to October · Link to KR 1.2&#x27; · Undo&quot;]
+  kr --&gt;|&quot;several / none&quot;| t2[&quot;Toast: &#x27;Added to October · Link to a key result&#x27; · Undo&quot;]
+  kr --&gt;|&quot;came from a KR&quot;| t3[&quot;Toast: &#x27;Added · linked to KR 1.2&#x27; · Unlink&quot;]
+  act --&gt;|&quot;already on board&quot;| opencard[&quot;Button reads &#x27;Open card&#x27;&quot;]
+</pre></div>
+    </div>
+
+    <div class="flow" id="flow-d">
+      <div class="flow-meta"><span class="tag">d · updated</span><h3>Paste to add</h3><p>Paste a link or title. Claude fills the details; without it, a pre-filled form.</p>
+        <ul><li>Duplicates caught before any work.</li><li>Primary: Save and add to this month.</li><li>Failure never loses the pasted text.</li></ul></div>
+      <div class="diagram"><pre data-src="paste">flowchart TD
+  e([&quot;Library · Paste to add, or topbar Add&quot;]) --&gt; inp[&quot;Paste a link or a title&quot;]
+  inp --&gt; dup{&quot;Already known?&quot;}
+  dup --&gt;|&quot;in Library&quot;| inlib[&quot;&#x27;Already in your library&#x27; → open it&quot;]
+  dup --&gt;|&quot;in Resources&quot;| incat[&quot;&#x27;This is in Resources&#x27; → use the curated version&quot;]
+  dup --&gt;|&quot;new&quot;| ai{&quot;Claude available?&quot;}
+  ai --&gt;|&quot;yes&quot;| fill[&quot;Claude fills type, title, author, summary,&lt;br/&gt;skills, length, level, cost&quot;]
+  fill --&gt; res{&quot;Filled?&quot;}
+  res --&gt;|&quot;yes&quot;| rv[&quot;Review form · filled fields marked · edit anything&quot;]
+  res --&gt;|&quot;failed / unsure&quot;| form
+  ai --&gt;|&quot;no&quot;| form[&quot;Pre-filled form&lt;br/&gt;link → URL + type guessed from domain · text → title&lt;br/&gt;required: title, type, 1+ skill&quot;]
+  rv --&gt; save{&quot;Save&quot;}
+  form --&gt; save
+  save --&gt;|&quot;Save to library&quot;| lib[&quot;In My Library · source &#x27;Added by me&#x27;&quot;]
+  save --&gt;|&quot;Save and add (primary)&quot;| add[&quot;In Library + To Do of the current month&lt;br/&gt;KR link toast · as in flow c&quot;]
+</pre></div>
+    </div>
+
+    <div class="flow" id="flow-e">
+      <div class="flow-meta"><span class="tag">e · updated</span><h3>Execute the month</h3><p>The board always opens on the current month. A summary becomes a Notebook entry the moment it's written.</p>
+        <ul><li>Past months: read-only columns, cards still open for notes.</li><li>Backlog column only on the current month.</li><li>No future months; Backlog is for later.</li></ul></div>
+      <div class="diagram"><pre data-src="execute">flowchart TD
+  e([&quot;My Board · opens on October 2026&quot;]) --&gt; st{&quot;To Do empty?&quot;}
+  st --&gt;|&quot;backlog or library has items&quot;| pull[&quot;&#x27;Pick 3–5 for October&#x27;&lt;br/&gt;KR-linked backlog items first · or Add from Library&quot;]
+  st --&gt;|&quot;nothing anywhere&quot;| find[&quot;&#x27;Find something to learn&#x27; → Resources&quot;]
+  st --&gt;|&quot;no&quot;| work
+  pull --&gt; work[&quot;To Do → In Progress&lt;br/&gt;drag, or keyboard &#x27;Move to…&#x27; · Backlog for not-this-month&quot;]
+  work --&gt; cd[&quot;Card detail drawer&lt;br/&gt;brief · KR link · tasks · notes · summary · reminder · time&quot;]
+  cd --&gt; sum[&quot;Write summary in my words&quot;]
+  sum --&gt; rf{&quot;Refine?&quot;}
+  rf --&gt;|&quot;Claude&quot;| fb[&quot;Feedback: what&#x27;s clear, what&#x27;s missing, tighter version&lt;br/&gt;accept · edit · ignore&quot;]
+  rf --&gt;|&quot;no Claude&quot;| fbh[&quot;Setup hint · summary kept as is&quot;]
+  sum --&gt; nb[&quot;Summary is a Notebook entry, linked to the card&lt;br/&gt;&#x27;Summarize in my words&#x27; task ticks itself&quot;]
+  fb --&gt; nb
+  fbh --&gt; nb
+  nb -.-&gt; rl[&quot;Optional: Review later → flow g&quot;]
+  nb --&gt; dn[&quot;Move to Done&quot;]
+  dn --&gt; hs{&quot;Has summary?&quot;}
+  hs --&gt;|&quot;no&quot;| nudge[&quot;Toast: &#x27;Add a 2-line summary?&#x27; · Later&quot;]
+  hs --&gt;|&quot;yes&quot;| prog
+  nudge --&gt; prog[&quot;KR progress + dashboard update&quot;]
+  prog --&gt; cert{&quot;Certification KR?&quot;}
+  cert --&gt;|&quot;yes&quot;| conf[&quot;&#x27;Certification earned?&#x27; Yes → KR met · Not yet → KR stays open&quot;]
+</pre></div>
+    </div>
+
+    <div class="flow" id="flow-f">
+      <div class="flow-meta"><span class="tag">f · updated</span><h3>Month-end review</h3><p>Non-blocking banner. Smart defaults make "Confirm all" a single click.</p>
+        <ul><li>Quarter months also close objectives.</li><li>Missed months: one combined review.</li><li>Backlog is never reviewed.</li></ul></div>
+      <div class="diagram"><pre data-src="review">flowchart TD
+  t([&quot;First open in a new month&quot;]) --&gt; ban[&quot;Banner on Dashboard + Board&lt;br/&gt;&#x27;October is done · review 4 items&#x27;&quot;]
+  ban --&gt; r1[&quot;1 · Recap: items done, delta, summaries written, KR movement&quot;]
+  r1 --&gt; un{&quot;Unfinished items?&quot;}
+  un --&gt;|&quot;none&quot;| r3
+  un --&gt;|&quot;yes&quot;| r2[&quot;2 · Per item: Carry over · Back to backlog · Drop&lt;br/&gt;defaults set · &#x27;Confirm all&#x27;&quot;]
+  r2 -.-&gt; cx[&quot;Carried 2+ times: &#x27;carried ×2&#x27; chip, suggests backlog&quot;]
+  r2 --&gt; qe{&quot;Quarter end?&quot;}
+  qe --&gt;|&quot;yes&quot;| qw[&quot;Quarter wrap (Mar · Jun · Sep · Dec)&lt;br/&gt;each objective: Close with score · Move to next quarter (once)&quot;]
+  qe --&gt;|&quot;no&quot;| r3
+  qw --&gt; ye{&quot;December?&quot;}
+  ye --&gt;|&quot;yes&quot;| yw[[&quot;Year wrap · flow i&quot;]]
+  ye --&gt;|&quot;no&quot;| r3
+  r3[&quot;3 · Plan November (optional)&lt;br/&gt;pull from Backlog, KR-linked first · Skip&quot;]
+  r3 --&gt; fin[&quot;Review saved · board on November&quot;]
+  yw --&gt; fin
+</pre></div>
+    </div>
+
+    <div class="flow" id="flow-g">
+      <div class="flow-meta"><span class="tag">g</span><h3>Review later</h3><p>Any note can get a date. Due notes surface on the dashboard; Done or Again in…</p>
+        <ul><li>Widget shows the 3 oldest + "n more".</li><li>Notes from dropped or archived items stay reviewable.</li></ul></div>
+      <div class="diagram"><pre data-src="notebook">flowchart TD
+  a([&quot;Any note: free note, card summary, card note&quot;]) --&gt; set[&quot;Review later&lt;br/&gt;Tomorrow · 1 week · 1 month · Pick date&quot;]
+  set --&gt; wait[&quot;Date chip on the note · Notebook filter &#x27;Due&#x27;&quot;]
+  wait --&gt; due{&quot;Date reached?&quot;}
+  due --&gt;|&quot;yes&quot;| dash[&quot;Dashboard &#x27;Due for review&#x27; · count on Notebook nav&quot;]
+  dash --&gt; open[&quot;Reading view + link to source card / material&quot;]
+  open --&gt; act{&quot;After reading&quot;}
+  act --&gt;|&quot;Done&quot;| clr[&quot;Date cleared · last reviewed saved&quot;]
+  act --&gt;|&quot;Again in…&quot;| set
+  act --&gt;|&quot;Edit&quot;| ed[&quot;Edit, then Done or Again&quot;]
+</pre></div>
+    </div>
+
+    <div class="flow" id="flow-h">
+      <div class="flow-meta"><span class="tag">h · updated</span><h3>Customize dashboard</h3><p>Show, hide, reorder, reset. The hero (items completed this month) is locked.</p>
+        <ul><li>Default: Hero · OKRs · Radar · Due · Reminders · Streak · Notes · Hours (hidden).</li><li>Month switcher re-scopes hero, radar, streak, hours.</li></ul></div>
+      <div class="diagram"><pre data-src="customize">flowchart TD
+  d([&quot;Dashboard · current month&quot;]) --&gt; c[&quot;Customize&quot;]
+  c --&gt; m[&quot;Edit mode&lt;br/&gt;each widget: handle + hide · hero locked · &#x27;Hidden&#x27; tray&quot;]
+  m --&gt; act{&quot;Change&quot;}
+  act --&gt;|&quot;reorder&quot;| ro[&quot;Drag, or Move up / down&quot;]
+  act --&gt;|&quot;hide&quot;| hd[&quot;Widget → Hidden tray&quot;]
+  act --&gt;|&quot;show&quot;| sh[&quot;From tray → added at the end&quot;]
+  act --&gt;|&quot;reset&quot;| rs{&quot;Confirm reset?&quot;}
+  rs --&gt;|&quot;yes&quot;| def[&quot;Default order · Hours hidden&quot;]
+  ro --&gt; dn[&quot;Done · saved locally · Cancel reverts&quot;]
+  hd --&gt; dn
+  sh --&gt; dn
+  def --&gt; dn
+</pre></div>
+    </div>
+
+    <div class="flow" id="flow-i">
+      <div class="flow-meta"><span class="tag">i</span><h3>Year end</h3><p>Year wrap, archive, and the next year opens.</p>
+        <ul><li>Archive only after December's review.</li><li>Library and Notebook are never archived.</li><li>No unarchive in MVP.</li></ul></div>
+      <div class="diagram"><pre data-src="year">flowchart TD
+  t([&quot;First open on or after 1 Jan&lt;br/&gt;after December&#x27;s review&quot;]) --&gt; w[&quot;Year wrap 2026&lt;br/&gt;items completed · top skills · objective scores · summaries written&quot;]
+  w --&gt; ar{&quot;Archive 2026?&quot;}
+  ar --&gt;|&quot;Archive&quot;| done[&quot;2026 OKRs + months read-only&lt;br/&gt;year switcher: &#x27;2026 · archived&#x27;&lt;br/&gt;Library + Notebook untouched&quot;]
+  ar --&gt;|&quot;Not now&quot;| later[&quot;Chip on Personal OKRs: &#x27;Archive 2026&#x27;&quot;]
+  done --&gt; ny{&quot;2027 plan exists?&quot;}
+  later --&gt; ny
+  ny --&gt;|&quot;yes&quot;| ready[&quot;&#x27;Your 2027 plan is ready&#x27; → Personal OKRs&lt;br/&gt;2028 becomes plannable&quot;]
+  ny --&gt;|&quot;no&quot;| wz[[&quot;Offer OKR wizard for 2027&quot;]]
+</pre></div>
+    </div>
+  </section>
+
+  <section id="rules">
+    <div class="sec-head"><h2>How things connect</h2><p class="muted">Skill is the join; the KR link is the commitment.</p></div>
+    <div class="diagram"><pre data-src="model">flowchart LR
+  obj[&quot;Objective&lt;br/&gt;one quarter&quot;] --&gt;|&quot;2–3&quot;| kr[&quot;Key result&lt;br/&gt;type + target&quot;]
+  kr --&gt;|&quot;exactly 1&quot;| sk[&quot;Skill&quot;]
+  res[&quot;Resource&lt;br/&gt;curated catalog&quot;] --&gt;|&quot;save / add&quot;| lib[&quot;Library item&quot;]
+  own[&quot;Pasted / own&quot;] --&gt; lib
+  lib --&gt;|&quot;Add&quot;| pi[&quot;Plan item&lt;br/&gt;a month, or Backlog&quot;]
+  pi -.-&gt;|&quot;optional link&quot;| kr
+  pi --&gt;|&quot;tagged&quot;| sk
+  res --&gt;|&quot;tagged&quot;| sk
+  pi --&gt;|&quot;summary, notes&quot;| note[&quot;Notebook note&quot;]
+  free[&quot;Free note&quot;] --&gt; note
+  note -.-&gt;|&quot;optional&quot;| sk
+</pre></div>
+    <h3 style="margin:28px 0 12px">KR progress</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Type</th><th>Progress</th><th>Met when</th></tr></thead>
+      <tbody>
+        <tr><td>Material</td><td>Linked card's task completion, capped at 99 % until Done</td><td>Card moves to Done</td></tr>
+        <tr><td>Certification</td><td>"Preparing" with task % once the card is on a month</td><td>Card Done and "Certification earned" confirmed</td></tr>
+        <tr><td>Count</td><td>Done items tagged with the skill, inside the objective's quarter, out of N</td><td>Count reaches N</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted" style="margin-top:10px">Objective progress = mean of its KRs, with a pace label against quarter elapsed. Progress is computed, never typed.</p>
+
+    <div class="ext" style="margin-top:28px">
+      <span class="tag">Optional extension · not confirmed</span>
+      <h3>Skill profile lives inside the wizard</h3>
+      <p>Question 4 already asks level now and target per focus skill. Store it and the current-vs-target spider chart comes free, as an Activity / Level toggle on the dashboard radar. The CV / LinkedIn box is just the optional question 9 with more room. Ship Q4 now; defer the chart and CV paste.</p>
+    </div>
+  </section>
+
+  <section id="questions">
+    <div class="sec-head"><h2>Open questions</h2></div>
+    <div class="qs">
+      <div class="q"><b>Does the rest of 2026 get an objective?</b><span>Default wizard scope "Rest of 2026 + 2027": at most one objective for Q4 2026, plus 3–4 for 2027. Caps per calendar year.</span></div>
+      <div class="q"><b>What about applied-practice KRs ("Interview 12 customers")?</b><span>Keep three KR types. Practice can be an own library item that counts toward a count KR.</span></div>
+      <div class="q"><b>Unfinished objective at quarter end?</b><span>Close with its score; allow one move to the next quarter in the quarter-month review.</span></div>
+      <div class="q"><b>How hard is "objectives first"?</b><span>Soft gate: skippable, with one persistent "Set your year" prompt.</span></div>
+      <div class="q"><b>Adopt the skill-profile extension?</b><span>Yes to wizard Q4 now; defer the Level chart and CV paste.</span></div>
+    </div>
+  </section>
+
+  <footer>Source of truth: <code>docs/design/ux-flows.md</code>. Diagrams render with Mermaid; if they don't load, the raw definitions are shown.</footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+(function(){
+  var root=document.documentElement, btn=document.getElementById('theme');
+  function isDark(){var t=root.dataset.theme;if(t)return t==='dark';return window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches}
+  function css(n){return getComputedStyle(root).getPropertyValue(n).trim()}
+  var blocks=[].slice.call(document.querySelectorAll('.diagram pre[data-src]'));
+  var sources=blocks.map(function(p){return p.textContent});
+  var n=0;
+  async function render(){
+    btn.textContent=isDark()?'Light':'Dark';
+    if(!window.mermaid)return;
+    mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'base',
+      flowchart:{curve:'basis',htmlLabels:true,padding:10,nodeSpacing:28,rankSpacing:36},
+      themeVariables:{
+        fontFamily:'"DM Sans",ui-sans-serif,system-ui,sans-serif',fontSize:'13px',
+        background:css('--surface'),
+        primaryColor:css('--surface-2'),primaryTextColor:css('--text'),primaryBorderColor:css('--border-strong'),
+        secondaryColor:css('--accent-soft'),tertiaryColor:css('--surface'),
+        lineColor:css('--line'),textColor:css('--text-2'),
+        edgeLabelBackground:css('--surface'),clusterBkg:css('--surface-2'),clusterBorder:css('--border')
+      }});
+    for(var i=0;i<blocks.length;i++){
+      var host=blocks[i].parentNode;
+      try{
+        var r=await mermaid.render('mmd'+(n++),sources[i]);
+        host.innerHTML=r.svg;
+      }catch(e){
+        host.innerHTML='';var pre=document.createElement('pre');pre.textContent=sources[i];host.appendChild(pre);
+        console.error('Diagram '+i+' failed',e);
+      }
+      host.dataset.i=i;
+    }
+  }
+  // keep a reference to each host so re-render can find it after innerHTML replacement
+  blocks=blocks.map(function(p){var h=p.parentNode;return {get parentNode(){return h}}});
+  btn.addEventListener('click',function(){
+    var next=isDark()?'light':'dark';root.dataset.theme=next;
+    try{localStorage.setItem('growloop-theme',next)}catch(e){}
+    render();
+  });
+  if(window.matchMedia){matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(!root.dataset.theme)render()})}
+  if(document.fonts&&document.fonts.ready){document.fonts.ready.then(render)}else{render()}
+})();
+</script>
+</body>
+</html>
