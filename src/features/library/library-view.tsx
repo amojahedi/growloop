@@ -76,14 +76,14 @@ export function LibraryView() {
           <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {results.map((material) => (
               <li key={material.id}>
-                <ResourceCard material={material} skills={skillMap} onOpenBrief={setBriefId} />
+                <ResourceCard material={material} onOpenBrief={setBriefId} />
               </li>
             ))}
           </ul>
         )}
       </section>
 
-      <ResourceBrief material={brief} skills={skillMap} onClose={() => setBriefId(undefined)} />
+      <ResourceBrief material={brief} onClose={() => setBriefId(undefined)} />
       <AddOwnDialog open={addOwnOpen} onOpenChange={setAddOwnOpen} onOpenExisting={setBriefId} onSaved={setAnnouncement} />
     </div>
   );

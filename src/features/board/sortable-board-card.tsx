@@ -5,6 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "cn";
 import { Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSkillPreviewTrigger } from "@/lib/store/hooks";
 import { BoardCard, type BoardCardProps } from "./board-card";
 
 interface SortableBoardCardProps extends Omit<BoardCardProps, keyof React.ComponentProps<"div">> {
@@ -16,13 +17,20 @@ interface SortableBoardCardProps extends Omit<BoardCardProps, keyof React.Compon
  * for the keyboard; the remove button is its sibling, not its child, so the
  * handle holds no nested controls and Enter on the button doesn't pick it up.
  * Pointers can grab anywhere: the sensors' activation distance keeps clicks working.
+ * Hovering or focusing the card previews its skill impact on any radar on screen
+ * (S-4); previews are cleared and paused while any card is being dragged.
  */
 export function SortableBoardCard({ onDelete, ...props }: SortableBoardCardProps) {
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
+  const { active, attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
+    useSortable({
     id: props.item.id,
     attributes: { roleDescription: "draggable card" },
   });
   const title = props.material?.title ?? "Unknown material";
+  const previewTrigger = useSkillPreviewTrigger(
+    { id: props.item.id, label: title, source: props.item },
+    { paused: active !== null },
+  );
 
   return (
     <li
@@ -31,6 +39,7 @@ export function SortableBoardCard({ onDelete, ...props }: SortableBoardCardProps
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className={cn("relative cursor-grab", isDragging && "opacity-40")}
       {...listeners}
+      {...previewTrigger}
     >
       <BoardCard
         {...props}

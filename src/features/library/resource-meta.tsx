@@ -2,9 +2,8 @@
 
 import { Badge } from "@/components/ui/badge";
 import { MaterialTypeIcon } from "@/components/icons";
-import type { ID, Material, Skill } from "@/lib/domain/types";
+import type { Material } from "@/lib/domain/types";
 import { formatHours } from "@/lib/format";
-import { skillColorVar } from "@/lib/theme/skill-colors";
 import { useLibraryIds, useMonthNavigation, usePlanItems } from "@/lib/store/hooks";
 import { COST_LABELS, LEVEL_LABELS, TYPE_LABELS } from "./labels";
 
@@ -38,22 +37,5 @@ export function ResourceBadges({ material }: { material: Material }) {
       {material.curated && inLibrary && <Badge variant="secondary">In library</Badge>}
       {onBoard && <Badge variant="secondary">On board</Badge>}
     </div>
-  );
-}
-
-/** The material's skills, each with its color dot. */
-export function SkillDots({ skillIds, skills }: { skillIds: readonly ID[]; skills: ReadonlyMap<ID, Skill> }) {
-  const tagged = skillIds.map((id) => skills.get(id)).filter((skill): skill is Skill => skill !== undefined);
-  if (tagged.length === 0) return null;
-
-  return (
-    <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground" aria-label="Skills">
-      {tagged.map((skill) => (
-        <li key={skill.id} className="inline-flex items-center gap-1.5">
-          <span aria-hidden className="size-2 rounded-full" style={{ backgroundColor: skillColorVar(skill.color) }} />
-          {skill.name}
-        </li>
-      ))}
-    </ul>
   );
 }

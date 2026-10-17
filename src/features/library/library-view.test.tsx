@@ -130,3 +130,15 @@ describe("LibraryView actions", () => {
     expect(screen.getAllByRole("article")).toHaveLength(1);
   });
 });
+
+describe("LibraryView skill impact", () => {
+  it("shows skill impact on resource cards and in the brief", () => {
+    renderLibrary();
+    const card = screen.getByRole("button", { name: first.title }).closest("article")!;
+    expect(within(card).getByRole("list", { name: "Skill impact" })).toBeInTheDocument();
+
+    fireEvent.click(within(card).getByRole("button", { name: first.title }));
+    const brief = screen.getByRole("dialog", { name: first.title });
+    expect(within(brief).getByRole("list", { name: "Skill impact" })).toHaveTextContent(/impact/);
+  });
+});

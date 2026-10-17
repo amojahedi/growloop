@@ -127,17 +127,23 @@ export const useSkillPreview = () => useUIStore((state) => state.skillPreview);
 
 /**
  * Event handlers that preview an item's skill impact while it is hovered or
- * focused. Spread them on the item's outermost element.
+ * focused. Spread them on the item's outermost element. While `paused` (e.g.
+ * during a drag) nothing is previewed and the item's own preview is cleared.
  */
-export function useSkillPreviewTrigger(preview: SkillPreview) {
+export function useSkillPreviewTrigger(preview: SkillPreview, { paused = false }: { paused?: boolean } = {}) {
   const showSkillPreview = useUIStore((state) => state.showSkillPreview);
   const hideSkillPreview = useUIStore((state) => state.hideSkillPreview);
   const { id } = preview;
 
   // A removed or moved-away item must not leave its preview behind.
   useEffect(() => () => hideSkillPreview(id), [id, hideSkillPreview]);
+  useEffect(() => {
+    if (paused) hideSkillPreview(id);
+  }, [paused, id, hideSkillPreview]);
 
-  const show = () => showSkillPreview(preview);
+  const show = () => {
+    if (!paused) showSkillPreview(preview);
+  };
   const hide = () => hideSkillPreview(id);
   return {
     onMouseEnter: show,

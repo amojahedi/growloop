@@ -1,17 +1,16 @@
 "use client";
 
-import type { ID, Material, Skill } from "@/lib/domain/types";
+import { SkillImpact } from "@/components/skills/skill-impact";
+import type { ID, Material } from "@/lib/domain/types";
 import { ResourceActions } from "./resource-actions";
-import { metaLine, ResourceBadges, SkillDots } from "./resource-meta";
+import { metaLine, ResourceBadges } from "./resource-meta";
 
-/** One resource in the grid. The title opens the brief (RS-3). */
+/** One resource in the grid, with its skill impact (S-4). The title opens the brief (RS-3). */
 export function ResourceCard({
   material,
-  skills,
   onOpenBrief,
 }: {
   material: Material;
-  skills: ReadonlyMap<ID, Skill>;
   onOpenBrief: (id: ID) => void;
 }) {
   return (
@@ -28,7 +27,7 @@ export function ResourceCard({
       </h3>
       <p className="text-xs text-muted-foreground">{metaLine(material)}</p>
       {material.tagline && <p className="line-clamp-2 text-sm">{material.tagline}</p>}
-      <SkillDots skillIds={material.skillIds} skills={skills} />
+      <SkillImpact material={material} />
       <div className="mt-auto pt-2">
         <ResourceActions material={material} />
       </div>

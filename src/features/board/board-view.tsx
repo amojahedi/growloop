@@ -1,7 +1,7 @@
 "use client";
 
 import { DndContext, DragOverlay, type DropAnimation } from "@dnd-kit/core";
-import { useId, useMemo, useState } from "react";
+import { useId, useState } from "react";
 import { boardColumns } from "@/lib/domain/board";
 import { objectivesForQuarter } from "@/lib/domain/okrs";
 import { BOARD_COLUMNS, type ID, type PlanItem } from "@/lib/domain/types";
@@ -27,7 +27,6 @@ export function BoardView() {
   const [skillFilter, setSkillFilter] = useState<ID>("");
   const [objectiveFilter, setObjectiveFilter] = useState<ID>("");
 
-  const skillMap = useMemo(() => new Map(skills.map((skill) => [skill.id, skill])), [skills]);
   const quarterObjectives = objectivesForQuarter(objectives, quarter);
   const objectiveKeyResults = new Set(
     quarterObjectives.find((o) => o.id === objectiveFilter)?.keyResults.map((kr) => kr.id) ?? [],
@@ -90,7 +89,6 @@ export function BoardView() {
                     key={item.id}
                     item={item}
                     material={materials.get(item.materialId)}
-                    skills={skillMap}
                     onDelete={() => window.confirm(`Remove "${titleOf(item.id)}" from your plan?`) && deletePlanItem(item.id)}
                   />
                 ))}
@@ -103,7 +101,6 @@ export function BoardView() {
             <BoardCard
               item={activeItem}
               material={materials.get(activeItem.materialId)}
-              skills={skillMap}
               className="rotate-2 cursor-grabbing shadow-lg ring-2 ring-ring/40 motion-reduce:rotate-0"
             />
           )}

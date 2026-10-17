@@ -5,6 +5,7 @@ import { CURATED_MATERIALS } from "@/lib/catalog";
 import { useAppStore } from "@/lib/store/app-store";
 import { TodayContext } from "@/lib/store/hooks";
 import { emptyWorkspace } from "@/lib/store/seed";
+import { useUIStore } from "@/lib/store/ui-store";
 import { BoardView } from "./board-view";
 
 // The overlay is a visual copy of the card; without it dnd-kit measures the card itself,
@@ -133,5 +134,42 @@ describe("BoardView keyboard drag", () => {
     remove.focus();
     await press("Enter", remove);
     expect(announcement() ?? "").not.toMatch(/Picked up/);
+  });
+});
+
+describe("BoardView skill impact", () => {
+  beforeEach(fakeLayout);
+
+  it("shows each card's skill impact bars", () => {
+    renderBoard();
+    expect(within(card(first.title)).getByRole("list", { name: "Skill impact" })).toBeInTheDocument();
+  });
+
+  it("previews a card's impact while hovered or focused, and clears it on leave, drag and removal", async () => {
+    renderBoard();
+    const preview = () => useUIStore.getState().skillPreview;
+    const item = card(first.title).closest("li")!;
+
+    fireEvent.mouseEnter(item);
+    expect(preview()).toMatchObject({ label: first.title, source: { skillIds: first.skillIds } });
+    fireEvent.mouseLeave(item);
+    expect(preview()).toBeNull();
+
+    card(first.title).focus();
+    expect(preview()?.label).toBe(first.title);
+    card(second.title).focus();
+    expect(preview()?.label).toBe(second.title);
+
+    // Picking up a card clears the preview, and nothing is previewed mid-drag.
+    await press("Space");
+    expect(preview()).toBeNull();
+    fireEvent.mouseEnter(item);
+    expect(preview()).toBeNull();
+    await press("Escape");
+
+    fireEvent.mouseEnter(item);
+    expect(preview()?.label).toBe(first.title);
+    cleanup();
+    expect(preview()).toBeNull();
   });
 });
