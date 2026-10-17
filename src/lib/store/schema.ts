@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SKILL_COLORS, type AppData, type Workspace } from "@/lib/domain/types";
+import { MATERIAL_COSTS, MATERIAL_LEVELS, MATERIAL_TYPES, SKILL_COLORS, type AppData, type Workspace } from "@/lib/domain/types";
 
 /**
  * Runtime schemas for stored data. Used to validate anything that enters the
@@ -24,7 +24,7 @@ const skillSchema = z.object({
 
 const materialSchema = z.object({
   id,
-  type: z.enum(["course", "book", "article", "podcast", "custom"]),
+  type: z.enum(MATERIAL_TYPES),
   title: z.string(),
   author: z.string(),
   url: z.string().optional(),
@@ -34,8 +34,8 @@ const materialSchema = z.object({
   audience: z.string(),
   keyTakeaways: z.array(z.string()),
   estimatedHours: z.number().nonnegative().optional(),
-  level: z.enum(["beginner", "intermediate", "advanced"]),
-  cost: z.enum(["free", "paid", "freemium"]),
+  level: z.enum(MATERIAL_LEVELS),
+  cost: z.enum(MATERIAL_COSTS),
   milestones: z.array(z.string()).optional(),
   curated: z.boolean(),
 });
@@ -133,6 +133,8 @@ const activityEventSchema = z.object({
 export const workspaceSchema = appDataV1Schema.extend({
   version: z.literal(2),
   activity: z.array(activityEventSchema),
+  // Added after v2 shipped: optional with a default, so saves without it load unchanged (no version bump).
+  savedMaterialIds: z.array(id).default([]),
 }) satisfies z.ZodType<Workspace>;
 
 export type ValidationResult<T> = { ok: true; data: T } | { ok: false; error: string };

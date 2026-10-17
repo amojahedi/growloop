@@ -16,6 +16,7 @@ export function newWorkspace(skills: readonly Skill[]): Workspace {
     planItems: [],
     rollovers: [],
     activity: [],
+    savedMaterialIds: [],
   };
 }
 

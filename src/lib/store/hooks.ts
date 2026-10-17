@@ -31,6 +31,18 @@ export function useMaterials(): Material[] {
   return useMemo(() => [...CURATED_MATERIALS, ...custom], [custom]);
 }
 
+const NO_IDS: ID[] = [];
+
+/** Curated materials saved to My Library (ML-1). */
+export const useSavedMaterialIds = (): ID[] => useAppStore((state) => state.data.savedMaterialIds ?? NO_IDS);
+
+/** Everything in My Library: saved curated materials plus the user's own. */
+export function useLibraryIds(): ReadonlySet<ID> {
+  const saved = useSavedMaterialIds();
+  const custom = useAppStore((state) => state.data.customMaterials);
+  return useMemo(() => new Set([...saved, ...custom.map((material) => material.id)]), [saved, custom]);
+}
+
 export function useMaterialMap(): ReadonlyMap<ID, Material> {
   const materials = useMaterials();
   return useMemo(() => new Map(materials.map((material) => [material.id, material])), [materials]);

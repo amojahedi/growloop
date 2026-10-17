@@ -78,13 +78,14 @@ export function makeData(overrides: Partial<Workspace> = {}): Workspace {
     planItems: [],
     rollovers: [],
     activity: [],
+    savedMaterialIds: [],
     ...overrides,
   };
 }
 
 /** Schema v1 data (before the activity log), e.g. authored seed data or an old export. */
 export function makeDataV1(overrides: Partial<AppData> = {}): AppData {
-  const { activity: _activity, ...rest } = makeData();
+  const { activity: _activity, savedMaterialIds: _saved, ...rest } = makeData();
   return { ...rest, version: 1, ...overrides };
 }
 

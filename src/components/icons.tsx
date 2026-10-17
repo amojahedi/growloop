@@ -1,4 +1,5 @@
 import {
+  AwardIcon,
   BookOpenIcon,
   ChartLineIcon,
   CodeIcon,
@@ -50,6 +51,7 @@ export function SkillIcon({ name, ...props }: { name: string } & LucideProps) {
 
 export const MATERIAL_TYPE_ICONS: Readonly<Record<MaterialType, LucideIcon>> = {
   course: GraduationCapIcon,
+  certification: AwardIcon,
   book: BookOpenIcon,
   article: NewspaperIcon,
   podcast: HeadphonesIcon,
