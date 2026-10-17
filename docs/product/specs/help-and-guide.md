@@ -17,7 +17,7 @@ As a new or returning user, I want a short tour of the main areas and a plain ex
 ## Guided tour (H-2, H-3)
 
 - Runs on the **Dashboard only**, highlighting dashboard widgets and nav items instead of navigating between pages. Why: no route changes mid-tour, no empty pages for new users, and it stays robust as pages change.
-- **Not auto-started.** Offered once after the first-launch screen ([onboarding.md](onboarding.md#tour-offer-not-an-auto-started-tour)); always available from Help.
+- **Auto-starts on the first visit** (owner decision, 2026-10-17), right after the first-launch screen; skippable at every step and never shown again once seen or skipped; always available from Help.
 - UI: dimmed backdrop with a spotlight cut-out around the target, a popover next to it (title, body, "3 of 7", **Back**, **Next** / **Done**, **Skip tour**). Esc skips. Focus moves into the popover; the target gets `aria-describedby` to the popover body. Reduced motion: no transitions.
 - Steps whose target isn't on screen are skipped and the count adjusts (e.g. the user removed the radar widget). On < 768 px, nav steps anchor to the menu button with the same copy.
 - Completion or skip sets `tourCompletedAt` (device preference). Replaying is always possible.

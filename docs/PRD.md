@@ -165,7 +165,7 @@ Storage scopes (ADR 009): the **workspace** (exported), **device preferences** (
 |---|---|---|
 | H-1 | A persistent **Help** button in the top bar: Take the tour, How Growloop works, Turn on Claude. | Must |
 | H-2 | **Guided tour** on the Dashboard: 7 steps (hero, radar, OKRs, Library, Board, Notebook, Help); Back/Next/Skip, "3 of 7", keyboard accessible. | Must |
-| H-3 | The tour is **offered** once after the first-launch screen (not auto-started) and can always be replayed from Help. Seen/done is remembered per device. | Must |
+| H-3 | The tour **starts automatically on the first visit** (right after the first-launch screen; skippable at any step) and can always be replayed from Help. Seen/done is remembered per device. | Must |
 | H-4 | **Guide page** (`/guide`): the loop, OKRs, monthly planning, reflection, month-end review, skills and radar, Claude, data and privacy. | Must |
 | H-5 | Help content is written as data, not hard-coded into components. | Should |
 | H-6 | **First-launch screen** (no questions): Set your year · Try sample data · Skip for now. | Must |

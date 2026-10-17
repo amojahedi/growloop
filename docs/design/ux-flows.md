@@ -336,7 +336,7 @@ The target model for the foundation package (see [build plan](../product/build-p
 5. **Note** (new): `{ id, kind: summary | item_note | free, planItemId?, materialId?, title?, body, skillIds[], reviewAt?, lastReviewedAt?, refinedAt?, createdAt, updatedAt }`.
 6. **Workspace**: add `profile`, `notes`, `archivedYears: number[]`. `RolloverRecord` stays as the month-review record.
 7. **Skill data**: built-in skills gain `objectivePhrases: [A, B]` (static data, not stored).
-8. **Outside the workspace** (ADR 009): device preferences (`welcomeDoneAt`, `tourOfferDismissedAt`, `tourCompletedAt`, `sampleMode`) and the Claude key.
+8. **Outside the workspace** (ADR 009): device preferences (`welcomeDoneAt`, `tourSeenAt`, `tourCompletedAt`, `sampleMode`) and the Claude key.
 
 **Migration v3 → v4:** summaries/notes → Note records (with `planItemId`, `materialId`, timestamps); each old KR → count KR on the objective's first skill (or the first visible skill), `count` = max(1, linked items), title kept; `description` → `why`; all objectives `active`, `source: manual`; `profile = { skillLevels: [] }`; `notes = []` plus migrated; `archivedYears = []`.
 

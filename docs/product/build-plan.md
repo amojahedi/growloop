@@ -7,7 +7,7 @@
 
 ## What I decided and why
 
-1. **Straight in.** One first-launch screen (Set your year · Try sample data · Skip), no questions; the tour is offered once, never forced. Visitors reach the product in one click.
+1. **Straight in.** One first-launch screen (Set your year · Try sample data · Skip), no questions; the tour starts once on the first visit (skippable) and is replayable from Help. Visitors reach the product in one click.
 2. **Sample data is a separate workspace** with an exit banner, so trying it can never touch your own data. One build for hosted and local; the demo flag is retired.
 3. **Key results are typed and computed** (material, certification, count; one skill each; no manual progress). Count KRs count by skill, so linking a card is optional, and material KRs link themselves.
 4. **The wizard is two steps with two engines:** role + goal, then skills + levels. Claude or a deterministic quick draft produce the same plan and the same inline review, so the no-AI path is good, not a bare form.

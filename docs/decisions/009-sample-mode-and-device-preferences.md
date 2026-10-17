@@ -13,7 +13,7 @@ The hosted app opens on an empty, real workspace with "Try sample data" (ADR 008
 | Key | Holds | Exported | Migrated |
 |---|---|---|---|
 | `growloop:data` | The workspace: profile, skills, objectives, plan items, notes, layout | Yes | Yes (schema versions) |
-| `growloop:device` | Device preferences: `welcomeDoneAt`, `tourOfferDismissedAt`, `tourCompletedAt`, `sampleMode` | No | No (unknown fields ignored) |
+| `growloop:device` | Device preferences: `welcomeDoneAt`, `tourSeenAt`, `tourCompletedAt`, `sampleMode` | No | No (unknown fields ignored) |
 | `growloop:claude-key` | The user's Claude API key | Never | No |
 
 ## Consequences
