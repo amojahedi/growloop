@@ -1,6 +1,16 @@
 "use client";
 
-import { ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, Trash2Icon, type LucideIcon } from "lucide-react";
+import type { DraggableAttributes } from "@dnd-kit/core";
+import { cn } from "cn";
+import {
+  ArrowDownIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ArrowUpIcon,
+  GripVerticalIcon,
+  Trash2Icon,
+  type LucideIcon,
+} from "lucide-react";
 import { MaterialTypeIcon } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +28,7 @@ const MOVE_ICONS: Record<MoveAction, LucideIcon> = {
   right: ArrowRightIcon,
 };
 
-interface BoardCardProps {
+export interface BoardCardProps {
   item: PlanItem;
   material: Material | undefined;
   skills: ReadonlyMap<string, Skill>;
@@ -26,14 +36,17 @@ interface BoardCardProps {
   canMove: Record<MoveAction, boolean>;
   onMove: (action: MoveAction) => void;
   onDelete: () => void;
+  /** Wires the grip up as the drag handle (keyboard activation, screen-reader hints). */
+  dragHandle?: { ref: (element: HTMLElement | null) => void; attributes: DraggableAttributes };
+  className?: string;
 }
 
 /**
- * A plan item on the board (B-4). The arrow buttons are the keyboard
- * alternative to drag and drop; `data-move` lets the board restore focus to
- * the same control after the card moves.
+ * A plan item on the board (B-4). The grip is the keyboard drag handle; the
+ * arrow buttons are a simpler alternative to dragging, and `data-move` lets the
+ * board restore focus to the same control after the card moves.
  */
-export function BoardCard({ item, material, skills, canMove, onMove, onDelete }: BoardCardProps) {
+export function BoardCard({ item, material, skills, canMove, onMove, onDelete, dragHandle, className }: BoardCardProps) {
   const tasks = taskProgress(item);
   const title = material?.title ?? "Unknown material";
   const column = BOARD_COLUMNS.indexOf(item.status);
@@ -46,7 +59,7 @@ export function BoardCard({ item, material, skills, canMove, onMove, onDelete }:
   };
 
   return (
-    <li data-item-id={item.id} className="rounded-lg border bg-card p-3 text-sm shadow-xs">
+    <div className={cn("rounded-lg border bg-card p-3 text-sm shadow-xs", className)}>
       <p className="flex items-start gap-2 font-medium">
         {material && <MaterialTypeIcon type={material.type} className="mt-0.5 size-4 shrink-0" />}
         {title}
@@ -64,6 +77,16 @@ export function BoardCard({ item, material, skills, canMove, onMove, onDelete }:
         {item.reminder && !item.reminder.dismissed && ` · Reminder ${formatShortDate(item.reminder.date)}`}
       </p>
       <div className="mt-2 flex gap-1">
+        <Button
+          ref={dragHandle?.ref}
+          variant="ghost"
+          size="icon-xs"
+          className="cursor-grab"
+          aria-label={`Drag "${title}"`}
+          {...dragHandle?.attributes}
+        >
+          <GripVerticalIcon />
+        </Button>
         {(["left", "up", "down", "right"] as const).map((action) => {
           const Icon = MOVE_ICONS[action];
           return (
@@ -84,6 +107,6 @@ export function BoardCard({ item, material, skills, canMove, onMove, onDelete }:
           <Trash2Icon />
         </Button>
       </div>
-    </li>
+    </div>
   );
 }
