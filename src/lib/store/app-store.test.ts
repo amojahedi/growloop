@@ -156,6 +156,32 @@ describe("objectives", () => {
   });
 });
 
+describe("my library", () => {
+  it("saves and unsaves curated materials once each", () => {
+    store().saveMaterial("inspired");
+    store().saveMaterial("inspired");
+    expect(data().savedMaterialIds).toEqual(["inspired"]);
+
+    store().unsaveMaterial("inspired");
+    expect(data().savedMaterialIds).toEqual([]);
+  });
+
+  it("ignores unknown ids and the user's own materials (always in the library)", () => {
+    const own = store().addCustomMaterial({ title: "Team wiki", type: "article", skillIds: [] });
+    store().saveMaterial("missing");
+    store().saveMaterial(own);
+    expect(data().savedMaterialIds).toEqual([]);
+  });
+
+  it("works on workspaces loaded without the field", () => {
+    const { savedMaterialIds: _saved, ...older } = emptyWorkspace();
+    useAppStore.setState({ data: older });
+    store().unsaveMaterial("inspired");
+    store().saveMaterial("inspired");
+    expect(data().savedMaterialIds).toEqual(["inspired"]);
+  });
+});
+
 describe("activity log", () => {
   afterEach(() => vi.useRealTimers());
 
@@ -296,6 +322,15 @@ describe("persistence", () => {
     await useAppStore.persist.rehydrate();
     expect(data()).toEqual(emptyWorkspace());
     expect(localStorage.getItem(BACKUP_STORAGE_KEY)).toContain('"version":3');
+  });
+
+  it("rehydrates v2 saves written before `savedMaterialIds` existed", async () => {
+    const { savedMaterialIds: _saved, ...older } = { ...emptyWorkspace(), skills: [] };
+    saved(older);
+
+    await useAppStore.persist.rehydrate();
+    expect(data()).toEqual({ ...older, savedMaterialIds: [] });
+    expect(localStorage.getItem(BACKUP_STORAGE_KEY)).toBeNull();
   });
 
   it("upgrades v1 saves, backfilling the activity log", async () => {

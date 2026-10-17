@@ -40,6 +40,25 @@ describe("validateWorkspace", () => {
     }
   });
 
+  it("loads v2 data saved before `savedMaterialIds` existed, defaulting it to [] (no migration)", () => {
+    const { savedMaterialIds: _saved, ...older } = sample();
+    expect(older).not.toHaveProperty("savedMaterialIds");
+
+    expect(validateWorkspace(older)).toEqual({ ok: true, data: { ...older, savedMaterialIds: [] } });
+    expect(parseImportedData(JSON.stringify(older))).toEqual({ ok: true, data: { ...older, savedMaterialIds: [] } });
+    expect(migrateAppData(older, 2)).toBe(older);
+  });
+
+  it("keeps saved material ids and rejects malformed ones", () => {
+    const data = sample();
+    expect(validateWorkspace({ ...data, savedMaterialIds: ["book-inspired"] })).toMatchObject({
+      ok: true,
+      data: { savedMaterialIds: ["book-inspired"] },
+    });
+    expect(validateWorkspace({ ...data, savedMaterialIds: [""] }).ok).toBe(false);
+    expect(validateWorkspace({ ...data, savedMaterialIds: "book-inspired" }).ok).toBe(false);
+  });
+
   it("rejects other versions and a missing activity log", () => {
     expect(validateWorkspace({ ...sample(), version: 1 }).ok).toBe(false);
     expect(validateWorkspace({ ...sample(), version: 3 }).ok).toBe(false);
@@ -104,7 +123,7 @@ describe("export / import", () => {
     const v1 = makeDataV1({ skills: [makeSkill({ id: "roadmapping" })] });
     const result = parseImportedData(JSON.stringify({ app: "growloop", exportedAt: "2026-09-01T00:00:00Z", data: v1 }));
 
-    expect(result).toMatchObject({ ok: true, data: { version: 2, activity: [], skills: v1.skills } });
+    expect(result).toMatchObject({ ok: true, data: { version: 2, activity: [], savedMaterialIds: [], skills: v1.skills } });
   });
 
   it("explains why an import failed", () => {

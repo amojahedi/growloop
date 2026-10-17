@@ -10,7 +10,16 @@ export type MonthKey = string;
 /** "2026-Q4" */
 export type QuarterKey = string;
 
-export type MaterialType = "course" | "book" | "article" | "podcast" | "custom";
+export type MaterialType = "course" | "certification" | "book" | "article" | "podcast" | "custom";
+
+/** Every material type, in display order. */
+export const MATERIAL_TYPES = ["course", "certification", "book", "article", "podcast", "custom"] as const satisfies readonly MaterialType[];
+
+export type MaterialLevel = "beginner" | "intermediate" | "advanced";
+export const MATERIAL_LEVELS = ["beginner", "intermediate", "advanced"] as const satisfies readonly MaterialLevel[];
+
+export type MaterialCost = "free" | "freemium" | "paid";
+export const MATERIAL_COSTS = ["free", "freemium", "paid"] as const satisfies readonly MaterialCost[];
 
 export type BoardStatus = "backlog" | "todo" | "in_progress" | "done";
 
@@ -54,8 +63,8 @@ export interface Material {
   keyTakeaways: string[];
   /** Rough effort to complete, in hours. */
   estimatedHours?: number;
-  level: "beginner" | "intermediate" | "advanced";
-  cost: "free" | "paid" | "freemium";
+  level: MaterialLevel;
+  cost: MaterialCost;
   /** Milestones such as chapters or modules (optional). */
   milestones?: string[];
   /** True for library items, false for user-added ones. */
@@ -190,4 +199,10 @@ export interface ActivityEvent {
 export interface Workspace extends Omit<AppData, "version"> {
   version: 2;
   activity: ActivityEvent[];
+  /**
+   * Curated materials the user saved to My Library (ML-1). Optional and
+   * defaulted to [] when loading, so older saves need no migration. The user's
+   * own materials are always in the library and are not listed here.
+   */
+  savedMaterialIds?: ID[];
 }

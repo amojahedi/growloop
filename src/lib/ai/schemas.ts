@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MATERIAL_COSTS, MATERIAL_LEVELS, MATERIAL_TYPES } from "@/lib/domain/types";
 
 /**
  * Request and response contracts for the local AI features. Shared by the
@@ -73,7 +74,7 @@ const absentToUndefined = (value: unknown) => (value === null || value === "" ? 
 export const recommendationSchema = z.object({
   title: z.string().trim().min(1),
   author: z.string().trim(),
-  type: z.enum(["course", "book", "article", "podcast"]),
+  type: z.enum(["course", "certification", "book", "article", "podcast"]),
   url: z.preprocess(absentToUndefined, z.url({ protocol: /^https?$/ }).optional()),
   why: z.string().trim().min(1),
   estimatedHours: z.preprocess(absentToUndefined, z.number().positive().max(1000).optional()),
@@ -107,6 +108,54 @@ export const summaryFeedbackSchema = z.object({
   improvedVersion: z.preprocess(absentToUndefined, z.string().trim().optional()),
 });
 export type SummaryFeedback = z.infer<typeof summaryFeedbackSchema>;
+
+// --- Enrich material (paste to add) -----------------------------------------------
+
+export const MAX_ENRICH_INPUT_LENGTH = 2000;
+export const MAX_ENRICH_SKILLS = 60;
+
+export const enrichMaterialRequestSchema = z.object({
+  // What the user pasted (a title or a link). Their own text: reject rather than silently cut it.
+  input: z
+    .string()
+    .trim()
+    .min(1, "Paste a title or a link first.")
+    .max(MAX_ENRICH_INPUT_LENGTH, `Pasted text is limited to ${MAX_ENRICH_INPUT_LENGTH.toLocaleString("en-US")} characters.`),
+  /** The user's skills; the draft may only be tagged with these ids. */
+  skills: z
+    .array(z.object({ id: requiredText(100), name: requiredText(100) }))
+    .max(MAX_ENRICH_SKILLS)
+    .default([]),
+});
+export type EnrichMaterialRequest = z.input<typeof enrichMaterialRequestSchema>;
+export type EnrichMaterialInput = z.output<typeof enrichMaterialRequestSchema>;
+
+/** Drops a single bad optional value instead of failing the whole draft. */
+const optional = <T extends z.ZodType>(schema: T) => z.preprocess(absentToUndefined, schema.optional()).catch(undefined);
+
+/**
+ * A draft the user reviews before saving. Text fields may be empty: the model
+ * is told to leave out anything it isn't sure of rather than guess.
+ */
+export const materialDraftSchema = z.object({
+  type: z.enum(MATERIAL_TYPES).catch("custom"),
+  title: clampedText(300).default(""),
+  author: clampedText(200).default(""),
+  url: optional(z.url({ protocol: /^https?$/ }).max(2000)),
+  tagline: clampedText(300).default(""),
+  summary: clampedText(2000).default(""),
+  skillIds: z.array(z.string()).max(MAX_ENRICH_SKILLS).catch([]).default([]),
+  estimatedHours: optional(z.number().positive().max(1000)),
+  level: optional(z.enum(MATERIAL_LEVELS)),
+  cost: optional(z.enum(MATERIAL_COSTS)),
+});
+export type MaterialDraft = z.infer<typeof materialDraftSchema>;
+
+/** Keeps only skill ids the user actually has (in their order), without duplicates. */
+export function restrictDraftSkills(draft: MaterialDraft, skills: readonly { id: string }[]): MaterialDraft {
+  const chosen = new Set(draft.skillIds);
+  return { ...draft, skillIds: skills.map((skill) => skill.id).filter((id) => chosen.has(id)) };
+}
 
 // --- Errors -----------------------------------------------------------------------
 

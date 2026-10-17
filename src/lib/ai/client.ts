@@ -4,10 +4,13 @@ import {
   aiErrorResponseSchema,
   aiStatusSchema,
   limitExistingTitles,
+  materialDraftSchema,
   recommendationsSchema,
   summaryFeedbackSchema,
   type AIErrorCode,
   type AIStatus,
+  type EnrichMaterialRequest,
+  type MaterialDraft,
   type RecommendRequest,
   type RecommendResponse,
   type RefineSummaryRequest,
@@ -70,6 +73,10 @@ export function requestRecommendations(input: RecommendRequest, signal?: AbortSi
   // Large libraries would make the payload (and prompt) huge; send a bounded list.
   const body = { ...input, existingTitles: limitExistingTitles(input.existingTitles ?? []) };
   return requestJson("/api/ai/recommend", recommendationsSchema, postJson(body, signal));
+}
+
+export function requestMaterialDraft(input: EnrichMaterialRequest, signal?: AbortSignal): Promise<MaterialDraft> {
+  return requestJson("/api/ai/enrich-material", materialDraftSchema, postJson(input, signal));
 }
 
 export function requestSummaryFeedback(input: RefineSummaryRequest, signal?: AbortSignal): Promise<SummaryFeedback> {

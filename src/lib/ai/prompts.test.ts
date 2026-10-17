@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildRecommendPrompt, buildRefineSummaryPrompt, RECOMMEND_SYSTEM_PROMPT } from "./prompts";
+import {
+  buildEnrichMaterialPrompt,
+  buildRecommendPrompt,
+  buildRefineSummaryPrompt,
+  ENRICH_MATERIAL_SYSTEM_PROMPT,
+  RECOMMEND_SYSTEM_PROMPT,
+} from "./prompts";
 
 describe("buildRecommendPrompt", () => {
   it("asks only for real resources and excludes existing titles", () => {
@@ -30,6 +36,34 @@ describe("buildRecommendPrompt", () => {
     expect(prompt).toContain("- Present a roadmap to leadership");
     expect(prompt).toContain("Related skills: Roadmapping, Communication");
     expect(prompt).not.toContain("already has these materials");
+  });
+});
+
+describe("buildEnrichMaterialPrompt", () => {
+  it("lists the user's skills as data and limits skillIds to them in the output schema", () => {
+    const spec = buildEnrichMaterialPrompt({
+      input: "Shape Up",
+      skills: [
+        { id: "roadmapping", name: "Roadmapping" },
+        { id: "custom-1", name: "Negotiation <b>" },
+      ],
+    });
+
+    expect(spec.systemPrompt).toBe(ENRICH_MATERIAL_SYSTEM_PROMPT);
+    expect(spec.systemPrompt).toMatch(/don't invent facts/i);
+    expect(spec.systemPrompt).toMatch(/cannot open links/i);
+    expect(spec.prompt).toContain('<user_data label="pasted">\nShape Up\n</user_data>');
+    expect(spec.prompt).toContain("custom-1: Negotiation ‹b›");
+    expect(spec.jsonSchema).toMatchObject({
+      properties: { skillIds: { maxItems: 3, items: { enum: ["roadmapping", "custom-1"] } } },
+      required: ["type", "title", "author", "tagline", "summary", "skillIds"],
+    });
+  });
+
+  it("allows no skill ids when the user has no skills", () => {
+    const spec = buildEnrichMaterialPrompt({ input: "https://example.com/post", skills: [] });
+    expect(spec.prompt).toContain("no skills to choose from");
+    expect(spec.jsonSchema).toMatchObject({ properties: { skillIds: { maxItems: 0 } } });
   });
 });
 

@@ -71,6 +71,11 @@ export interface AppActions {
   /** Deletes a custom material and the plan items that use it. */
   deleteCustomMaterial: (id: ID) => void;
 
+  // My Library
+  /** Saves a curated material to My Library. Unknown ids and the user's own materials are ignored. */
+  saveMaterial: (id: ID) => void;
+  unsaveMaterial: (id: ID) => void;
+
   // Objectives & key results
   addObjective: (input: NewObjective) => ID;
   updateObjective: (id: ID, patch: ObjectivePatch) => void;
@@ -202,6 +207,16 @@ export const useAppStore = create<AppState>()(
             customMaterials: data.customMaterials.filter((m) => m.id !== id),
             planItems: data.planItems.filter((item) => item.materialId !== id),
           })),
+
+        // --- My Library -----------------------------------------------------------
+        saveMaterial: (id) =>
+          update((data) => {
+            const saved = data.savedMaterialIds ?? [];
+            if (saved.includes(id) || !findMaterial(id, [])) return data;
+            return { ...data, savedMaterialIds: [...saved, id] };
+          }),
+        unsaveMaterial: (id) =>
+          update((data) => ({ ...data, savedMaterialIds: (data.savedMaterialIds ?? []).filter((saved) => saved !== id) })),
 
         // --- Objectives & key results -------------------------------------------
         addObjective: (input) => {
