@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { persist } from "zustand/middleware";
 import { BUILT_IN_SKILLS, DEMO_DATA, findMaterial } from "@/lib/catalog";
 import {
   APP_DATA_VERSION,
@@ -33,13 +33,16 @@ import type {
   TimeLog,
 } from "@/lib/domain/types";
 import { isDemoMode } from "@/lib/env";
+import { saveBackup } from "./backup";
 import { migrateAppData } from "./migrations";
 import { validateAppData, type ValidationResult } from "./schema";
 import { parseImportedData, serializeAppData } from "./serialization";
+import { createSafeStorage } from "./storage";
 
 export const STORAGE_KEY = "growloop:data";
-/** Where unreadable persisted data is copied before it would be overwritten. */
-export const BACKUP_STORAGE_KEY = "growloop:data:backup";
+
+/** What is read back from storage; untrusted until validated in `merge`. */
+type PersistedState = { data: unknown };
 
 type SkillPatch = Partial<Pick<Skill, "name" | "description" | "icon" | "color">>;
 type MaterialPatch = Partial<Omit<Material, "id" | "curated">>;
@@ -305,7 +308,7 @@ export const useAppStore = create<AppState>()(
     {
       name: STORAGE_KEY,
       version: APP_DATA_VERSION,
-      storage: createJSONStorage(() => localStorage),
+      storage: createSafeStorage<PersistedState>(),
       partialize: (state) => ({ data: state.data }),
       // Rehydrated explicitly after mount (see StoreHydrator) so server and first client render match.
       skipHydration: true,
@@ -324,7 +327,7 @@ export const useAppStore = create<AppState>()(
         const result = validateAppData((persisted as { data?: unknown } | null)?.data);
         if (result.ok) return { ...current, data: result.data };
 
-        backUpUnreadableData();
+        backUpRawSavedData();
         console.warn("[growloop] Saved data is invalid and was backed up; starting fresh.", result.error);
         return current;
       },
@@ -333,11 +336,11 @@ export const useAppStore = create<AppState>()(
 );
 
 /** Keeps a copy of the raw saved value so a failed validation never silently destroys user data. */
-function backUpUnreadableData() {
+function backUpRawSavedData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) localStorage.setItem(BACKUP_STORAGE_KEY, raw);
+    if (raw) saveBackup(raw);
   } catch {
-    // Storage unavailable (private mode, quota): nothing to preserve.
+    // Storage unavailable: nothing to preserve.
   }
 }

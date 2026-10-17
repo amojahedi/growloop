@@ -1,5 +1,6 @@
 import { SproutIcon } from "lucide-react";
 import Link from "next/link";
+import { BackupBanner } from "@/components/app/backup-banner";
 import { MonthSwitcher } from "./month-switcher";
 import { SidebarNav } from "./sidebar-nav";
 import { ThemeToggle } from "./theme-toggle";
@@ -16,6 +17,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <SidebarNav />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
+        <BackupBanner />
         <header className="flex items-center justify-between gap-2 border-b px-4 py-2 md:px-6">
           <MonthSwitcher />
           <ThemeToggle />

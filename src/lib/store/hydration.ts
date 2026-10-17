@@ -3,8 +3,9 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { STORAGE_KEY, useAppStore } from "./app-store";
 
-const subscribe = (onChange: () => void) => useAppStore.persist.onFinishHydration(onChange);
-const getSnapshot = () => useAppStore.persist.hasHydrated();
+// `persist` is accessed defensively: without usable storage there is nothing to hydrate.
+const subscribe = (onChange: () => void) => useAppStore.persist?.onFinishHydration(onChange) ?? (() => {});
+const getSnapshot = () => useAppStore.persist?.hasHydrated() ?? true;
 const getServerSnapshot = () => false;
 
 /**
@@ -22,10 +23,10 @@ export function useStoreHydrated(): boolean {
  */
 export function useStoreRehydration(): void {
   useEffect(() => {
-    void useAppStore.persist.rehydrate();
+    void useAppStore.persist?.rehydrate();
 
     const onStorage = (event: StorageEvent) => {
-      if (event.key === STORAGE_KEY) void useAppStore.persist.rehydrate();
+      if (event.key === STORAGE_KEY) void useAppStore.persist?.rehydrate();
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);

@@ -17,7 +17,8 @@ vi.mock("@/lib/catalog", async () => {
   };
 });
 
-const { BACKUP_STORAGE_KEY, STORAGE_KEY, emptyWorkspace, useAppStore } = await import("./app-store");
+const { STORAGE_KEY, emptyWorkspace, useAppStore } = await import("./app-store");
+const { BACKUP_STORAGE_KEY } = await import("./backup");
 
 const store = () => useAppStore.getState();
 const data = () => useAppStore.getState().data;
@@ -222,6 +223,35 @@ describe("persistence", () => {
     expect(data()).toEqual(emptyWorkspace());
     expect(localStorage.getItem(BACKUP_STORAGE_KEY)).toBe(raw);
     expect(warn).toHaveBeenCalled();
+  });
+
+  it("backs up unparseable JSON instead of getting stuck loading", async () => {
+    localStorage.setItem(STORAGE_KEY, "{not json");
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await useAppStore.persist.rehydrate();
+
+    expect(useAppStore.persist.hasHydrated()).toBe(true);
+    expect(data()).toEqual(emptyWorkspace());
+    expect(localStorage.getItem(BACKUP_STORAGE_KEY)).toBe("{not json");
+  });
+
+  it("keeps working in memory when storage is blocked", async () => {
+    // jsdom's Storage keeps methods on the prototype; the Node 25 test stand-in on the instance.
+    const target: Storage = localStorage instanceof Storage ? Storage.prototype : localStorage;
+    const blocked = () => {
+      throw new DOMException("Blocked", "SecurityError");
+    };
+    const getItem = vi.spyOn(target, "getItem").mockImplementation(blocked);
+    vi.spyOn(target, "setItem").mockImplementation(blocked);
+
+    await useAppStore.persist.rehydrate();
+    expect(useAppStore.persist.hasHydrated()).toBe(true);
+
+    expect(getItem).toHaveBeenCalled();
+
+    store().addSkill({ name: "Negotiation" });
+    expect(data().skills).toHaveLength(3);
   });
 
   it("does not load data written by a newer version", async () => {
