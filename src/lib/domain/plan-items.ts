@@ -84,7 +84,3 @@ export function addTimeLog(item: PlanItem, log: Omit<TimeLog, "id">): PlanItem {
 export function removeTimeLog(item: PlanItem, logId: ID): PlanItem {
   return { ...item, timeLogs: item.timeLogs.filter((log) => log.id !== logId) };
 }
-
-export function loggedHours(item: PlanItem): number {
-  return item.timeLogs.reduce((sum, log) => sum + log.hours, 0);
-}

@@ -92,7 +92,7 @@ describe("export / import", () => {
     expect(parseImportedData(JSON.stringify({ ...sample(), skills: "nope" }))).toMatchObject({ ok: false });
   });
 
-  it("suggests a dated file name", () => {
-    expect(exportFileName(new Date("2026-10-17T10:00:00Z"))).toBe("growloop-2026-10-17.json");
+  it("suggests a file name with the local date", () => {
+    expect(exportFileName(new Date(2026, 9, 17, 23, 30))).toBe("growloop-2026-10-17.json");
   });
 });

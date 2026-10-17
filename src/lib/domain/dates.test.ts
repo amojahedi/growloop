@@ -9,12 +9,9 @@ import {
   daysInMonth,
   formatMonth,
   formatQuarter,
-  isMonthKey,
-  isQuarterKey,
   monthKey,
   monthOf,
   monthsInQuarter,
-  nextMonth,
   prevMonth,
   quarterOf,
   toDayKey,
@@ -26,16 +23,8 @@ describe("month keys", () => {
     expect(monthKey(new Date(2026, 9, 31, 23, 59))).toBe("2026-10");
   });
 
-  it("validates month and quarter keys", () => {
-    expect(isMonthKey("2026-10")).toBe(true);
-    expect(isMonthKey("2026-13")).toBe(false);
-    expect(isMonthKey("2026-1")).toBe(false);
-    expect(isQuarterKey("2026-Q4")).toBe(true);
-    expect(isQuarterKey("2026-Q5")).toBe(false);
-  });
-
   it("steps across year boundaries", () => {
-    expect(nextMonth("2026-12")).toBe("2027-01");
+    expect(addMonths("2026-12", 1)).toBe("2027-01");
     expect(prevMonth("2026-01")).toBe("2025-12");
     expect(addMonths("2026-10", 15)).toBe("2028-01");
     expect(addMonths("2026-10", -22)).toBe("2024-12");
@@ -48,7 +37,7 @@ describe("month keys", () => {
   });
 
   it("rejects malformed keys", () => {
-    expect(() => nextMonth("October")).toThrow(/Invalid month key/);
+    expect(() => addMonths("October", 1)).toThrow(/Invalid month key/);
   });
 });
 

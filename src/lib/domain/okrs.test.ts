@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makeItem, makeKeyResult, makeObjective } from "@/lib/testing/fixtures";
-import { findKeyResult, keyResultProgress, objectiveProgress, objectivesForQuarter } from "./okrs";
+import { keyResultProgress, objectiveProgress, objectivesForQuarter } from "./okrs";
 
 describe("keyResultProgress", () => {
   it("auto mode: done / total of linked items", () => {
@@ -56,13 +56,5 @@ describe("lookups", () => {
     const q4 = makeObjective({ quarter: "2026-Q4" });
     const q1 = makeObjective({ quarter: "2027-Q1" });
     expect(objectivesForQuarter([q4, q1], "2026-Q4")).toEqual([q4]);
-  });
-
-  it("finds a key result with its objective", () => {
-    const kr = makeKeyResult({ id: "target" });
-    const objective = makeObjective({ keyResults: [makeKeyResult(), kr] });
-
-    expect(findKeyResult([makeObjective(), objective], "target")).toEqual({ objective, keyResult: kr });
-    expect(findKeyResult([objective], "missing")).toBeUndefined();
   });
 });

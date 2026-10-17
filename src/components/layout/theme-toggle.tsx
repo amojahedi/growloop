@@ -17,7 +17,7 @@ const MODES = [
   { value: "system", label: "System", icon: MonitorIcon },
 ] as const;
 
-/** Quick light / dark / system toggle. The style theme is chosen in Settings. */
+/** Light / dark / system toggle (defaults to following the system). */
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
 
@@ -25,7 +25,7 @@ export function ThemeToggle() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon-sm" aria-label="Color mode">
-          {/* Icon swap is pure CSS, so it is correct before hydration. */}
+          {/* Pure CSS swap keyed off the `dark` class next-themes sets before paint, so no mismatch on hydration. */}
           <SunIcon className="dark:hidden" />
           <MoonIcon className="hidden dark:block" />
         </Button>

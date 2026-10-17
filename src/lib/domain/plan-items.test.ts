@@ -3,7 +3,6 @@ import { makeItem } from "@/lib/testing/fixtures";
 import {
   addTask,
   addTimeLog,
-  loggedHours,
   removeTask,
   removeTimeLog,
   renameTask,
@@ -81,13 +80,13 @@ describe("reminder", () => {
 });
 
 describe("time logs", () => {
-  it("adds and removes logs and totals hours", () => {
+  it("adds and removes logs", () => {
     let item = addTimeLog(makeItem(), { date: "2026-10-17", hours: 1.5 });
     item = addTimeLog(item, { date: "2026-10-18", hours: 0.5 });
-    expect(loggedHours(item)).toBe(2);
+    expect(item.timeLogs.map((log) => log.hours)).toEqual([1.5, 0.5]);
 
     item = removeTimeLog(item, item.timeLogs[0].id);
-    expect(loggedHours(item)).toBe(0.5);
+    expect(item.timeLogs.map((log) => log.hours)).toEqual([0.5]);
   });
 
   it("rejects non-positive hours", () => {

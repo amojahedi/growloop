@@ -40,14 +40,3 @@ export function objectivesForQuarter(objectives: readonly Objective[], quarter: 
   return objectives.filter((objective) => objective.quarter === quarter);
 }
 
-/** Finds a key result and its parent objective by KR id. */
-export function findKeyResult(
-  objectives: readonly Objective[],
-  keyResultId: string,
-): { objective: Objective; keyResult: KeyResult } | undefined {
-  for (const objective of objectives) {
-    const keyResult = objective.keyResults.find((kr) => kr.id === keyResultId);
-    if (keyResult) return { objective, keyResult };
-  }
-  return undefined;
-}

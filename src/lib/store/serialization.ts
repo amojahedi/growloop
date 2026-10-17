@@ -1,3 +1,4 @@
+import { dayKey } from "@/lib/domain/dates";
 import type { AppData } from "@/lib/domain/types";
 import { migrateAppData, MigrationError } from "./migrations";
 import { validateAppData, type ValidationResult } from "./schema";
@@ -17,9 +18,9 @@ export function serializeAppData(data: AppData, now: string = new Date().toISOSt
   return JSON.stringify(file, null, 2);
 }
 
-/** Suggested download name, e.g. "growloop-2026-10-17.json". */
+/** Suggested download name using the local date, e.g. "growloop-2026-10-17.json". */
 export function exportFileName(now: Date = new Date()): string {
-  return `growloop-${now.toISOString().slice(0, 10)}.json`;
+  return `growloop-${dayKey(now)}.json`;
 }
 
 /**

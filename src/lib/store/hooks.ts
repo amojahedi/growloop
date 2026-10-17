@@ -13,7 +13,6 @@ import { useUIStore } from "./ui-store";
 export const useAppData = () => useAppStore((state) => state.data);
 export const usePlanItems = () => useAppStore((state) => state.data.planItems);
 export const useObjectives = () => useAppStore((state) => state.data.objectives);
-export const useRollovers = () => useAppStore((state) => state.data.rollovers);
 
 /** Skills in display order; hidden skills are excluded unless requested. */
 export function useSkills({ includeHidden = false }: { includeHidden?: boolean } = {}): Skill[] {

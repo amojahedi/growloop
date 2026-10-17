@@ -17,14 +17,6 @@ const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
 const pad = (value: number) => String(value).padStart(2, "0");
 
-export function isMonthKey(value: string): value is MonthKey {
-  return MONTH_KEY.test(value);
-}
-
-export function isQuarterKey(value: string): value is QuarterKey {
-  return QUARTER_KEY.test(value);
-}
-
 export function parseMonthKey(month: MonthKey): { year: number; month: number } {
   const match = MONTH_KEY.exec(month);
   if (!match) throw new Error(`Invalid month key: "${month}"`);
@@ -69,7 +61,6 @@ export function addMonths(month: MonthKey, delta: number): MonthKey {
   return `${Math.floor(index / 12)}-${pad((index % 12) + 1)}`;
 }
 
-export const nextMonth = (month: MonthKey): MonthKey => addMonths(month, 1);
 export const prevMonth = (month: MonthKey): MonthKey => addMonths(month, -1);
 
 /** Negative when `a` is before `b`. Month keys sort lexicographically. */
