@@ -1,7 +1,7 @@
 import { dayKey } from "@/lib/domain/dates";
-import type { AppData } from "@/lib/domain/types";
+import type { Workspace } from "@/lib/domain/types";
 import { migrateAppData, MigrationError } from "./migrations";
-import { validateAppData, type ValidationResult } from "./schema";
+import { validateWorkspace, type ValidationResult } from "./schema";
 
 /** JSON export/import of the whole workspace. */
 
@@ -10,10 +10,10 @@ export const EXPORT_APP_ID = "growloop";
 export interface ExportFile {
   app: typeof EXPORT_APP_ID;
   exportedAt: string;
-  data: AppData;
+  data: Workspace;
 }
 
-export function serializeAppData(data: AppData, now: string = new Date().toISOString()): string {
+export function serializeWorkspace(data: Workspace, now: string = new Date().toISOString()): string {
   const file: ExportFile = { app: EXPORT_APP_ID, exportedAt: now, data };
   return JSON.stringify(file, null, 2);
 }
@@ -24,10 +24,10 @@ export function exportFileName(now: Date = new Date()): string {
 }
 
 /**
- * Parses an export file (or a bare `AppData` object), migrating older versions
+ * Parses an export file (or bare workspace data), migrating older versions
  * and validating the result. Never throws.
  */
-export function parseImportedData(json: string): ValidationResult<AppData> {
+export function parseImportedData(json: string): ValidationResult<Workspace> {
   let parsed: unknown;
   try {
     parsed = JSON.parse(json);
@@ -46,7 +46,7 @@ export function parseImportedData(json: string): ValidationResult<AppData> {
   }
 
   try {
-    return validateAppData(migrateAppData(payload, version));
+    return validateWorkspace(migrateAppData(payload, version));
   } catch (error) {
     if (error instanceof MigrationError) return { ok: false, error: error.message };
     throw error;

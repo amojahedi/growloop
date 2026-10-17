@@ -1,12 +1,13 @@
 import { createId } from "./ids";
-import type { AppData, KeyResult, Material, Objective, QuarterKey, Skill } from "./types";
+import type { KeyResult, Material, Objective, QuarterKey, Skill, Workspace } from "./types";
 
 /** Factories for user-created records. */
 
-export const APP_DATA_VERSION = 1 as const;
+/** Current schema version of stored data (see src/lib/store/migrations.ts). */
+export const APP_DATA_VERSION = 2 as const;
 
 /** A fresh workspace: the given starter skills and nothing planned yet. */
-export function emptyAppData(skills: readonly Skill[]): AppData {
+export function newWorkspace(skills: readonly Skill[]): Workspace {
   return {
     version: APP_DATA_VERSION,
     skills: skills.map((skill) => ({ ...skill })),
@@ -14,6 +15,7 @@ export function emptyAppData(skills: readonly Skill[]): AppData {
     objectives: [],
     planItems: [],
     rollovers: [],
+    activity: [],
   };
 }
 

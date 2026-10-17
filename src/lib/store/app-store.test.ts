@@ -1,23 +1,25 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { AppData } from "@/lib/domain/types";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Workspace } from "@/lib/domain/types";
 
 vi.mock("@/lib/catalog", async () => {
-  const { makeData, makeMaterial, makeSkill } = await import("@/lib/testing/fixtures");
+  const { makeDataV1, makeMaterial, makeSkill } = await import("@/lib/testing/fixtures");
   const BUILT_IN_SKILLS = [makeSkill({ id: "roadmapping" }), makeSkill({ id: "discovery", name: "Discovery" })];
   const CURATED_MATERIALS = [makeMaterial({ id: "inspired", skillIds: ["discovery"] })];
   const getMaterialById = (id: string) => CURATED_MATERIALS.find((m) => m.id === id);
   return {
     BUILT_IN_SKILLS,
     CURATED_MATERIALS,
-    DEMO_DATA: makeData({ skills: BUILT_IN_SKILLS, planItems: [] , objectives: [] , rollovers: [], customMaterials: [] , version: 1 }),
+    DEMO_DATA: makeDataV1({ skills: BUILT_IN_SKILLS }),
     getMaterialById,
     suggestedTasksFor: () => ["Summarize in my words"],
     findMaterial: (id: string, custom: { id: string }[]) => getMaterialById(id) ?? custom.find((m) => m.id === id),
   };
 });
 
-const { STORAGE_KEY, emptyWorkspace, useAppStore } = await import("./app-store");
+const { STORAGE_KEY, useAppStore } = await import("./app-store");
+const { emptyWorkspace } = await import("./seed");
+const { hoursLoggedInMonth, monthActivity } = await import("@/lib/domain/dashboard");
 const { BACKUP_STORAGE_KEY } = await import("./backup");
 
 const store = () => useAppStore.getState();
@@ -33,7 +35,8 @@ describe("initial state", () => {
   it("starts with the built-in skills and an empty plan", () => {
     expect(data().skills.map((skill) => skill.id)).toEqual(["roadmapping", "discovery"]);
     expect(data().planItems).toEqual([]);
-    expect(data().version).toBe(1);
+    expect(data().version).toBe(2);
+    expect(data().activity).toEqual([]);
   });
 });
 
@@ -153,6 +156,38 @@ describe("objectives", () => {
   });
 });
 
+describe("activity log", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("counts note edits on different days as separate active days", () => {
+    const id = store().addPlanItem("inspired", "2026-10")!;
+    for (const [day, text] of [["03", "a"], ["04", "b"], ["04", "c"], ["06", "d"]]) {
+      vi.setSystemTime(new Date(2026, 9, Number(day), 12));
+      store().setNotes(id, text);
+    }
+    expect(monthActivity(data().activity, "2026-10").activeDays).toBe(3);
+  });
+
+  it("keeps logged hours after the item is dropped at rollover", () => {
+    vi.setSystemTime(new Date(2026, 8, 20, 12));
+    const id = store().addPlanItem("inspired", "2026-09")!;
+    store().logTime(id, { date: "2026-09-20", hours: 2 });
+
+    vi.setSystemTime(new Date(2026, 9, 1, 12));
+    store().applyRollover("2026-10", { [id]: "drop" });
+
+    expect(item(id)).toBeUndefined();
+    expect(hoursLoggedInMonth(data().activity, "2026-09")).toBe(2);
+  });
+
+  it("forgets a time log entry that is deleted", () => {
+    const id = store().addPlanItem("inspired", "2026-10")!;
+    store().logTime(id, { date: "2026-10-02", hours: 1 });
+    store().deleteTimeLog(id, item(id)!.timeLogs[0].id);
+    expect(hoursLoggedInMonth(data().activity, "2026-10")).toBeNull();
+  });
+});
+
 describe("rollover", () => {
   it("applies decisions and records the review", () => {
     const carry = store().addPlanItem("inspired", "2026-09")!;
@@ -194,19 +229,19 @@ describe("data management", () => {
 });
 
 describe("persistence", () => {
-  const saved = (value: unknown, version = 1) => localStorage.setItem(STORAGE_KEY, JSON.stringify({ state: { data: value }, version }));
+  const saved = (value: unknown, version = 2) => localStorage.setItem(STORAGE_KEY, JSON.stringify({ state: { data: value }, version }));
 
   it("saves data under a versioned key", () => {
     store().addSkill({ name: "Negotiation" });
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
 
-    expect(stored.version).toBe(1);
+    expect(stored.version).toBe(2);
     expect(stored.state.data.skills).toHaveLength(3);
     expect(stored.state).not.toHaveProperty("addSkill");
   });
 
   it("rehydrates valid saved data", async () => {
-    const savedData: AppData = { ...emptyWorkspace(), skills: [] };
+    const savedData: Workspace = { ...emptyWorkspace(), skills: [] };
     saved(savedData);
 
     await useAppStore.persist.rehydrate();
@@ -214,7 +249,7 @@ describe("persistence", () => {
   });
 
   it("backs up and ignores invalid saved data", async () => {
-    saved({ version: 1, skills: "corrupt" });
+    saved({ version: 2, skills: "corrupt" });
     const raw = localStorage.getItem(STORAGE_KEY);
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -255,11 +290,21 @@ describe("persistence", () => {
   });
 
   it("does not load data written by a newer version", async () => {
-    saved({ ...emptyWorkspace(), version: 2, skills: [] }, 2);
+    saved({ ...emptyWorkspace(), version: 3, skills: [] }, 3);
     vi.spyOn(console, "warn").mockImplementation(() => {});
 
     await useAppStore.persist.rehydrate();
     expect(data()).toEqual(emptyWorkspace());
-    expect(localStorage.getItem(BACKUP_STORAGE_KEY)).toContain('"version":2');
+    expect(localStorage.getItem(BACKUP_STORAGE_KEY)).toContain('"version":3');
+  });
+
+  it("upgrades v1 saves, backfilling the activity log", async () => {
+    const { makeDataV1, makeItem, at } = await import("@/lib/testing/fixtures");
+    const v1 = makeDataV1({ planItems: [makeItem({ status: "done", completedAt: at("2026-10-03") })] });
+    saved(v1, 1);
+
+    await useAppStore.persist.rehydrate();
+    expect(data().version).toBe(2);
+    expect(data().activity.map((event) => event.kind)).toEqual(["item_completed"]);
   });
 });

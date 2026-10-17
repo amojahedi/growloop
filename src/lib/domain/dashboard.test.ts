@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { at, makeItem, makeSkill } from "@/lib/testing/fixtures";
+import { at, makeEvent, makeItem, makeSkill } from "@/lib/testing/fixtures";
 import {
   activityCounts,
   completedInMonth,
@@ -36,17 +36,19 @@ describe("completed items (core metric)", () => {
 });
 
 describe("hoursLoggedInMonth", () => {
-  it("sums time logs in the month", () => {
-    const items = [
-      makeItem({ timeLogs: [{ id: "1", date: "2026-10-01", hours: 1.5 }, { id: "2", date: "2026-09-30", hours: 9 }] }),
-      makeItem({ timeLogs: [{ id: "3", date: "2026-10-20", hours: 2 }] }),
+  it("sums logged hours in the month from the activity log", () => {
+    const activity = [
+      makeEvent({ kind: "time_logged", day: "2026-10-01", hours: 1.5 }),
+      makeEvent({ kind: "time_logged", day: "2026-09-30", hours: 9 }),
+      makeEvent({ kind: "time_logged", day: "2026-10-20", hours: 2 }),
+      makeEvent({ kind: "task_completed", day: "2026-10-20" }),
     ];
-    expect(hoursLoggedInMonth(items, "2026-10")).toBe(3.5);
+    expect(hoursLoggedInMonth(activity, "2026-10")).toBe(3.5);
   });
 
   it("returns null when nothing is logged, since hours are optional", () => {
-    expect(hoursLoggedInMonth([makeItem()], "2026-10")).toBeNull();
-    expect(hoursLoggedInMonth([makeItem({ timeLogs: [{ id: "1", date: "2026-09-01", hours: 1 }] })], "2026-10")).toBeNull();
+    expect(hoursLoggedInMonth([], "2026-10")).toBeNull();
+    expect(hoursLoggedInMonth([makeEvent({ kind: "time_logged", day: "2026-09-01", hours: 1 })], "2026-10")).toBeNull();
   });
 });
 
@@ -56,59 +58,47 @@ describe("skillInvestment", () => {
   const hidden = makeSkill({ id: "hidden", name: "Hidden", hidden: true });
 
   const items = [
-    makeItem({
-      skillIds: ["roadmapping", "discovery"],
-      status: "done",
-      completedAt: at("2026-10-05"),
-      timeLogs: [{ id: "t1", date: "2026-10-04", hours: 2 }],
-    }),
+    makeItem({ skillIds: ["roadmapping", "discovery"], status: "done", completedAt: at("2026-10-05") }),
     makeItem({ skillIds: ["roadmapping"], status: "todo" }),
-    makeItem({ skillIds: ["roadmapping"], month: "2026-11", timeLogs: [{ id: "t2", date: "2026-11-02", hours: 4 }] }),
+    makeItem({ skillIds: ["roadmapping"], month: "2026-11" }),
     makeItem({ skillIds: ["hidden"] }),
+  ];
+  const activity = [
+    makeEvent({ kind: "time_logged", day: "2026-10-04", hours: 2, skillIds: ["roadmapping", "discovery"] }),
+    makeEvent({ kind: "time_logged", day: "2026-11-02", hours: 4, skillIds: ["roadmapping"] }),
   ];
 
   it("reports planned, completed and hours per visible skill for a month", () => {
-    expect(skillInvestment(items, [roadmapping, discovery, hidden], "2026-10")).toEqual([
+    expect(skillInvestment(items, activity, [roadmapping, discovery, hidden], "2026-10")).toEqual([
       { skillId: "roadmapping", name: "Roadmapping", planned: 2, completed: 1, hours: 2 },
       { skillId: "discovery", name: "Discovery", planned: 1, completed: 1, hours: 2 },
     ]);
   });
 
   it("aggregates over several months (e.g. a quarter)", () => {
-    const [first] = skillInvestment(items, [roadmapping], ["2026-10", "2026-11", "2026-12"]);
+    const [first] = skillInvestment(items, activity, [roadmapping], ["2026-10", "2026-11", "2026-12"]);
     expect(first).toEqual({ skillId: "roadmapping", name: "Roadmapping", planned: 3, completed: 1, hours: 6 });
   });
 
+  it("keeps hours logged on items that were later deleted", () => {
+    const [first] = skillInvestment([], activity, [roadmapping], "2026-11");
+    expect(first.hours).toBe(4);
+  });
+
   it("keeps skills with no activity so radar axes stay stable", () => {
-    expect(skillInvestment([], [roadmapping], "2026-10")).toEqual([
+    expect(skillInvestment([], [], [roadmapping], "2026-10")).toEqual([
       { skillId: "roadmapping", name: "Roadmapping", planned: 0, completed: 0, hours: 0 },
     ]);
   });
 });
 
 describe("activity & streaks", () => {
-  const items = [
-    makeItem({
-      status: "done",
-      completedAt: at("2026-10-03"),
-      summaryUpdatedAt: at("2026-10-04"),
-      tasks: [
-        { id: "t1", title: "Read", done: true, kind: "suggested", completedAt: at("2026-10-02") },
-        { id: "t2", title: "Open", done: false, kind: "custom" },
-      ],
-    }),
-    makeItem({
-      notesUpdatedAt: at("2026-10-10"),
-      timeLogs: [
-        { id: "l1", date: "2026-10-03", hours: 1 },
-        { id: "l2", date: "2026-10-09", hours: 1 },
-      ],
-    }),
-  ];
+  const activity = ["2026-10-02", "2026-10-03", "2026-10-03", "2026-10-04", "2026-10-09", "2026-10-10"].map((day) =>
+    makeEvent({ day }),
+  );
 
-  it("counts events per day from completions, tasks, time logs, notes and summaries", () => {
-    const counts = activityCounts(items);
-    expect(Object.fromEntries(counts)).toEqual({
+  it("counts events per day", () => {
+    expect(Object.fromEntries(activityCounts(activity))).toEqual({
       "2026-10-02": 1,
       "2026-10-03": 2,
       "2026-10-04": 1,
@@ -118,18 +108,18 @@ describe("activity & streaks", () => {
   });
 
   it("summarizes a month's activity calendar", () => {
-    const activity = monthActivity(items, "2026-10");
-    expect(activity.days).toHaveLength(31);
-    expect(activity.days[2]).toEqual({ date: "2026-10-03", count: 2 });
-    expect(activity.activeDays).toBe(5);
-    expect(activity.longestStreak).toBe(3);
+    const month = monthActivity(activity, "2026-10");
+    expect(month.days).toHaveLength(31);
+    expect(month.days[2]).toEqual({ date: "2026-10-03", count: 2 });
+    expect(month.activeDays).toBe(5);
+    expect(month.longestStreak).toBe(3);
   });
 
   it("computes the current streak ending today or yesterday", () => {
-    expect(currentStreak(items, "2026-10-10")).toBe(2);
-    expect(currentStreak(items, "2026-10-11")).toBe(2);
-    expect(currentStreak(items, "2026-10-05")).toBe(3);
-    expect(currentStreak(items, "2026-10-12")).toBe(0);
+    expect(currentStreak(activity, "2026-10-10")).toBe(2);
+    expect(currentStreak(activity, "2026-10-11")).toBe(2);
+    expect(currentStreak(activity, "2026-10-05")).toBe(3);
+    expect(currentStreak(activity, "2026-10-12")).toBe(0);
   });
 });
 

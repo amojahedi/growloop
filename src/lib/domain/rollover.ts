@@ -1,7 +1,7 @@
 import { nextOrder } from "./board";
 import { compareMonths, prevMonth } from "./dates";
 import { withStatus } from "./plan-items";
-import type { AppData, ID, MonthKey, PlanItem, RolloverDecision, RolloverRecord } from "./types";
+import type { ID, MonthKey, PlanItem, RolloverDecision, RolloverRecord, Workspace } from "./types";
 
 /**
  * Month-end review (ADR 002): planned work left unfinished in earlier months
@@ -45,7 +45,7 @@ export function bulkDecisions(items: readonly PlanItem[], decision: RolloverDeci
 }
 
 export interface ApplyRolloverResult {
-  data: AppData;
+  data: Workspace;
   record: RolloverRecord;
 }
 
@@ -54,10 +54,10 @@ export interface ApplyRolloverResult {
  * review) are left untouched, so a review can be completed in several passes.
  * - carry_over: moves to `toMonth`, keeping its status; the old month is appended to `carriedFrom`.
  * - backlog: moves to `toMonth` with status "backlog"; also recorded in `carriedFrom`.
- * - drop: deletes the item.
+ * - drop: deletes the item. Its past activity (completed tasks, logged hours) stays in the log.
  */
 export function applyRollover(
-  data: AppData,
+  data: Workspace,
   toMonth: MonthKey,
   decisions: Readonly<Record<ID, RolloverDecision>>,
   now: string,

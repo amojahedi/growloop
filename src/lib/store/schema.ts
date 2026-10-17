@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { SKILL_COLORS, type AppData } from "@/lib/domain/types";
+import { SKILL_COLORS, type AppData, type Workspace } from "@/lib/domain/types";
 
 /**
- * Runtime schema for `AppData`. Used to validate anything that enters the store
- * from outside the type system: persisted localStorage state and imported JSON.
- * The `satisfies` clause keeps it in lockstep with the TypeScript contract.
+ * Runtime schemas for stored data. Used to validate anything that enters the
+ * store from outside the type system: persisted localStorage state and
+ * imported JSON. The `satisfies` clauses keep them in lockstep with the types.
  */
 
 const id = z.string().min(1);
@@ -107,7 +107,8 @@ const rolloverRecordSchema = z.object({
   counts: z.object({ carry_over: decisionCount, backlog: decisionCount, drop: decisionCount }).optional(),
 });
 
-export const appDataSchema = z.object({
+/** Schema v1 (before the activity log); used to upgrade old saves, imports and seed data. */
+export const appDataV1Schema = z.object({
   version: z.literal(1),
   skills: z.array(skillSchema),
   customMaterials: z.array(materialSchema),
@@ -116,11 +117,36 @@ export const appDataSchema = z.object({
   rollovers: z.array(rolloverRecordSchema),
 }) satisfies z.ZodType<AppData>;
 
+const activityEventSchema = z.object({
+  id,
+  kind: z.enum(["item_completed", "task_completed", "notes_edited", "summary_edited", "time_logged"]),
+  day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected a day like 2026-10-17"),
+  at: timestamp,
+  itemId: id,
+  materialId: id,
+  skillIds: z.array(id),
+  hours: z.number().positive().optional(),
+  refId: id.optional(),
+});
+
+/** Current schema (v2). */
+export const workspaceSchema = appDataV1Schema.extend({
+  version: z.literal(2),
+  activity: z.array(activityEventSchema),
+}) satisfies z.ZodType<Workspace>;
+
 export type ValidationResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
-/** Validates unknown input as `AppData`, with a readable error on failure. */
-export function validateAppData(input: unknown): ValidationResult<AppData> {
-  const result = appDataSchema.safeParse(input);
-  if (result.success) return { ok: true, data: result.data };
-  return { ok: false, error: z.prettifyError(result.error) };
+function toResult<T>(result: z.ZodSafeParseResult<T>): ValidationResult<T> {
+  return result.success ? { ok: true, data: result.data } : { ok: false, error: z.prettifyError(result.error) };
+}
+
+/** Validates unknown input as a current-schema `Workspace`, with a readable error on failure. */
+export function validateWorkspace(input: unknown): ValidationResult<Workspace> {
+  return toResult(workspaceSchema.safeParse(input));
+}
+
+/** Validates unknown input as schema v1 data. */
+export function validateAppDataV1(input: unknown): ValidationResult<AppData> {
+  return toResult(appDataV1Schema.safeParse(input));
 }

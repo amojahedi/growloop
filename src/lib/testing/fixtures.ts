@@ -1,4 +1,4 @@
-import type { AppData, KeyResult, Material, Objective, PlanItem, Skill } from "@/lib/domain/types";
+import type { ActivityEvent, AppData, KeyResult, Material, Objective, PlanItem, Skill, Workspace } from "@/lib/domain/types";
 
 /** Small builders for tests. Every builder takes overrides; ids are sequential and readable. */
 
@@ -69,14 +69,34 @@ export function makeObjective(overrides: Partial<Objective> = {}): Objective {
   };
 }
 
-export function makeData(overrides: Partial<AppData> = {}): AppData {
+export function makeData(overrides: Partial<Workspace> = {}): Workspace {
   return {
-    version: 1,
+    version: 2,
     skills: [],
     customMaterials: [],
     objectives: [],
     planItems: [],
     rollovers: [],
+    activity: [],
+    ...overrides,
+  };
+}
+
+/** Schema v1 data (before the activity log), e.g. authored seed data or an old export. */
+export function makeDataV1(overrides: Partial<AppData> = {}): AppData {
+  const { activity: _activity, ...rest } = makeData();
+  return { ...rest, version: 1, ...overrides };
+}
+
+export function makeEvent(overrides: Partial<ActivityEvent> = {}): ActivityEvent {
+  return {
+    id: nextId("event"),
+    kind: "task_completed",
+    day: "2026-10-01",
+    at: "2026-10-01T12:00:00.000Z",
+    itemId: "item-x",
+    materialId: "material-x",
+    skillIds: [],
     ...overrides,
   };
 }

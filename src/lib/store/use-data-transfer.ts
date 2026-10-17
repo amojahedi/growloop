@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { useActions } from "./hooks";
 import type { ValidationResult } from "./schema";
 import { exportFileName } from "./serialization";
-import type { AppData } from "@/lib/domain/types";
+import type { Workspace } from "@/lib/domain/types";
 
 /** Browser-side export (file download) and import (file read) of the workspace. */
 export function useDataTransfer() {
@@ -18,7 +18,7 @@ export function useDataTransfer() {
   }, [exportData]);
 
   const importFile = useCallback(
-    async (file: File): Promise<ValidationResult<AppData>> => importData(await file.text()),
+    async (file: File): Promise<ValidationResult<Workspace>> => importData(await file.text()),
     [importData],
   );
 

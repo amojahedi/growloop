@@ -147,6 +147,11 @@ export interface RolloverRecord {
   counts?: Record<RolloverDecision, number>;
 }
 
+/**
+ * A workspace snapshot in schema v1: the format curated seed data (DEMO_DATA)
+ * is authored in. The app stores a `Workspace` (current schema) and upgrades
+ * v1 data through the migrations in src/lib/store/migrations.ts.
+ */
 export interface AppData {
   version: 1;
   skills: Skill[];
@@ -155,4 +160,34 @@ export interface AppData {
   objectives: Objective[];
   planItems: PlanItem[];
   rollovers: RolloverRecord[];
+}
+
+export type ActivityKind = "item_completed" | "task_completed" | "notes_edited" | "summary_edited" | "time_logged";
+
+/**
+ * One entry in the append-only activity log. Streaks, active days and logged
+ * hours are computed from this log, so history survives later edits,
+ * unchecked tasks and deleted or dropped items.
+ */
+export interface ActivityEvent {
+  id: ID;
+  kind: ActivityKind;
+  /** Local calendar day the activity counts for, e.g. "2026-10-17". */
+  day: string;
+  /** When it was recorded (ISO timestamp). */
+  at: string;
+  itemId: ID;
+  materialId: ID;
+  /** The item's skills at the time, so per-skill history survives later edits. */
+  skillIds: ID[];
+  /** Hours, for "time_logged". */
+  hours?: number;
+  /** The task id ("task_completed") or time log id ("time_logged"). */
+  refId?: ID;
+}
+
+/** Everything the app stores locally (schema v2: v1 plus the activity log). */
+export interface Workspace extends Omit<AppData, "version"> {
+  version: 2;
+  activity: ActivityEvent[];
 }

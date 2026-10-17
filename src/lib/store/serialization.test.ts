@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { makeData, makeItem, makeObjective, makeKeyResult, makeSkill } from "@/lib/testing/fixtures";
+import { at, makeData, makeDataV1, makeEvent, makeItem, makeKeyResult, makeObjective, makeSkill } from "@/lib/testing/fixtures";
 import { migrateAppData, MigrationError } from "./migrations";
-import { validateAppData } from "./schema";
-import { exportFileName, parseImportedData, serializeAppData } from "./serialization";
+import { validateWorkspace } from "./schema";
+import { exportFileName, parseImportedData, serializeWorkspace } from "./serialization";
 
 const sample = () =>
   makeData({
@@ -19,18 +19,19 @@ const sample = () =>
     rollovers: [
       { fromMonth: "2026-09", toMonth: "2026-10", completedAt: "2026-10-01T08:00:00Z", counts: { carry_over: 1, backlog: 0, drop: 2 } },
     ],
+    activity: [makeEvent({ kind: "time_logged", hours: 1, refId: "log" })],
   });
 
-describe("validateAppData", () => {
+describe("validateWorkspace", () => {
   it("accepts valid data", () => {
     const data = sample();
-    expect(validateAppData(data)).toEqual({ ok: true, data });
+    expect(validateWorkspace(data)).toEqual({ ok: true, data });
   });
 
   it("rejects invalid data with a readable error", () => {
     const data = sample();
     const broken = { ...data, planItems: [{ ...data.planItems[0], month: "October", status: "blocked" }] };
-    const result = validateAppData(broken);
+    const result = validateWorkspace(broken);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -39,8 +40,11 @@ describe("validateAppData", () => {
     }
   });
 
-  it("rejects an unknown version", () => {
-    expect(validateAppData({ ...sample(), version: 2 }).ok).toBe(false);
+  it("rejects other versions and a missing activity log", () => {
+    expect(validateWorkspace({ ...sample(), version: 1 }).ok).toBe(false);
+    expect(validateWorkspace({ ...sample(), version: 3 }).ok).toBe(false);
+    const { activity: _activity, ...withoutLog } = sample();
+    expect(validateWorkspace(withoutLog).ok).toBe(false);
   });
 });
 
@@ -55,7 +59,25 @@ describe("migrateAppData", () => {
 
   it("is a no-op at the current version", () => {
     const data = sample();
-    expect(migrateAppData(data, 1)).toBe(data);
+    expect(migrateAppData(data, 2)).toBe(data);
+  });
+
+  it("upgrades v1 data to v2, backfilling the activity log", () => {
+    const v1 = makeDataV1({
+      planItems: [makeItem({ id: "done", status: "done", completedAt: at("2026-10-03") })],
+    });
+    const result = validateWorkspace(migrateAppData(v1, 1));
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.version).toBe(2);
+      expect(result.data.activity).toEqual([expect.objectContaining({ kind: "item_completed", itemId: "done", day: "2026-10-03" })]);
+      expect(result.data.planItems).toEqual(v1.planItems);
+    }
+  });
+
+  it("refuses to migrate invalid v1 data", () => {
+    expect(() => migrateAppData({ ...makeDataV1(), skills: "nope" }, 1)).toThrow(MigrationError);
   });
 
   it("refuses data from a newer version and missing steps", () => {
@@ -67,15 +89,22 @@ describe("migrateAppData", () => {
 describe("export / import", () => {
   it("round-trips through the export format", () => {
     const data = sample();
-    const json = serializeAppData(data, "2026-10-17T10:00:00.000Z");
+    const json = serializeWorkspace(data, "2026-10-17T10:00:00.000Z");
 
     expect(JSON.parse(json)).toMatchObject({ app: "growloop", exportedAt: "2026-10-17T10:00:00.000Z" });
     expect(parseImportedData(json)).toEqual({ ok: true, data });
   });
 
-  it("accepts a bare AppData object", () => {
+  it("accepts bare workspace data", () => {
     const data = sample();
     expect(parseImportedData(JSON.stringify(data))).toEqual({ ok: true, data });
+  });
+
+  it("imports v1 exports by upgrading them", () => {
+    const v1 = makeDataV1({ skills: [makeSkill({ id: "roadmapping" })] });
+    const result = parseImportedData(JSON.stringify({ app: "growloop", exportedAt: "2026-09-01T00:00:00Z", data: v1 }));
+
+    expect(result).toMatchObject({ ok: true, data: { version: 2, activity: [], skills: v1.skills } });
   });
 
   it("explains why an import failed", () => {

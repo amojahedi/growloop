@@ -1,9 +1,12 @@
+import { backfillActivity } from "@/lib/domain/activity";
 import { APP_DATA_VERSION } from "@/lib/domain/app-data";
+import type { Workspace } from "@/lib/domain/types";
+import { validateAppDataV1 } from "./schema";
 
 /**
  * Schema migrations for persisted and imported data.
  *
- * When `AppData` changes shape: bump `APP_DATA_VERSION` (and the `version`
+ * When the stored shape changes: bump `APP_DATA_VERSION` (and the `version`
  * literal in types.ts / schema.ts), then add a step here keyed by the version
  * it upgrades *from*. Steps receive unvalidated data; the result is validated
  * against the current schema afterwards.
@@ -11,13 +14,19 @@ import { APP_DATA_VERSION } from "@/lib/domain/app-data";
 
 export type Migration = (data: Record<string, unknown>) => Record<string, unknown>;
 
-export const migrations: Readonly<Record<number, Migration>> = {
-  // 1: (data) => ({ ...data, version: 2, newField: [] }),
-};
-
 export class MigrationError extends Error {
   override name = "MigrationError";
 }
+
+export const migrations: Readonly<Record<number, Migration>> = {
+  /** v1 → v2: add the activity log, reconstructed from the timestamps already on plan items. */
+  1: (data) => {
+    const v1 = validateAppDataV1(data);
+    if (!v1.ok) throw new MigrationError(`Saved data (v1) is invalid: ${v1.error}`);
+    const upgraded: Workspace = { ...v1.data, version: 2, activity: backfillActivity(v1.data.planItems) };
+    return upgraded as unknown as Record<string, unknown>;
+  },
+};
 
 export function migrateAppData(
   input: unknown,

@@ -1,13 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { BUILT_IN_SKILLS, DEMO_DATA, findMaterial } from "@/lib/catalog";
+import { findMaterial } from "@/lib/catalog";
+import { syncActivity } from "@/lib/domain/activity";
 import {
   APP_DATA_VERSION,
   createCustomMaterial,
   createKeyResult,
   createObjective,
   createSkill,
-  emptyAppData,
   type NewKeyResult,
   type NewMaterial,
   type NewObjective,
@@ -18,7 +18,6 @@ import { createPlanItem } from "@/lib/domain/create-plan-item";
 import * as planItems from "@/lib/domain/plan-items";
 import { applyRollover } from "@/lib/domain/rollover";
 import type {
-  AppData,
   BoardStatus,
   ID,
   KeyResult,
@@ -31,12 +30,14 @@ import type {
   RolloverRecord,
   Skill,
   TimeLog,
+  Workspace,
 } from "@/lib/domain/types";
 import { isDemoMode } from "@/lib/env";
 import { saveBackup } from "./backup";
 import { migrateAppData } from "./migrations";
-import { validateAppData, type ValidationResult } from "./schema";
-import { parseImportedData, serializeAppData } from "./serialization";
+import { validateWorkspace, type ValidationResult } from "./schema";
+import { demoWorkspace, emptyWorkspace } from "./seed";
+import { parseImportedData, serializeWorkspace } from "./serialization";
 import { createSafeStorage } from "./storage";
 
 export const STORAGE_KEY = "growloop:data";
@@ -103,7 +104,7 @@ export interface AppActions {
 
   // Data management
   exportData: () => string;
-  importData: (json: string) => ValidationResult<AppData>;
+  importData: (json: string) => ValidationResult<Workspace>;
   /** Replaces everything with the sample workspace. */
   resetToDemo: () => void;
   /** Replaces everything with built-in skills and an empty plan. */
@@ -111,18 +112,11 @@ export interface AppActions {
 }
 
 export interface AppState extends AppActions {
-  data: AppData;
+  data: Workspace;
 }
 
 const now = () => new Date().toISOString();
 
-const clone = <T>(value: T): T => structuredClone(value);
-
-export const demoAppData = (): AppData => clone(DEMO_DATA);
-export const emptyWorkspace = (): AppData => emptyAppData(BUILT_IN_SKILLS);
-
-/** First-run data: the sample workspace on the hosted demo, otherwise an empty plan. */
-export const initialAppData = (): AppData => (isDemoMode ? demoAppData() : emptyWorkspace());
 
 const omitKey = <T extends object, K extends keyof T>(value: T, key: K): Omit<T, K> => {
   const { [key]: _omitted, ...rest } = value;
@@ -133,10 +127,14 @@ export const useAppStore = create<AppState>()(
   persist(
     (set, get) => {
       /** Applies a pure transformation to the persisted data. */
-      const update = (recipe: (data: AppData) => AppData) => set((state) => ({ data: recipe(state.data) }));
+      const update = (recipe: (data: Workspace) => Workspace) => set((state) => ({ data: recipe(state.data) }));
 
+      /** Every plan-item change goes through here, which also records it in the activity log. */
       const updateItems = (recipe: (items: PlanItem[]) => PlanItem[]) =>
-        update((data) => ({ ...data, planItems: recipe(data.planItems) }));
+        update((data) => {
+          const planItems = recipe(data.planItems);
+          return { ...data, planItems, activity: syncActivity(data.activity, data.planItems, planItems, new Date()) };
+        });
 
       const updateItem = (id: ID, recipe: (item: PlanItem) => PlanItem) =>
         updateItems((items) => items.map((item) => (item.id === id ? recipe(item) : item)));
@@ -153,7 +151,8 @@ export const useAppStore = create<AppState>()(
         );
 
       return {
-        data: initialAppData(),
+        // The demo seed is applied on first hydration (see `merge`), where the current date is known.
+        data: emptyWorkspace(),
 
         // --- Skills -----------------------------------------------------------
         addSkill: (input) => {
@@ -295,13 +294,13 @@ export const useAppStore = create<AppState>()(
         },
 
         // --- Data management ----------------------------------------------------------
-        exportData: () => serializeAppData(get().data),
+        exportData: () => serializeWorkspace(get().data),
         importData: (json) => {
           const result = parseImportedData(json);
           if (result.ok) set({ data: result.data });
           return result;
         },
-        resetToDemo: () => set({ data: demoAppData() }),
+        resetToDemo: () => set({ data: demoWorkspace() }),
         resetToEmpty: () => set({ data: emptyWorkspace() }),
       };
     },
@@ -321,10 +320,10 @@ export const useAppStore = create<AppState>()(
         }
       },
       merge: (persisted, current) => {
-        // Nothing saved yet: keep the first-run data.
-        if (persisted === undefined) return current;
+        // Nothing saved yet: first run.
+        if (persisted === undefined) return isDemoMode ? { ...current, data: demoWorkspace() } : current;
 
-        const result = validateAppData((persisted as { data?: unknown } | null)?.data);
+        const result = validateWorkspace((persisted as { data?: unknown } | null)?.data);
         if (result.ok) return { ...current, data: result.data };
 
         backUpRawSavedData();

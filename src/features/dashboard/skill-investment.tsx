@@ -3,14 +3,15 @@
 import { EmptyHint, Section } from "@/components/app/section";
 import { skillInvestment } from "@/lib/domain/dashboard";
 import { formatHours } from "@/lib/format";
-import { useMonthNavigation, usePlanItems, useSkills } from "@/lib/store/hooks";
+import { useActivity, useMonthNavigation, usePlanItems, useSkills } from "@/lib/store/hooks";
 
 /** Per-skill investment for the month. Data source for the skill radar (D-3). */
 export function SkillInvestment() {
   const items = usePlanItems();
+  const activity = useActivity();
   const skills = useSkills();
   const { month } = useMonthNavigation();
-  const rows = skillInvestment(items, skills, month).filter((row) => row.planned + row.completed + row.hours > 0);
+  const rows = skillInvestment(items, activity, skills, month).filter((row) => row.planned + row.completed + row.hours > 0);
 
   return (
     <Section title="Skill investment" description="Items planned and completed per skill this month">
