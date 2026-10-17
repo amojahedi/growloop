@@ -35,7 +35,12 @@ export function SkillsView() {
                 </span>
               </Link>
               <span className="flex gap-1">
-                <Button variant="ghost" size="xs" onClick={() => setSkillHidden(skill.id, !skill.hidden)}>
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setSkillHidden(skill.id, !skill.hidden)}
+                  aria-label={`${skill.hidden ? "Show" : "Hide"} ${skill.name}`}
+                >
                   {skill.hidden ? "Show" : "Hide"}
                 </Button>
                 {!skill.builtIn && (
@@ -43,6 +48,7 @@ export function SkillsView() {
                     variant="ghost"
                     size="xs"
                     onClick={() => window.confirm(`Delete "${skill.name}"?`) && deleteSkill(skill.id)}
+                    aria-label={`Delete ${skill.name}`}
                   >
                     Delete
                   </Button>
@@ -63,7 +69,7 @@ export function SkillsView() {
             onChange={(event) => setName(event.target.value)}
           />
           <Button type="submit" size="sm" disabled={!name.trim()}>
-            Add
+            Add skill
           </Button>
         </form>
       </Section>

@@ -44,28 +44,31 @@ export function RolloverReview() {
         ))}
       </div>
       <ul className="flex flex-col gap-2">
-        {pending.items.map((item) => (
-          <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-            <span>{materials.get(item.materialId)?.title ?? "Unknown material"}</span>
-            <select
-              aria-label="Decision"
-              className="rounded-md border bg-background px-2 py-1"
-              value={decisions[item.id] ?? ""}
-              onChange={(event) =>
-                setDecisions((current) => ({ ...current, [item.id]: event.target.value as RolloverDecision }))
-              }
-            >
-              <option value="" disabled>
-                Decide…
-              </option>
-              {DECISIONS.map(({ value, label }) => (
-                <option key={value} value={value}>
-                  {label}
+        {pending.items.map((item) => {
+          const title = materials.get(item.materialId)?.title ?? "Unknown material";
+          return (
+            <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span>{title}</span>
+              <select
+                aria-label={`Decision for "${title}"`}
+                className="rounded-md border bg-background px-2 py-1"
+                value={decisions[item.id] ?? ""}
+                onChange={(event) =>
+                  setDecisions((current) => ({ ...current, [item.id]: event.target.value as RolloverDecision }))
+                }
+              >
+                <option value="" disabled>
+                  Decide…
                 </option>
-              ))}
-            </select>
-          </li>
-        ))}
+                {DECISIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </li>
+          );
+        })}
       </ul>
       <Button className="mt-4" onClick={apply} disabled={decided === 0}>
         Apply {decided > 0 ? `${decided} decision(s)` : ""}

@@ -17,7 +17,10 @@ export function Section({
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        {/* CardTitle renders a div; the h2 gives the section a real heading in the outline. */}
+        <CardTitle>
+          <h2>{title}</h2>
+        </CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
         {action && <CardAction>{action}</CardAction>}
       </CardHeader>

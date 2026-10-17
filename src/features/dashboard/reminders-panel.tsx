@@ -31,7 +31,12 @@ export function RemindersPanel() {
                   {reminder.note || materials.get(materialId)?.title}
                 </p>
               </div>
-              <Button variant="ghost" size="xs" onClick={() => dismissReminder(itemId)}>
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={() => dismissReminder(itemId)}
+                aria-label={`Dismiss reminder for "${materials.get(materialId)?.title ?? "item"}"`}
+              >
                 Dismiss
               </Button>
             </li>

@@ -60,6 +60,7 @@ export function AIRecommendations({ context, existingTitles, skillIds = [] }: AI
                     variant="outline"
                     size="sm"
                     disabled={saved.has(recommendation.title)}
+                    aria-label={`${saved.has(recommendation.title) ? "Saved" : "Save"} "${recommendation.title}" to library`}
                     onClick={() => {
                       setSaved((current) => new Set(current).add(recommendation.title));
                       addCustomMaterial({

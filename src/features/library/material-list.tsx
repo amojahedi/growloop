@@ -30,7 +30,7 @@ export function MaterialList({ materials }: { materials: readonly Material[] }) 
             </p>
             {material.tagline && <p className="mt-1 text-sm">{material.tagline}</p>}
           </div>
-          <AddToMonthButton materialId={material.id} />
+          <AddToMonthButton materialId={material.id} materialTitle={material.title} />
         </li>
       ))}
     </ul>

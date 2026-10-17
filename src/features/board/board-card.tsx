@@ -1,37 +1,52 @@
 "use client";
 
-import { ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, Trash2Icon } from "lucide-react";
+import { ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, Trash2Icon, type LucideIcon } from "lucide-react";
 import { MaterialTypeIcon } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { taskProgress } from "@/lib/domain/plan-items";
-import { BOARD_COLUMNS, type Material, type MonthKey, type PlanItem, type Skill } from "@/lib/domain/types";
+import { BOARD_COLUMNS, type Material, type PlanItem, type Skill } from "@/lib/domain/types";
 import { formatShortDate } from "@/lib/format";
-import { useActions } from "@/lib/store/hooks";
 import { STATUS_LABELS } from "./board-labels";
+
+export type MoveAction = "left" | "up" | "down" | "right";
+
+const MOVE_ICONS: Record<MoveAction, LucideIcon> = {
+  left: ArrowLeftIcon,
+  up: ArrowUpIcon,
+  down: ArrowDownIcon,
+  right: ArrowRightIcon,
+};
 
 interface BoardCardProps {
   item: PlanItem;
-  /** The board's month; items leaving the backlog are scheduled into it. */
-  boardMonth: MonthKey;
-  /** Reorder within the column; undefined when the card is already first / last. */
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
   material: Material | undefined;
   skills: ReadonlyMap<string, Skill>;
+  /** Which moves are possible from the card's current position. */
+  canMove: Record<MoveAction, boolean>;
+  onMove: (action: MoveAction) => void;
+  onDelete: () => void;
 }
 
-/** A plan item on the board (B-4), with button controls as the keyboard alternative to drag and drop. */
-export function BoardCard({ item, boardMonth, onMoveUp, onMoveDown, material, skills }: BoardCardProps) {
-  const { movePlanItem, deletePlanItem } = useActions();
+/**
+ * A plan item on the board (B-4). The arrow buttons are the keyboard
+ * alternative to drag and drop; `data-move` lets the board restore focus to
+ * the same control after the card moves.
+ */
+export function BoardCard({ item, material, skills, canMove, onMove, onDelete }: BoardCardProps) {
   const tasks = taskProgress(item);
-  const columnIndex = BOARD_COLUMNS.indexOf(item.status);
-  const previousStatus = BOARD_COLUMNS[columnIndex - 1];
-  const nextStatus = BOARD_COLUMNS[columnIndex + 1];
   const title = material?.title ?? "Unknown material";
+  const column = BOARD_COLUMNS.indexOf(item.status);
+
+  const label = (action: MoveAction) => {
+    if (action === "up") return `Move "${title}" up`;
+    if (action === "down") return `Move "${title}" down`;
+    const neighbour = BOARD_COLUMNS[column + (action === "left" ? -1 : 1)];
+    return neighbour ? `Move "${title}" to ${STATUS_LABELS[neighbour]}` : `Move "${title}" ${action}`;
+  };
 
   return (
-    <li className="rounded-lg border bg-card p-3 text-sm shadow-xs">
+    <li data-item-id={item.id} className="rounded-lg border bg-card p-3 text-sm shadow-xs">
       <p className="flex items-start gap-2 font-medium">
         {material && <MaterialTypeIcon type={material.type} className="mt-0.5 size-4 shrink-0" />}
         {title}
@@ -49,49 +64,23 @@ export function BoardCard({ item, boardMonth, onMoveUp, onMoveDown, material, sk
         {item.reminder && !item.reminder.dismissed && ` · Reminder ${formatShortDate(item.reminder.date)}`}
       </p>
       <div className="mt-2 flex gap-1">
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          disabled={!previousStatus}
-          onClick={() => movePlanItem(item.id, { status: previousStatus, month: boardMonth })}
-          aria-label={previousStatus ? `Move "${title}" to ${STATUS_LABELS[previousStatus]}` : undefined}
-        >
-          <ArrowLeftIcon />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          disabled={!onMoveUp}
-          onClick={onMoveUp}
-          aria-label={`Move "${title}" up`}
-        >
-          <ArrowUpIcon />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          disabled={!onMoveDown}
-          onClick={onMoveDown}
-          aria-label={`Move "${title}" down`}
-        >
-          <ArrowDownIcon />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          disabled={!nextStatus}
-          onClick={() => movePlanItem(item.id, { status: nextStatus, month: boardMonth })}
-          aria-label={nextStatus ? `Move "${title}" to ${STATUS_LABELS[nextStatus]}` : undefined}
-        >
-          <ArrowRightIcon />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          className="ml-auto"
-          onClick={() => window.confirm(`Remove "${title}" from your plan?`) && deletePlanItem(item.id)}
-          aria-label={`Remove "${title}"`}
-        >
+        {(["left", "up", "down", "right"] as const).map((action) => {
+          const Icon = MOVE_ICONS[action];
+          return (
+            <Button
+              key={action}
+              variant="ghost"
+              size="icon-xs"
+              data-move={action}
+              disabled={!canMove[action]}
+              onClick={() => onMove(action)}
+              aria-label={label(action)}
+            >
+              <Icon />
+            </Button>
+          );
+        })}
+        <Button variant="ghost" size="icon-xs" className="ml-auto" onClick={onDelete} aria-label={`Remove "${title}"`}>
           <Trash2Icon />
         </Button>
       </div>
