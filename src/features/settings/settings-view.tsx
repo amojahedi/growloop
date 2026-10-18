@@ -8,11 +8,18 @@ import { toast } from "@/components/ui/toast";
 import { useSampleMode } from "@/lib/store/device";
 import { useActions } from "@/lib/store/hooks";
 import { useDataTransfer } from "@/lib/store/use-data-transfer";
+import { SkillsView } from "../skills/skills-view";
 import { ClaudeSettings } from "./claude-settings";
 
 export function SettingsView() {
   return (
     <div className="flex flex-col gap-6">
+      {/* The old Skills page, here until Settings > Skills replaces it; /skills redirects to this anchor. */}
+      <div id="skills" className="scroll-mt-6">
+        <DataGate>
+          <SkillsView />
+        </DataGate>
+      </div>
       {/* Independent of workspace data: the key is stored separately. */}
       <ClaudeSettings />
       <DataGate>
