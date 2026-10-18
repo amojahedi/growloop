@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { axisSummary, SkillRadar, type SkillRadarAxis, type SkillRadarSeries } from "./skill-radar";
 
 const axes: SkillRadarAxis[] = [
@@ -58,6 +58,24 @@ describe("SkillRadar", () => {
 
     expect(label).toBeDefined();
     expect(label?.getAttribute("style")).toContain("--skill-violet");
+  });
+
+  it("makes axis labels buttons when asked, by click and keyboard", () => {
+    const onAxisClick = vi.fn();
+    const { rerender } = render(<SkillRadar axes={axes} series={series} title="Radar" />);
+    expect(screen.queryByRole("button", { name: "Open Roadmapping" })).toBeNull();
+
+    rerender(<SkillRadar axes={axes} series={series} title="Radar" onAxisClick={onAxisClick} />);
+    const axis = screen.getByRole("button", { name: "Open Roadmapping" });
+    expect(axis).toHaveAttribute("tabindex", "0");
+    fireEvent.click(axis);
+    expect(onAxisClick).toHaveBeenLastCalledWith("roadmapping");
+
+    fireEvent.keyDown(screen.getByRole("button", { name: "Open Strategy" }), { key: "Enter" });
+    expect(onAxisClick).toHaveBeenLastCalledWith("strategy");
+    fireEvent.keyDown(screen.getByRole("button", { name: "Open Discovery" }), { key: " " });
+    expect(onAxisClick).toHaveBeenLastCalledWith("discovery");
+    expect(onAxisClick).toHaveBeenCalledTimes(3);
   });
 
   it("summarizes an axis for the tooltip", () => {

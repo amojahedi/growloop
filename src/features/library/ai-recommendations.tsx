@@ -22,15 +22,19 @@ const DESCRIPTIONS: Record<AIProviderKind, string> = {
   local: "Suggested by Claude Code running on your machine",
 };
 
-/** "Recommend materials" via the active AI provider (L-6). Degrades to a setup hint when AI is off. */
+/**
+ * "Recommend" via the active Claude provider (L-6, AI-4). Without Claude the
+ * section says how to turn it on (settings spec §AI-off copy) and the list
+ * below stays in curated order.
+ */
 export function AIRecommendations({ context, existingTitles, skillIds = [] }: AIRecommendationsProps) {
   const { provider, status, recheck, recommend } = useAI();
   const { addCustomMaterial } = useActions();
   const [saved, setSaved] = useState<ReadonlySet<string>>(new Set());
 
   return (
-    <Section title="AI recommendations" description={provider ? DESCRIPTIONS[provider] : "Suggested by Claude"}>
-      {status.state === "checking" && <p className="text-sm text-muted-foreground">Checking AI…</p>}
+    <Section title="Picks from Claude" description={provider ? DESCRIPTIONS[provider] : "Suggested by Claude"}>
+      {status.state === "checking" && <p className="text-sm text-muted-foreground">Checking Claude…</p>}
 
       {status.state === "unavailable" && (
         <AISetupHint status={status} onRecheck={recheck}>

@@ -5,14 +5,17 @@ import { SkillRadar, type SkillRadarSeries } from "@/components/skills/skill-rad
 import { formatMonth } from "@/lib/domain/dates";
 import { radarSeries, skillImpact } from "@/lib/domain/skill-impact";
 import { useAppData, useMonthNavigation, useSkillPreview } from "@/lib/store/hooks";
+import { useUIStore } from "@/lib/store/ui-store";
 
 /**
  * Skill growth in the viewed month (D-2, S-4): completed impact against what
  * the month's plan would add, plus a faint preview of a hovered item's impact.
+ * Axis labels open the skill's sheet (S-3).
  */
 export function SkillRadarWidget() {
   const data = useAppData();
   const preview = useSkillPreview();
+  const openSkillSheet = useUIStore((state) => state.openSkillSheet);
   const { month } = useMonthNavigation();
   const axes = radarSeries(data, month);
 
@@ -41,7 +44,12 @@ export function SkillRadarWidget() {
 
   return (
     <Section title="Skill radar" description={`Skill impact in ${formatMonth(month)}`} className="h-full">
-      <SkillRadar axes={axes} series={series} title={`Skill impact per skill, ${formatMonth(month)}`} />
+      <SkillRadar
+        axes={axes}
+        series={series}
+        title={`Skill impact per skill, ${formatMonth(month)}`}
+        onAxisClick={openSkillSheet}
+      />
     </Section>
   );
 }

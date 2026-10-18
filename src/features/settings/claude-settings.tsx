@@ -4,12 +4,12 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Section } from "@/components/app/section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/components/ui/toast";
 import { selectProviderKind, type AIProviderKind } from "@/lib/ai/provider";
 import { forgetApiKey, isMalformedApiKey, saveApiKey, useApiKeyLast4, useHasApiKey } from "@/lib/ai/providers/key-storage";
 import { validateApiKey } from "@/lib/ai/providers/own-key";
 import { AIRequestError } from "@/lib/ai/request-error";
 import { useLocalClaudeStatus, type AIStatusState } from "@/lib/ai/use-ai";
-import { cn } from "@/lib/utils";
 
 /**
  * Settings → Claude (docs/product/specs/settings-and-ai-keys.md, ADR 008).
@@ -20,16 +20,18 @@ import { cn } from "@/lib/utils";
  * <form>, so nothing offers to remember the key.
  */
 
-type Feedback = { tone: "info" | "success" | "error"; text: string };
+/** Only failures stay on the page; success and forget are confirmed with a toast. */
+type Feedback = { tone: "error"; text: string };
 
 const KEY_DIDNT_WORK = "That key didn't work. Check it and try again.";
 const UNREACHABLE = "Couldn't reach Anthropic. Check your connection and try again.";
 
-const STATUS_LINE: Record<AIProviderKind | "checking" | "off", { on: boolean; text: string }> = {
-  key: { on: true, text: "Claude is on · your API key" },
-  local: { on: true, text: "Claude is on · Claude Code on this computer" },
-  checking: { on: false, text: "Checking Claude…" },
-  off: { on: false, text: "Claude is off" },
+/** `short` is the sidebar's wording, used on narrow screens so the intro keeps its width. */
+const STATUS_LINE: Record<AIProviderKind | "checking" | "off", { on: boolean; text: string; short: string }> = {
+  key: { on: true, text: "Claude is on · your API key", short: "Claude on" },
+  local: { on: true, text: "Claude is on · Claude Code on this computer", short: "Claude on" },
+  checking: { on: false, text: "Checking Claude…", short: "Claude…" },
+  off: { on: false, text: "Claude is off", short: "Claude off" },
 };
 
 /** Attributes that keep password managers from offering to save or fill the key. */
@@ -50,13 +52,26 @@ export function ClaudeSettings() {
 
   const inputId = useId();
   const noticeId = useId();
+  const errorId = useId();
+  const labelId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
+  const savedRef = useRef<HTMLParagraphElement>(null);
+  // Where focus goes once the field swaps: to the masked key after saving (not
+  // to Forget key, so a repeated Enter can't forget it), to the input after forgetting.
+  const focusAfterSwap = useRef<"saved" | "input" | null>(null);
   const [hasDraft, setHasDraft] = useState(false);
   const [checking, setChecking] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>();
   const checkRef = useRef<AbortController | null>(null);
 
   useEffect(() => () => checkRef.current?.abort(), []);
+
+  useEffect(() => {
+    const target = focusAfterSwap.current;
+    focusAfterSwap.current = null;
+    if (target === "saved" && hasKey) savedRef.current?.focus();
+    if (target === "input" && !hasKey) inputRef.current?.focus();
+  }, [hasKey]);
 
   const save = async () => {
     const input = inputRef.current;
@@ -76,14 +91,13 @@ export function ClaudeSettings() {
     try {
       await validateApiKey(key, controller.signal);
       if (controller.signal.aborted) return;
+      focusAfterSwap.current = "saved";
       const stored = saveApiKey(key);
       if (input) input.value = "";
       setHasDraft(false);
-      setFeedback(
-        stored === "memory"
-          ? { tone: "info", text: "Your browser blocks storage, so the key lasts only for this tab." }
-          : { tone: "success", text: "Claude is on." },
-      );
+      toast({
+        message: stored === "memory" ? "Your browser blocks storage, so the key lasts only for this tab." : "Claude is on.",
+      });
     } catch (error) {
       if (controller.signal.aborted) return;
       // Nothing is stored on failure.
@@ -108,8 +122,10 @@ export function ClaudeSettings() {
   };
 
   const forget = () => {
+    focusAfterSwap.current = "input";
     forgetApiKey();
-    setFeedback({ tone: "info", text: "Key forgotten. It's no longer stored in this browser." });
+    setFeedback(undefined);
+    toast({ message: "Key forgotten. It's no longer stored in this browser." });
   };
 
   // Claude Code only exists when the server is reached via localhost.
@@ -117,98 +133,104 @@ export function ClaudeSettings() {
     local.status.state !== "unavailable" || local.status.code !== "disabled";
 
   return (
-    <div id="claude" className="scroll-mt-6">
-      <Section
-        title="Claude"
-        description="Claude can draft your yearly plan, fill in resources you paste, recommend what to learn and give feedback on your summaries. Everything else works without it."
-        action={
-          <p className="flex items-center gap-1.5 text-sm" role="status" aria-live="polite">
-            <span aria-hidden className={status.on ? "text-primary" : "text-muted-foreground"}>
-              {status.on ? "●" : "○"}
-            </span>
-            <span className="font-medium">{status.text}</span>
-          </p>
-        }
-      >
-        <div className="flex flex-col gap-5">
-          <p className="text-sm text-muted-foreground">Each Claude action uses your own API credit, usually a few cents.</p>
+    <Section
+      title="Claude"
+      description="Claude can draft your yearly plan, fill in resources you paste, recommend what to learn and give feedback on your summaries. Everything else works without it."
+      action={
+        <p className="flex items-center gap-1.5 text-sm" role="status" aria-live="polite">
+          <span aria-hidden className={status.on ? "text-primary" : "text-muted-foreground"}>
+            {status.on ? "●" : "○"}
+          </span>
+          <span className="font-medium whitespace-nowrap sm:hidden">{status.short}</span>
+          <span className="hidden font-medium sm:inline">{status.text}</span>
+        </p>
+      }
+    >
+      <div className="flex flex-col gap-5">
+        <p className="text-sm text-muted-foreground">Each Claude action uses your own API credit, usually a few cents.</p>
 
-          <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
+          {hasKey ? (
+            <p id={labelId} className="text-xs font-medium text-muted-foreground">
+              Your Claude API key
+            </p>
+          ) : (
             <label htmlFor={inputId} className="text-xs font-medium text-muted-foreground">
               Your Claude API key
-              {!hasKey && local.status.state === "available" && (
-                <span className="font-normal"> · Optional: use an API key instead</span>
-              )}
+              {local.status.state === "available" && <span className="font-normal"> · Optional: use an API key instead</span>}
             </label>
-            {hasKey ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <p
-                  id={inputId}
-                  className="min-w-0 flex-1 rounded-lg border border-input px-2.5 py-1 font-mono text-sm text-muted-foreground"
-                  aria-label={`Saved key ending in ${last4}`}
-                >
+          )}
+          {hasKey ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <p
+                ref={savedRef}
+                tabIndex={-1}
+                role="group"
+                aria-labelledby={labelId}
+                className="min-w-0 flex-1 rounded-lg border border-input px-2.5 py-1 font-mono text-sm text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                <span className="sr-only">Saved key ending in {last4}</span>
+                <span aria-hidden>
                   {"•".repeat(24)}
                   {last4}
-                </p>
-                <Button type="button" variant="destructive" size="sm" onClick={forget}>
-                  Forget key
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                <Input
-                  ref={inputRef}
-                  id={inputId}
-                  type="password"
-                  {...NO_PASSWORD_MANAGER}
-                  spellCheck={false}
-                  autoCapitalize="off"
-                  placeholder="sk-ant-…"
-                  className="min-w-0 flex-1"
-                  aria-describedby={noticeId}
-                  onChange={(event) => setHasDraft(event.target.value.trim() !== "")}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      void save();
-                    }
-                  }}
-                />
-                <Button type="button" size="sm" disabled={!hasDraft || checking} onClick={() => void save()}>
-                  {checking ? "Checking…" : "Save key"}
-                </Button>
-              </div>
-            )}
-            {feedback && (
-              <p
-                className={cn(
-                  "text-sm",
-                  feedback.tone === "error" ? "text-destructive" : feedback.tone === "success" ? "text-foreground" : "text-muted-foreground",
-                )}
-                role={feedback.tone === "error" ? "alert" : "status"}
-              >
-                {feedback.text}
+                </span>
               </p>
-            )}
-            <p id={noticeId} className="text-xs text-muted-foreground">
-              Your key stays in this browser and goes only to Anthropic. Growloop&apos;s server never sees it. Anyone who
-              can use this browser profile could read it, so set a spending limit on the key and forget it on shared
-              computers.{" "}
-              <a
-                href="https://platform.claude.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-4"
-              >
-                Get a key ↗
-              </a>
+              <Button type="button" variant="destructive" size="sm" onClick={forget}>
+                Forget key
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                ref={inputRef}
+                id={inputId}
+                type="password"
+                {...NO_PASSWORD_MANAGER}
+                spellCheck={false}
+                autoCapitalize="off"
+                placeholder="sk-ant-…"
+                className="min-w-0 flex-1"
+                aria-describedby={feedback ? `${errorId} ${noticeId}` : noticeId}
+                aria-invalid={feedback ? true : undefined}
+                onChange={(event) => {
+                  setHasDraft(event.target.value.trim() !== "");
+                  setFeedback(undefined);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    void save();
+                  }
+                }}
+              />
+              <Button type="button" size="sm" disabled={!hasDraft || checking} onClick={() => void save()}>
+                {checking ? "Checking…" : "Save key"}
+              </Button>
+            </div>
+          )}
+          {feedback && (
+            <p id={errorId} className="text-sm text-destructive" role="alert">
+              {feedback.text}
             </p>
-          </div>
-
-          {showClaudeCode && <ClaudeCodeRow status={local.status} hasKey={hasKey} onRecheck={local.recheck} />}
+          )}
+          <p id={noticeId} className="text-xs text-muted-foreground">
+            Your key stays in this browser and goes only to Anthropic. Growloop&apos;s server never sees it. Anyone who
+            can use this browser profile could read it, so set a spending limit on the key and forget it on shared
+            computers.{" "}
+            <a
+              href="https://platform.claude.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-4"
+            >
+              Get a key ↗
+            </a>
+          </p>
         </div>
-      </Section>
-    </div>
+
+        {showClaudeCode && <ClaudeCodeRow status={local.status} hasKey={hasKey} onRecheck={local.recheck} />}
+      </div>
+    </Section>
   );
 }
 

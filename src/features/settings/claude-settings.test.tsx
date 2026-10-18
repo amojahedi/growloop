@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { dismissToast, Toaster } from "@/components/ui/toast";
 import { AIRequestError } from "@/lib/ai/request-error";
 
 const validateApiKey = vi.hoisted(() => vi.fn());
@@ -24,6 +25,7 @@ async function saveKey(value: string) {
 }
 
 beforeEach(() => {
+  dismissToast();
   localStorage.clear();
   forgetApiKey();
   validateApiKey.mockReset();
@@ -38,7 +40,12 @@ afterEach(cleanup);
 describe("ClaudeSettings", () => {
   it("checks the key once, saves it, masks it, and forgets it", async () => {
     validateApiKey.mockResolvedValueOnce(undefined);
-    render(<ClaudeSettings />);
+    render(
+      <>
+        <ClaudeSettings />
+        <Toaster />
+      </>,
+    );
     await waitFor(() => expect(screen.getByText("Claude is off")).toBeInTheDocument());
     expect(screen.getByText(/goes only to Anthropic/)).toBeInTheDocument();
     expect(screen.getByText(/usually a few cents/)).toBeInTheDocument();
@@ -61,14 +68,43 @@ describe("ClaudeSettings", () => {
     expect(localStorage.getItem(API_KEY_STORAGE_KEY)).toBe(KEY);
     expect(screen.getByText("Claude is on · your API key")).toBeInTheDocument();
     expect(screen.getByText("Claude is on.")).toBeInTheDocument();
-    expect(screen.getByLabelText("Saved key ending in wxyz")).toHaveTextContent(/•+wxyz/);
+    const saved = screen.getByRole("group", { name: "Your Claude API key" });
+    expect(saved).toHaveTextContent("Saved key ending in wxyz");
+    expect(saved).toHaveTextContent(/•+wxyz/);
+    // Focus lands on the masked key, not on Forget key, so a second Enter can't forget it.
+    expect(saved).toHaveFocus();
+    fireEvent.keyDown(saved, { key: "Enter" });
+    expect(localStorage.getItem(API_KEY_STORAGE_KEY)).toBe(KEY);
+    // No label points at the masked key (only the input has one).
+    expect(document.querySelector("label")).toBeNull();
     // The full key is never shown on the page.
     expect(document.body.innerHTML).not.toContain(KEY);
 
     fireEvent.click(screen.getByRole("button", { name: "Forget key" }));
     expect(localStorage.getItem(API_KEY_STORAGE_KEY)).toBeNull();
     expect(screen.getByText("Key forgotten. It's no longer stored in this browser.")).toBeInTheDocument();
+    expect(keyInput()).toHaveFocus();
     await waitFor(() => expect(screen.getByText("Claude is off")).toBeInTheDocument());
+  });
+
+  it("says when blocked storage keeps the key only for this tab", async () => {
+    validateApiKey.mockResolvedValueOnce(undefined);
+    // jsdom's Storage, or the in-memory one test/setup.ts swaps in on newer Node.
+    const storagePrototype = Object.getPrototypeOf(localStorage) as Storage;
+    vi.spyOn(storagePrototype, "setItem").mockImplementation(() => {
+      throw new DOMException("Blocked", "SecurityError");
+    });
+    render(
+      <>
+        <ClaudeSettings />
+        <Toaster />
+      </>,
+    );
+    await saveKey(KEY);
+    expect(screen.getByText("Your browser blocks storage, so the key lasts only for this tab.")).toBeInTheDocument();
+    expect(screen.getByText("Claude is on · your API key")).toBeInTheDocument();
+    // The tab-only copy must not leak into the next test.
+    forgetApiKey();
   });
 
   it("rejects obviously wrong keys without a network call", async () => {
