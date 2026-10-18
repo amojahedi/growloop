@@ -35,7 +35,7 @@ AI features (recommendations, "Add your own" drafts, summary feedback) are optio
 2. **Claude Code on your computer** (local only). When Growloop runs on `localhost`, it can use your installed [Claude Code](https://docs.claude.com/en/docs/claude-code) CLI in headless mode (`claude -p`) with your own subscription. Install it and sign in once (`claude`), then restart the dev server. These endpoints refuse requests from any other host, so they're always off on a hosted deployment. See [ADR 004](docs/decisions/004-ai-via-local-claude-code.md).
 3. **Off.** AI buttons explain how to turn AI on.
 
-To keep a browser-stored key safe, every response carries a strict Content Security Policy (no third-party scripts; the page can only connect to itself and `https://api.anthropic.com`), plus `frame-ancestors 'none'`, `Referrer-Policy: no-referrer` and a restrictive `Permissions-Policy`. See `src/lib/security-headers.ts`.
+The main protection for a browser-stored key is having no way to inject scripts: React escapes all text, raw HTML is banned by lint (`react/no-danger`), and there are no third-party scripts. As defense in depth, every response carries a Content Security Policy (the page can only connect to itself and `https://api.anthropic.com`), HSTS, `frame-ancestors 'none'`, `Referrer-Policy: no-referrer` and a restrictive `Permissions-Policy`. See `src/lib/security-headers.ts` for what the CSP can and can't stop.
 
 ### Configuration
 
