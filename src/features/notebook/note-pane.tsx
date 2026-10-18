@@ -8,6 +8,7 @@ import { noteKindLabel, noteSource } from "@/components/notes/note-labels";
 import { RefinePanel } from "@/components/notes/refine-panel";
 import { REVIEW_PRESETS, ReviewLaterMenu } from "@/components/notes/review-later-menu";
 import { useAutosave } from "@/components/notes/use-autosave";
+import { SkillChip } from "@/components/skills/skill-chip";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/components/ui/toast";
 import { hasContent, isDue, MAX_FREE_NOTE_SKILLS, reviewDay, type ReviewPreset } from "@/lib/domain/notes";
-import type { ID, Note, Skill } from "@/lib/domain/types";
+import type { ID, Note } from "@/lib/domain/types";
 import { useActions, useMaterialMap, useNote, usePlanItems, useSkills, useToday } from "@/lib/store/hooks";
 import { skillColorVar } from "@/lib/theme/skill-colors";
 
@@ -99,7 +100,7 @@ function NoteEditorPane({ note, onLeave }: { note: Note; onLeave: () => void }) 
         textareaClassName="min-h-40 border-transparent bg-transparent px-0 font-display text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent"
         actions={
           <>
-            {note.kind === "free" ? <SkillsPicker note={note} /> : <SkillDots skillIds={note.skillIds} />}
+            {note.kind === "free" ? <SkillsPicker note={note} /> : <SkillChips skillIds={note.skillIds} />}
             <ReviewLaterMenu noteId={hasContent(note) ? note.id : undefined} reviewAt={note.reviewAt} />
           </>
         }
@@ -229,18 +230,13 @@ function NoteMenu({ note, onLeave }: { note: Note; onLeave: () => void }) {
   );
 }
 
-/** Card notes follow their card's skills, so they're shown, not picked. */
-function SkillDots({ skillIds }: { skillIds: readonly ID[] }) {
-  const skills = useSkillMap();
-  const list = skillIds.flatMap((id) => skills.get(id) ?? []);
-  if (list.length === 0) return null;
+/** A note's skills as chips that open the skill sheet. Card notes follow their card's skills, so they're shown, not picked. */
+function SkillChips({ skillIds }: { skillIds: readonly ID[] }) {
+  if (skillIds.length === 0) return null;
   return (
-    <span className="mr-auto flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-      {list.map((skill) => (
-        <span key={skill.id} className="inline-flex items-center gap-1">
-          <span aria-hidden className="size-2 rounded-full" style={{ backgroundColor: skillColorVar(skill.color) }} />
-          {skill.name}
-        </span>
+    <span className="mr-auto flex flex-wrap items-center gap-1.5" role="group" aria-label="Skills">
+      {skillIds.map((id) => (
+        <SkillChip key={id} skillId={id} />
       ))}
     </span>
   );
@@ -250,8 +246,6 @@ function SkillDots({ skillIds }: { skillIds: readonly ID[] }) {
 function SkillsPicker({ note }: { note: Note }) {
   const { updateNote } = useActions();
   const skills = useSkills();
-  const byId = useSkillMap();
-  const chosen = note.skillIds.flatMap((id) => byId.get(id) ?? []);
   const full = note.skillIds.length >= MAX_FREE_NOTE_SKILLS;
 
   const toggle = (id: ID) =>
@@ -261,7 +255,7 @@ function SkillsPicker({ note }: { note: Note }) {
 
   return (
     <span className="mr-auto flex flex-wrap items-center gap-2">
-      <SkillDots skillIds={chosen.map((skill) => skill.id)} />
+      <SkillChips skillIds={note.skillIds} />
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="ghost" size="xs" className="text-muted-foreground" aria-label="Choose skills for this note">
@@ -295,9 +289,4 @@ function SkillsPicker({ note }: { note: Note }) {
       </Popover>
     </span>
   );
-}
-
-function useSkillMap(): ReadonlyMap<ID, Skill> {
-  const skills = useSkills({ includeHidden: true });
-  return new Map(skills.map((skill) => [skill.id, skill]));
 }

@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { PlanItem, Skill } from "@/lib/domain/types";
 import { useActions, useSkills } from "@/lib/store/hooks";
-import { useUIStore } from "@/lib/store/ui-store";
-import { skillColorVar, skillTextColor } from "@/lib/theme/skill-colors";
+import { SkillChip } from "@/components/skills/skill-chip";
+import { skillColorVar } from "@/lib/theme/skill-colors";
 import { MAX_CARD_SKILLS, setPrimarySkill, toggleCardSkill } from "./card-mode";
 
 /**
@@ -16,32 +16,15 @@ import { MAX_CARD_SKILLS, setPrimarySkill, toggleCardSkill } from "./card-mode";
  */
 export function CardSkills({ item, readOnly }: { item: PlanItem; readOnly: boolean }) {
   const allSkills = useSkills({ includeHidden: true });
-  const byId = new Map(allSkills.map((skill) => [skill.id, skill]));
-  const skills = item.skillIds.flatMap((id) => byId.get(id) ?? []);
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Skills">
-      {skills.map((skill, index) => (
-        <SkillChipButton key={skill.id} skill={skill} primary={index === 0 && skills.length > 1} />
+    // The first skill is the primary one (full impact weight).
+    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Skills, primary first">
+      {item.skillIds.map((id) => (
+        <SkillChip key={id} skillId={id} />
       ))}
       {!readOnly && <EditSkills item={item} skills={allSkills} />}
     </div>
-  );
-}
-
-function SkillChipButton({ skill, primary }: { skill: Skill; primary: boolean }) {
-  const openSkillSheet = useUIStore((state) => state.openSkillSheet);
-  return (
-    <button
-      type="button"
-      onClick={() => openSkillSheet(skill.id)}
-      className="inline-flex h-6 items-center gap-1.5 rounded-full border bg-card px-2.5 text-xs font-medium outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
-      style={{ color: skillTextColor(skill.color) }}
-    >
-      <span aria-hidden className="size-2 rounded-full" style={{ backgroundColor: skillColorVar(skill.color) }} />
-      {skill.name}
-      {primary && <span className="sr-only">(primary)</span>}
-    </button>
   );
 }
 
