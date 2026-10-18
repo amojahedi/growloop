@@ -199,6 +199,25 @@ describe("BoardView ⋯ menu", () => {
   });
 });
 
+describe("BoardView undo after a reorder", () => {
+  it("puts a removed card back in its slot with no duplicate orders", async () => {
+    state().addPlanItem(third.id, "2026-10");
+    renderBoard();
+    await choose(first.title, "Remove from board");
+    // The column is reordered before Undo: the third card moves above the second.
+    await choose(third.title, "Move up");
+    fireEvent.click(within(document.querySelector("[data-toaster]") as HTMLElement).getByRole("button", { name: "Undo" }));
+    await settle();
+
+    const todo = state()
+      .data.planItems.filter((item) => item.status === "todo")
+      .sort((a, b) => a.order - b.order);
+    expect(todo.map((item) => item.order)).toEqual([0, 1, 2]);
+    expect(todo.map((item) => item.materialId)).toEqual([first.id, third.id, second.id]);
+    expect(within(column(/To do/)).getAllByRole("listitem")[0]).toHaveTextContent(first.title);
+  });
+});
+
 describe("BoardView moving to Done", () => {
   it("asks whether a certification was earned; Yes sets earnedAt", async () => {
     state().addPlanItem(certification.id, "2026-10");

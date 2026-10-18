@@ -176,6 +176,8 @@ export function BoardView() {
     const column = status ? drag.columns[status] : [];
     const index = column.indexOf(item.id);
     const neighbour = column[index + 1] ?? column[index - 1];
+    // Its slot in the full column, so Undo puts it back there even if the column changed meanwhile.
+    const slot = all[item.status].findIndex((candidate) => candidate.id === item.id);
     const removed = removePlanItem(item.id);
     if (!removed) return;
     toast({
@@ -184,6 +186,8 @@ export function BoardView() {
         label: "Undo",
         onClick: () => {
           restorePlanItem(removed);
+          // Re-slotting renumbers the column, so a reorder made before Undo can't leave two cards with one order.
+          movePlanItem(item.id, { status: item.status, index: Math.max(0, slot), month });
           focusCard(item.id);
         },
       },
