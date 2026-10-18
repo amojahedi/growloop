@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import { defaultLayout, type WidgetMeta } from "@/lib/domain/dashboard-layout";
+import { DueForReviewWidget } from "./due-for-review-widget";
 import { ItemsCompletedWidget } from "./items-completed-widget";
 import { LearningStreakWidget } from "./learning-streak-widget";
 import { OkrProgressWidget } from "./okr-progress-widget";
@@ -45,6 +46,13 @@ export const WIDGETS: readonly WidgetDefinition[] = [
     description: "Completed and projected skill impact this month, per skill.",
     defaultSize: "medium",
     component: SkillRadarWidget,
+  },
+  {
+    id: "due-for-review",
+    title: "Due for review",
+    description: "Notes you asked to see again.",
+    defaultSize: "small",
+    component: DueForReviewWidget,
   },
   {
     id: "reminders",

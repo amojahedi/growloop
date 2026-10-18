@@ -107,15 +107,3 @@ export function menuMoves(
 
 /** "Moved Inspired to In progress." */
 export const movedToMessage = (title: string, label: string) => `Moved ${title} to ${label}.`;
-
-// --- Certifications -----------------------------------------------------------------
-
-/**
- * The name used in "Did you earn {short title}?": a trailing abbreviation in
- * brackets when there is one ("Certified Scrum Product Owner (CSPO)" → "CSPO"),
- * else the title.
- */
-export function shortTitle(title: string): string {
-  const abbreviation = /\(([^()]{2,24})\)\s*$/.exec(title)?.[1]?.trim();
-  return abbreviation || title.trim();
-}

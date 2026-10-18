@@ -7,12 +7,11 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { boardColumns, type MoveTarget } from "@/lib/domain/board";
-import { isSummarized } from "@/lib/domain/notes";
 import { objectivesForQuarter } from "@/lib/domain/okrs";
 import type { BoardStatus, ID, PlanItem } from "@/lib/domain/types";
-import { useAppStore } from "@/lib/store/app-store";
 import { useActions, useMaterialMap, useObjectives, usePlanItems, useSkills } from "@/lib/store/hooks";
-import { CardDetailDrawer, type CardDetailDrawerProps } from "../card/card-detail-drawer";
+import { CardDetailDrawer } from "../card/card-detail-drawer";
+import { EarnedDialog, useDoneFollowUps } from "../card/use-done-follow-ups";
 import { monthsLabel } from "../review/labels";
 import { ReviewBanner } from "../review/review-banner";
 import { BoardCard } from "./board-card";
@@ -29,15 +28,12 @@ import {
   visibleColumns,
   type BoardFilters as Filters,
 } from "./board-model";
-import { EarnedDialog } from "./earned-dialog";
 import { SortableBoardCard, StaticBoardCard } from "./sortable-board-card";
 import { useBoardDrag } from "./use-board-drag";
 import { useBoardMonth } from "./use-board-month";
-import { useCardParam, type CardFocus } from "./use-card-param";
+import { useCardParam } from "./use-card-param";
 
 const DROP_ANIMATION: DropAnimation = { duration: 220, easing: "cubic-bezier(0.2, 0.9, 0.3, 1.1)" };
-
-export const SUMMARY_NUDGE = "Nice. Add a two-line summary while it's fresh?";
 
 // Optional call: jsdom has no matchMedia.
 const prefersReducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
@@ -90,10 +86,8 @@ export function BoardView() {
   const skills = useSkills();
   const objectives = useObjectives();
   const { month, quarter, currentMonth, goToCurrentMonth } = useBoardMonth();
-  const { movePlanItem, removePlanItem, restorePlanItem, setItemEarned, markSummaryNudged } = useActions();
+  const { movePlanItem, removePlanItem, restorePlanItem, setItemEarned } = useActions();
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
-  // The certification the "Did you earn…?" dialog asks about; kept after closing so focus can return to it.
-  const [earned, setEarned] = useState<{ id: ID; open: boolean } | null>(null);
   const { itemId: openItemId, focus: openFocus, openCard, closeCard } = useCardParam();
   const focusAfterRender = useFocusAfterRender();
   const { announce, region } = useAnnouncer();
@@ -118,13 +112,9 @@ export function BoardView() {
 
   // --- Moving to Done (board.md §Moving to Done) ----------------------------------
 
-  const nudgeSummary = (id: ID) => {
-    const { data } = useAppStore.getState();
-    const item = data.planItems.find((candidate) => candidate.id === id);
-    if (!item || item.summaryNudgedAt || isSummarized(id, data.notes)) return;
-    markSummaryNudged(id);
-    toast({ message: SUMMARY_NUDGE, action: { label: "Write summary", onClick: () => openCard(id, { focus: "summary" }) } });
-  };
+  // Shared with the card drawer's status select: "Did you earn…?" for certifications, then the summary toast.
+  const writeSummary = (id: ID) => openCard(id, { focus: "summary" });
+  const followUps = useDoneFollowUps({ onWriteSummary: writeSummary });
 
   /** Moves a card; returns true when the move opened the "Did you earn…?" dialog. */
   const move = (id: ID, target: MoveTarget): boolean => {
@@ -132,21 +122,7 @@ export function BoardView() {
     if (!editable(id)) return false;
     // Always onto this board's month (the current one).
     movePlanItem(id, { ...target, month });
-    if (!before || before.status === "done" || target.status !== "done") return false;
-    const certification = materials.get(before.materialId)?.type === "certification";
-    if (certification && !before.earnedAt) {
-      setEarned({ id, open: true });
-      return true;
-    }
-    nudgeSummary(id);
-    return false;
-  };
-
-  const answerEarned = (answer: boolean | undefined) => {
-    if (!earned?.open) return;
-    setEarned({ id: earned.id, open: false });
-    if (answer) setItemEarned(earned.id, true);
-    nudgeSummary(earned.id);
+    return before ? followUps.afterMove(before, target.status) : false;
   };
 
   const drag = useBoardDrag({ columns, items, month, titleOf, onMove: move });
@@ -327,13 +303,14 @@ export function BoardView() {
       )}
 
       <EarnedDialog
-        title={earned?.open ? titleOf(earned.id) : null}
-        onAnswer={answerEarned}
-        onCloseAutoFocus={() => earned && focusNow(cardSelector(earned.id))}
+        title={followUps.asking ? titleOf(followUps.asking) : null}
+        onAnswer={followUps.answer}
+        onCloseAutoFocus={() => followUps.lastAsked && focusNow(cardSelector(followUps.lastAsked))}
       />
-      <CardDrawer
+      <CardDetailDrawer
         itemId={openItemId}
         focus={openFocus}
+        onWriteSummary={writeSummary}
         onClose={() => {
           const id = openItemId;
           closeCard();
@@ -342,18 +319,6 @@ export function BoardView() {
       />
     </div>
   );
-}
-
-/**
- * The card drawer with the field to focus (`?focus=`).
- * TODO(WP4): once feat/wp4-card-notebook is merged, CardDetailDrawer declares
- * `focus?: "summary" | "notes"`: render it directly with `focus={focus}` and
- * delete this wrapper. Until then the prop is passed through a spread, which
- * compiles against the WP0 stub (it ignores it) and type-checks against WP4's.
- */
-function CardDrawer({ focus, ...props }: CardDetailDrawerProps & { focus?: CardFocus }) {
-  const drawerProps: CardDetailDrawerProps & { focus?: CardFocus } = { ...props, focus };
-  return <CardDetailDrawer {...drawerProps} />;
 }
 
 function EmptyBoard({
