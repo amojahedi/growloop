@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_", ignoreRestSiblings: true },
       ],
+      // No raw HTML: a script-injection vector would expose a visitor's Claude key (ADR 008).
+      "react/no-danger": "error",
     },
   },
   // Override default ignores of eslint-config-next.

@@ -7,7 +7,6 @@ import {
   materialDraftSchema,
   recommendationsSchema,
   summaryFeedbackSchema,
-  type AIErrorCode,
   type AIStatus,
   type EnrichMaterialRequest,
   type MaterialDraft,
@@ -16,24 +15,16 @@ import {
   type RefineSummaryRequest,
   type SummaryFeedback,
 } from "./schemas";
+import { AIRequestError } from "./request-error";
 
-/** Browser-side calls to the `/api/ai/*` routes, with validated responses. */
+/** Browser-side calls to the local `/api/ai/*` routes (Claude Code bridge), with validated responses. */
 
-export class AIRequestError extends Error {
-  override name = "AIRequestError";
-
-  constructor(
-    message: string,
-    readonly code: AIErrorCode | "network",
-  ) {
-    super(message);
-  }
-}
+export { AIRequestError };
 
 export const DEMO_MODE_STATUS: AIStatus = {
   available: false,
   code: "demo-mode",
-  reason: "AI features run on your own machine with Claude Code. Run Growloop locally to enable them.",
+  reason: "Claude Code only runs when Growloop runs on your own computer.",
 };
 
 async function requestJson<T>(path: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {

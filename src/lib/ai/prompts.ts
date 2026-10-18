@@ -1,7 +1,8 @@
 import { MAX_RECOMMENDATIONS, type EnrichMaterialInput, type RecommendInput, type RefineSummaryInput } from "./schemas";
 
 /**
- * Prompts and output schemas for the local Claude Code CLI.
+ * Prompts and output schemas shared by both AI providers (local Claude Code
+ * CLI and the visitor's own API key), so they return the same shapes.
  *
  * User-supplied text is wrapped in XML-style tags and the system prompt tells
  * the model to treat it as data, not instructions. The model also runs with no
@@ -11,7 +12,7 @@ import { MAX_RECOMMENDATIONS, type EnrichMaterialInput, type RecommendInput, typ
 export interface PromptSpec {
   systemPrompt: string;
   prompt: string;
-  /** JSON Schema passed to `--json-schema` so the CLI enforces the output shape. */
+  /** JSON Schema for the output: the CLI's `--json-schema`, or the API's structured output format. */
   jsonSchema: Record<string, unknown>;
 }
 

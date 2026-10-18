@@ -1,11 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AIRequestError, fetchAIStatus, requestMaterialDraft, requestRecommendations, requestSummaryFeedback } from "./client";
+import { fetchAIStatus } from "./client";
+import { offProvider, selectProviderKind, type AIProvider, type AIProviderKind } from "./provider";
+import { useHasApiKey } from "./providers/key-storage";
+import { localProvider } from "./providers/local";
+import { ownKeyProvider } from "./providers/own-key";
+import { AIRequestError } from "./request-error";
 import type {
   AIStatus,
+  DraftOkrsRequest,
   EnrichMaterialRequest,
   MaterialDraft,
+  OkrDraft,
   RecommendRequest,
   RecommendResponse,
   RefineSummaryRequest,
@@ -13,8 +20,11 @@ import type {
 } from "./schemas";
 
 /**
- * React access to the local AI features: availability plus one async action
- * per feature, each with its own loading / error / data state.
+ * React access to the AI features: which provider is active, plus one async
+ * action per feature, each with its own loading / error / data state.
+ *
+ * Provider order (ADR 008): the visitor's own Claude API key → the local
+ * Claude Code CLI (only when `/api/ai/status` says it's available) → off.
  *
  *   const ai = useAI();
  *   if (ai.status.state === "available") ai.recommend.run({ context, existingTitles });
@@ -23,6 +33,7 @@ import type {
 export type AIStatusState =
   | { state: "checking" }
   | { state: "available" }
+  /** No key and no local Claude Code; `reason` and `code` describe the local check. */
   | { state: "unavailable"; reason?: string; code?: AIStatus["code"] };
 
 export interface AsyncAction<Input, Output> {
@@ -30,6 +41,8 @@ export interface AsyncAction<Input, Output> {
   run: (input: Input) => Promise<Output | undefined>;
   data: Output | undefined;
   error: AIRequestError | undefined;
+  /** The error from the latest `run`, readable right after it resolves (state updates land later). */
+  lastError: () => AIRequestError | undefined;
   loading: boolean;
   /** Clears data and error, and cancels a call in flight. */
   reset: () => void;
@@ -59,11 +72,16 @@ function useAsyncAction<Input, Output>(
   request: (input: Input, signal: AbortSignal) => Promise<Output>,
 ): AsyncAction<Input, Output> {
   const [data, setData] = useState<Output>();
-  const [error, setError] = useState<AIRequestError>();
+  // Tagged with the request that failed, so an error (e.g. "key rejected") clears once the provider changes.
+  const [failure, setFailure] = useState<{ request: typeof request; error: AIRequestError }>();
+  const error = failure?.request === request ? failure.error : undefined;
+  const lastErrorRef = useRef<AIRequestError | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const controllerRef = useRef<AbortController | null>(null);
 
-  useEffect(() => () => controllerRef.current?.abort(), []);
+  // Cancel a call in flight on unmount, and when the provider behind `request` changes
+  // (e.g. the key was forgotten): its result must not appear under the new provider.
+  useEffect(() => () => controllerRef.current?.abort(), [request]);
 
   const run = useCallback(
     async (input: Input) => {
@@ -71,7 +89,8 @@ function useAsyncAction<Input, Output>(
       const controller = new AbortController();
       controllerRef.current = controller;
       setLoading(true);
-      setError(undefined);
+      setFailure(undefined);
+      lastErrorRef.current = undefined;
 
       try {
         const result = await request(input, controller.signal);
@@ -80,7 +99,10 @@ function useAsyncAction<Input, Output>(
         return result;
       } catch (caught) {
         if (controller.signal.aborted) return undefined;
-        setError(caught instanceof AIRequestError ? caught : new AIRequestError("Something went wrong.", "process-failed"));
+        const failed =
+          caught instanceof AIRequestError ? caught : new AIRequestError("Something went wrong.", "process-failed");
+        lastErrorRef.current = failed;
+        setFailure({ request, error: failed });
         return undefined;
       } finally {
         if (controllerRef.current === controller) {
@@ -96,24 +118,35 @@ function useAsyncAction<Input, Output>(
     controllerRef.current?.abort();
     controllerRef.current = null;
     setData(undefined);
-    setError(undefined);
+    setFailure(undefined);
+    lastErrorRef.current = undefined;
     setLoading(false);
   }, []);
 
-  return { run, data, error, loading, reset };
+  const lastError = useCallback(() => lastErrorRef.current, []);
+
+  return { run, data, error, lastError, loading, reset };
 }
 
 export interface UseAI {
+  /** Where AI calls go; "off" while checking or when neither a key nor local Claude Code is available. */
+  provider: AIProviderKind;
   status: AIStatusState;
-  /** Re-checks availability, e.g. after the user installs or signs in to Claude Code. */
+  /** Re-checks local availability, e.g. after the user installs or signs in to Claude Code. */
   recheck: () => void;
   recommend: AsyncAction<RecommendRequest, RecommendResponse>;
   refineSummary: AsyncAction<RefineSummaryRequest, SummaryFeedback>;
   /** Drafts a resource's details from a pasted title or link. */
   enrichMaterial: AsyncAction<EnrichMaterialRequest, MaterialDraft>;
+  /** Drafts objectives for the OKR wizard. The providers don't implement it yet. */
+  draftOkrs: AsyncAction<DraftOkrsRequest, OkrDraft>;
 }
 
-export function useAI(): UseAI {
+/** Local Claude Code availability (`/api/ai/status`), one request shared by every caller on the page. */
+export function useLocalClaudeStatus({ enabled = true }: { enabled?: boolean } = {}): {
+  status: AIStatusState;
+  recheck: () => void;
+} {
   const [status, setStatus] = useState<AIStatusState>({ state: "checking" });
 
   const check = useCallback((fresh: boolean) => {
@@ -126,18 +159,32 @@ export function useAI(): UseAI {
     };
   }, []);
 
-  useEffect(() => check(false), [check]);
+  useEffect(() => (enabled ? check(false) : undefined), [enabled, check]);
 
   const recheck = useCallback(() => {
     setStatus({ state: "checking" });
     check(true);
   }, [check]);
 
+  return { status, recheck };
+}
+
+export function useAI(): UseAI {
+  // A boolean, never the key itself: the key isn't held in React state (or visible in DevTools).
+  const hasKey = useHasApiKey();
+  // With a key the local CLI is never used, so skip its status check (which spawns processes).
+  const local = useLocalClaudeStatus({ enabled: !hasKey });
+
+  const provider = selectProviderKind({ hasKey, localAvailable: local.status.state === "available" });
+  const active: AIProvider = provider === "own-key" ? ownKeyProvider : provider === "local" ? localProvider : offProvider;
+
   return {
-    status,
-    recheck,
-    recommend: useAsyncAction(requestRecommendations),
-    refineSummary: useAsyncAction(requestSummaryFeedback),
-    enrichMaterial: useAsyncAction(requestMaterialDraft),
+    provider,
+    status: hasKey ? { state: "available" } : local.status,
+    recheck: local.recheck,
+    recommend: useAsyncAction(active.recommend),
+    refineSummary: useAsyncAction(active.refineSummary),
+    enrichMaterial: useAsyncAction(active.enrichMaterial),
+    draftOkrs: useAsyncAction(active.draftOkrs),
   };
 }
