@@ -32,7 +32,10 @@ describe("API key storage", () => {
   });
 
   it("keeps the key for this tab only when the browser blocks storage", () => {
-    vi.spyOn(localStorage, "setItem").mockImplementation(() => {
+    // jsdom's Storage methods live on the prototype (an instance spy is bypassed);
+    // the test stand-in used on newer Node defines them on the object itself.
+    const storage = Object.hasOwn(localStorage, "setItem") ? localStorage : Object.getPrototypeOf(localStorage);
+    vi.spyOn(storage, "setItem").mockImplementation(() => {
       throw new DOMException("blocked", "SecurityError");
     });
     expect(saveApiKey("sk-ant-api03-abcd")).toBe("memory");
