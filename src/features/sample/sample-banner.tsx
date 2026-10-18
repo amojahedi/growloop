@@ -2,34 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
-import { toast } from "@/components/ui/toast";
-import { STORAGE_KEY } from "@/lib/store/app-store";
+import { dismissToast, toast } from "@/components/ui/toast";
 import { useSampleMode } from "@/lib/store/device";
 import { useActions } from "@/lib/store/hooks";
-
-/**
- * Whether the own workspace (`growloop:data`) holds anything, read straight
- * from storage while the sample is loaded. Anything unreadable counts as
- * data: there is something to go back to. Without storage there is nothing.
- */
-export function storedOwnWorkspaceHasData(): boolean {
-  let raw: string | null;
-  try {
-    raw = localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return false;
-  }
-  if (raw === null) return false;
-  try {
-    const data = (JSON.parse(raw) as { state?: { data?: Record<string, unknown> } }).state?.data;
-    if (!data || typeof data !== "object") return true;
-    return ["objectives", "planItems", "notes", "savedMaterialIds", "customMaterials"].some(
-      (key) => Array.isArray(data[key]) && (data[key] as unknown[]).length > 0,
-    );
-  } catch {
-    return true;
-  }
-}
 
 /** The action's label: "Back to my data" when the own workspace has something, "Start fresh" otherwise. */
 export const exitSampleLabel = (ownHasData: boolean) => (ownHasData ? "Back to my data" : "Start fresh");
@@ -47,12 +22,14 @@ export function SampleBanner() {
 }
 
 function SampleBannerContent() {
-  const { exitSampleMode } = useActions();
+  const { exitSampleMode, ownWorkspaceHasData } = useActions();
   const router = useRouter();
   // The own workspace can't change while the sample is loaded (every tab follows sample mode).
-  const label = useMemo(() => exitSampleLabel(storedOwnWorkspaceHasData()), []);
+  const label = useMemo(() => exitSampleLabel(ownWorkspaceHasData()), [ownWorkspaceHasData]);
 
   const exit = () => {
+    // An Undo toast from the sample must never act on the own workspace.
+    dismissToast();
     const { ownWorkspaceEmpty } = exitSampleMode();
     toast({ message: ownWorkspaceEmpty ? "Fresh start. It's all yours." : "Back to your own data." });
     router.push("/");
