@@ -4,10 +4,17 @@ import { useCallback } from "react";
 import { isSampleModeOn } from "./device";
 import { useActions } from "./hooks";
 import type { ValidationResult } from "./schema";
-import { exportFileName } from "./serialization";
+import { exportFileName, parseImportedData } from "./serialization";
 import type { Workspace } from "@/lib/domain/types";
 
-/** Browser-side export (file download) and import (file read) of the workspace. */
+/** A file read for import and checked, but not applied yet (the user confirms first). */
+export type PreparedImport = { ok: true; json: string; fileName: string } | { ok: false; error: string };
+
+/**
+ * Browser-side export (file download) and import (file read) of the workspace.
+ * Import is two steps so the replace dialog only appears for a usable file:
+ * `prepareImport` reads and checks it, `applyImport` replaces the workspace.
+ */
 export function useDataTransfer() {
   const { exportData, importData } = useActions();
 
@@ -18,10 +25,18 @@ export function useDataTransfer() {
     URL.revokeObjectURL(url);
   }, [exportData]);
 
-  const importFile = useCallback(
-    async (file: File): Promise<ValidationResult<Workspace>> => importData(await file.text()),
-    [importData],
-  );
+  const prepareImport = useCallback(async (file: File): Promise<PreparedImport> => {
+    let json: string;
+    try {
+      json = await file.text();
+    } catch {
+      return { ok: false, error: "The file couldn't be read." };
+    }
+    const result = parseImportedData(json);
+    return result.ok ? { ok: true, json, fileName: file.name } : { ok: false, error: result.error };
+  }, []);
 
-  return { downloadExport, importFile };
+  const applyImport = useCallback((json: string): ValidationResult<Workspace> => importData(json), [importData]);
+
+  return { downloadExport, prepareImport, applyImport };
 }
