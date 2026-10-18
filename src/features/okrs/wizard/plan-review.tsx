@@ -116,7 +116,13 @@ export function PlanReview({
               const here = forms.filter((form) => form.quarter === quarter);
               const existing = saved.filter((objective) => objective.quarter === quarter);
               return (
-                <QuarterColumn key={quarter} quarter={quarter} isNow={quarter === now} heading="h3">
+                <QuarterColumn
+                  key={quarter}
+                  quarter={quarter}
+                  isNow={quarter === now}
+                  heading="h3"
+                  collapseOnMobile={!inScope.has(quarter) && here.length === 0 && existing.length === 0 && quarter < now}
+                >
                   {existing.map((objective) => (
                     <div key={objective.id} className="rounded-xl border border-dashed bg-card/60 px-3 py-2 text-sm">
                       <p className="font-medium leading-snug">{objective.title}</p>

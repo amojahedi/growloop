@@ -108,7 +108,7 @@ export function SegmentedControl<T extends string | number>({
         )}
       >
         {options.map((option, index) => (
-          <label key={String(option.value)} className={cn("relative", stretch && "min-w-0 flex-1")}>
+          <label key={String(option.value)} className={cn("relative", stretch && "flex-auto")}>
             <input
               id={index === 0 ? id : undefined}
               type="radio"

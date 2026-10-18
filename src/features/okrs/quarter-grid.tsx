@@ -29,19 +29,26 @@ export function QuarterColumn({
   quarter,
   isNow,
   heading: Heading = "h2",
+  collapseOnMobile = false,
   children,
 }: {
   quarter: QuarterKey;
   /** The current quarter: labelled "Now" and tinted. */
   isNow: boolean;
   heading?: "h2" | "h3";
+  /** A past quarter with nothing in it: hidden on small screens, where columns stack. */
+  collapseOnMobile?: boolean;
   children: ReactNode;
 }) {
   return (
     <section
       role="listitem"
       aria-label={formatQuarter(quarter)}
-      className={cn("flex min-w-0 flex-col gap-3 rounded-2xl p-2", isNow ? "bg-brand-soft/60 ring-1 ring-primary/15" : "bg-muted/40")}
+      className={cn(
+        "flex min-w-0 flex-col gap-3 rounded-2xl p-2",
+        isNow ? "bg-brand-soft/60 ring-1 ring-primary/15" : "bg-muted/40",
+        collapseOnMobile && "max-md:hidden",
+      )}
     >
       <Heading className="flex items-center gap-2 px-1.5 pt-1 text-sm font-semibold">
         <span>{quarterLabel(quarter)}</span>

@@ -225,7 +225,12 @@ function YearPanel({ year, isCurrentYear, onArchived }: { year: number; isCurren
           const isPast = compareQuarters(quarter, nowQuarter) < 0;
           const addingHere = editing?.kind === "new" && editing.form.quarter === quarter;
           return (
-            <QuarterColumn key={quarter} quarter={quarter} isNow={quarter === nowQuarter}>
+            <QuarterColumn
+              key={quarter}
+              quarter={quarter}
+              isNow={quarter === nowQuarter}
+              collapseOnMobile={isPast && here.length === 0 && !addingHere}
+            >
               {here.length === 0 && isPast && !addingHere && <EmptyQuarter />}
               {here.map((objective) => {
                 const editable = objective.status === "active" && isLinkable(objective, archivedYears);
