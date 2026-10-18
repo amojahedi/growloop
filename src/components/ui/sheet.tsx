@@ -5,6 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 import { XIcon } from "lucide-react"
 import { Dialog as DialogPrimitive } from "radix-ui"
+import { isInsideToaster } from "./toast"
 
 /**
  * A drawer from the right on desktop and a full-screen sheet below 768 px
@@ -46,6 +47,7 @@ function SheetContent({
   children,
   size,
   closeLabel = "Close",
+  onInteractOutside,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> &
   VariantProps<typeof sheetContentVariants> & {
@@ -58,7 +60,16 @@ function SheetContent({
         data-slot="sheet-overlay"
         className="fixed inset-0 z-50 bg-background/70 duration-200 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:animate-none"
       />
-      <DialogPrimitive.Content data-slot="sheet-content" className={cn(sheetContentVariants({ size }), className)} {...props}>
+      <DialogPrimitive.Content
+        data-slot="sheet-content"
+        className={cn(sheetContentVariants({ size }), className)}
+        // Undo on a toast must not close the sheet it undoes something in.
+        onInteractOutside={(event) => {
+          if (isInsideToaster(event.target)) event.preventDefault()
+          onInteractOutside?.(event)
+        }}
+        {...props}
+      >
         {children}
         <DialogPrimitive.Close
           className="absolute top-3 right-3 rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-hidden"

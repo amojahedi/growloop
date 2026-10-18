@@ -30,6 +30,16 @@ interface ActiveToast extends ToastOptions {
 const useToastStore = create<{ current: ActiveToast | null }>(() => ({ current: null }))
 let nextId = 0
 
+/**
+ * Whether an event happened inside the toaster. Sheets and dialogs use it so
+ * that clicking Undo on a toast doesn't count as a click outside that closes
+ * them. (The toaster's live region is never aria-hidden by a modal: the
+ * modal's hideOthers keeps every [aria-live] element and its ancestors.)
+ */
+export function isInsideToaster(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest("[data-toaster]") !== null
+}
+
 /** Shows a toast, replacing any visible one. */
 export function toast(options: ToastOptions): void {
   nextId += 1
@@ -61,6 +71,7 @@ export function Toaster() {
   return (
     // The live region is always present, so screen readers announce toasts added to it.
     <div
+      data-toaster
       role="status"
       aria-live="polite"
       className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex justify-center px-4 md:inset-x-auto md:right-4 md:justify-end"

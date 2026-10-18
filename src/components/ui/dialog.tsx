@@ -5,6 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 import { XIcon } from "lucide-react"
 import { Dialog as DialogPrimitive } from "radix-ui"
+import { isInsideToaster } from "./toast"
 
 function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -40,6 +41,7 @@ function DialogContent({
   className,
   children,
   side,
+  onInteractOutside,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & VariantProps<typeof dialogContentVariants>) {
   return (
@@ -51,6 +53,11 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(dialogContentVariants({ side }), className)}
+        // Undo on a toast must not close the dialog it undoes something in.
+        onInteractOutside={(event) => {
+          if (isInsideToaster(event.target)) event.preventDefault()
+          onInteractOutside?.(event)
+        }}
         {...props}
       >
         {children}

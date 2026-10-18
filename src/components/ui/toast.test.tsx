@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "./sheet";
 import { dismissToast, toast, Toaster } from "./toast";
 
 beforeEach(() => vi.useFakeTimers());
@@ -67,5 +68,34 @@ describe("Toaster", () => {
     act(() => toast({ message: "Saved" }));
     fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
     expect(screen.queryByText("Saved")).not.toBeInTheDocument();
+  });
+
+  it("stays announced and clickable over an open sheet, without closing it", async () => {
+    vi.useRealTimers();
+    const undo = vi.fn();
+    const onOpenChange = vi.fn();
+    render(
+      <>
+        <Toaster />
+        <Sheet open onOpenChange={onOpenChange}>
+          <SheetContent>
+            <SheetTitle>Card</SheetTitle>
+            <SheetDescription>Details</SheetDescription>
+          </SheetContent>
+        </Sheet>
+      </>,
+    );
+    act(() => toast({ message: "Removed from October", action: { label: "Undo", onClick: undo } }));
+
+    // The sheet starts listening for outside clicks a tick after opening.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+    const region = document.querySelector("[data-toaster]")!;
+    expect(region.closest("[aria-hidden=true]")).toBeNull();
+    const button = screen.getByRole("button", { name: "Undo" });
+    fireEvent.pointerDown(button);
+    fireEvent.click(button);
+
+    expect(undo).toHaveBeenCalledTimes(1);
+    expect(onOpenChange).not.toHaveBeenCalled();
   });
 });
