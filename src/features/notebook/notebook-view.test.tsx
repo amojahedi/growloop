@@ -249,6 +249,34 @@ describe("NotebookView", () => {
     expect(data().notes.find((note) => note.id === cardNoteId)?.body).toBe("Try outcome roadmaps");
   });
 
+  it("moves focus in one pane: to the note on open, back to the list on All notes, into the text after Reviewed", async () => {
+    const { summaryId } = seed();
+    renderNotebook();
+    list().focus();
+    fireEvent.keyDown(list(), { key: "End" });
+    fireEvent.keyDown(list(), { key: "Enter" });
+    expect(search()).toBe(`?note=${summaryId}`);
+    expect(document.activeElement).toBe(screen.getByRole("article", { name: `Summary: ${book.title}` }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Reviewed" }));
+    await act(() => new Promise((resolve) => requestAnimationFrame(() => resolve(undefined))));
+    expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Summary" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "All notes" }));
+    expect(search()).toBe("");
+    expect(document.activeElement).toBe(list());
+  });
+
+  it("undoing Clear restores only the text, keeping a review date set since", () => {
+    const { cardNoteId } = seed();
+    renderNotebook(`/notebook?note=${cardNoteId}`);
+    openMenu(screen.getByRole("button", { name: "Note actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Clear" }));
+    act(() => store().setNoteReview(cardNoteId, "2026-11-01"));
+    fireEvent.click(within(toaster()).getByRole("button", { name: "Undo" }));
+    expect(data().notes.find((note) => note.id === cardNoteId)).toMatchObject({ body: "Try outcome roadmaps", reviewAt: "2026-11-01" });
+  });
+
   it("picks 0 to 3 skills for free notes", () => {
     const { freeId } = seed();
     renderNotebook(`/notebook?note=${freeId}`);

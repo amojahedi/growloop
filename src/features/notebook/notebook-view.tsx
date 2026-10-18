@@ -17,6 +17,9 @@ import { clearNotebookFilters, hasActiveFilters, NOTEBOOK_SHOW, type NotebookSho
 import { NotebookSearch } from "./notebook-search";
 import { createNoteAndOpen, useNotebookParams } from "./use-notebook-params";
 
+/** Below 1024 px the Notebook shows one pane at a time. Optional call: jsdom has no matchMedia. */
+const isSinglePane = () => !(window.matchMedia?.("(min-width: 1024px)").matches ?? false);
+
 const SHOW_LABELS: Record<NotebookShow, string> = { all: "All", summaries: "Summaries", notes: "Notes" };
 
 /** Deletes a free note that was left without a title and a body (notebook.md §New note). */
@@ -63,8 +66,29 @@ export function NotebookView() {
     options: visibleSkills.map((skill) => ({ value: skill.id, label: skill.name, color: skill.color })),
   };
 
-  const open = (id: ID) => update((current) => ({ ...current, note: id }));
-  const leave = () => update((current) => ({ ...current, note: null }));
+  // In one pane the list and the editor replace each other, so focus follows: editor on open, list on back.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const pendingFocus = useRef<"pane" | "list" | null>(null);
+  useEffect(() => {
+    const target = pendingFocus.current;
+    pendingFocus.current = null;
+    const root = rootRef.current;
+    if (!target || !root) return;
+    const element =
+      target === "pane"
+        ? root.querySelector<HTMLElement>("[data-note-pane]")
+        : (root.querySelector<HTMLElement>("[role=listbox]") ?? root.querySelector<HTMLElement>("input[type=search]"));
+    element?.focus();
+  }, [selected]);
+
+  const open = (id: ID) => {
+    if (isSinglePane()) pendingFocus.current = "pane";
+    update((current) => ({ ...current, note: id }));
+  };
+  const leave = () => {
+    pendingFocus.current = "list";
+    update((current) => ({ ...current, note: null }));
+  };
 
   let listContent: React.ReactNode;
   if (!anyWritten && listed.length === 0) {
@@ -94,7 +118,7 @@ export function NotebookView() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div ref={rootRef} className="flex flex-col gap-4">
       <div className={cn("flex flex-wrap items-center gap-2", selected && "hidden lg:flex")} role="search" aria-label="Filter notes">
         <NotebookSearch value={params.query} onCommit={(query) => update((current) => ({ ...current, query }), { replace: true })} />
         <div role="group" aria-label="Show" className="flex items-center gap-1">

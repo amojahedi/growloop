@@ -63,7 +63,12 @@ function NoteEditorPane({ note, onLeave }: { note: Note; onLeave: () => void }) 
   const isCardNote = note.kind !== "free";
 
   return (
-    <article aria-label={`${noteKindLabel(note.kind)}: ${source}`} className="flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-xs md:p-6">
+    <article
+      data-note-pane
+      tabIndex={-1}
+      aria-label={`${noteKindLabel(note.kind)}: ${source}`}
+      className="flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50 md:p-6"
+    >
       <header className="flex items-start gap-3">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {isCardNote ? (
@@ -154,7 +159,15 @@ function DueBar({ noteId }: { noteId: ID }) {
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-lg bg-brand-soft px-3 py-2 text-sm text-brand-soft-foreground">
       <span className="mr-auto font-medium">Due for review</span>
-      <Button size="xs" onClick={() => markNoteReviewed(noteId)}>
+      <Button
+        size="xs"
+        onClick={(event) => {
+          // The bar goes away with its buttons; keep focus in the note.
+          const pane = event.currentTarget.closest("[data-note-pane]");
+          markNoteReviewed(noteId);
+          requestAnimationFrame(() => pane?.querySelector<HTMLElement>("textarea")?.focus());
+        }}
+      >
         Reviewed
       </Button>
       <DropdownMenu>
@@ -191,10 +204,12 @@ function NoteMenu({ note, onLeave }: { note: Note; onLeave: () => void }) {
     const previous = note;
     if (isFree) deleteNote(note.id);
     else updateNote(note.id, { body: "" });
+    // Undo puts back a deleted note whole, but only a cleared note's text, so changes made since are kept.
+    const undo = () => (isFree ? restoreNote(previous) : updateNote(previous.id, { body: previous.body }));
     onLeave();
     toast({
       message: isFree ? "Note deleted" : note.kind === "summary" ? "Summary cleared" : "Note cleared",
-      action: { label: "Undo", onClick: () => restoreNote(previous) },
+      action: { label: "Undo", onClick: undo },
     });
   };
 
