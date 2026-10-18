@@ -265,6 +265,14 @@ export interface AppActions {
   eraseEverything: () => void;
 
   // --- Phase 1 additions go below, one marked section per package. ---
+
+  // --- Phase 1: WP1 (shell, onboarding, help and sample) ---
+  /**
+   * Whether the own workspace holds anything, even while the sample is loaded
+   * (sample banner: "Start fresh" vs "Back to my data"). Counts the in-memory
+   * copy kept on entering sample mode, so it is right with blocked storage too.
+   */
+  ownWorkspaceHasData: () => boolean;
 }
 
 export interface AppState extends AppActions {
@@ -872,6 +880,13 @@ export const useAppStore = create<AppState>()(
           persistApi().setOptions({ name: STORAGE_KEY });
           set({ data: emptyWorkspace() });
         },
+
+        // --- Phase 1: WP1 (shell, onboarding, help and sample) ----------------------
+        ownWorkspaceHasData: () => {
+          if (!isSampleModeOn()) return !isEmptyWorkspace(get().data);
+          // The copy kept on entering (the only one when storage is blocked), else what's stored.
+          return ownWorkspaceCopy ? !isEmptyWorkspace(ownWorkspaceCopy) : storedWorkspaceHasData();
+        },
       };
     },
     {
@@ -969,5 +984,31 @@ function backUpRawSavedData() {
     if (raw) saveBackup(raw);
   } catch {
     // Storage unavailable: nothing to preserve.
+  }
+}
+
+// --- Phase 1: WP1 (shell, onboarding, help and sample) ---------------------------------
+
+/**
+ * Whether the stored own workspace holds anything, read without loading it
+ * (it may be from an older schema). Anything unreadable counts as data: there
+ * is something to go back to. Without storage there is nothing.
+ */
+function storedWorkspaceHasData(): boolean {
+  let raw: string | null;
+  try {
+    raw = localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return false;
+  }
+  if (raw === null) return false;
+  try {
+    const data = (JSON.parse(raw) as { state?: { data?: Record<string, unknown> } }).state?.data;
+    if (!data || typeof data !== "object") return true;
+    return ["objectives", "planItems", "notes", "savedMaterialIds", "customMaterials"].some(
+      (key) => Array.isArray(data[key]) && (data[key] as unknown[]).length > 0,
+    );
+  } catch {
+    return true;
   }
 }
