@@ -35,8 +35,6 @@ export function createPlanItem(
     skillIds: options.skillIds ?? [...material.skillIds],
     ...(options.keyResultId ? { keyResultId: options.keyResultId } : {}),
     tasks: suggest(material).map((seed) => createTask(seed, "suggested")),
-    notes: "",
-    summary: "",
     estimatedHours: material.estimatedHours,
     timeLogs: [],
     createdAt: now,

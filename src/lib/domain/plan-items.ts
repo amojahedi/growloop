@@ -1,3 +1,4 @@
+import { SUMMARIZE_TASK_TITLE } from "@/lib/catalog";
 import { createId } from "./ids";
 import type { BoardStatus, ID, PlanItem, Reminder, Task, TimeLog } from "./types";
 
@@ -56,14 +57,18 @@ export function taskProgress(item: PlanItem): { done: number; total: number } {
   return { done: item.tasks.filter((task) => task.done).length, total: item.tasks.length };
 }
 
-// --- Reflection ----------------------------------------------------------
-
-export function setNotes(item: PlanItem, notes: string, now: string): PlanItem {
-  return item.notes === notes ? item : { ...item, notes, notesUpdatedAt: now };
+/** The "Summarize in my words" task, which ticks itself on the first summary (C-2). */
+export function summaryTask(item: PlanItem): Task | undefined {
+  return item.tasks.find((task) => task.kind === "suggested" && task.title === SUMMARIZE_TASK_TITLE);
 }
 
-export function setSummary(item: PlanItem, summary: string, now: string): PlanItem {
-  return item.summary === summary ? item : { ...item, summary, summaryUpdatedAt: now };
+// --- Certifications --------------------------------------------------------
+
+/** Marks a certification card earned (or not). Earning is a fact, so later moves out of Done keep it. */
+export function setEarned(item: PlanItem, earned: boolean, now: string): PlanItem {
+  if (earned) return item.earnedAt ? item : { ...item, earnedAt: now };
+  const { earnedAt: _cleared, ...rest } = item;
+  return rest;
 }
 
 // --- Reminder ------------------------------------------------------------

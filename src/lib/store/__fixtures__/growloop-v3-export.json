@@ -1,0 +1,227 @@
+{
+  "app": "growloop",
+  "exportedAt": "2026-10-16T19:42:11.000Z",
+  "data": {
+    "version": 3,
+    "skills": [
+      {
+        "id": "stakeholder-management",
+        "name": "Stakeholder Management",
+        "description": "Building trust and alignment with execs, partners and peer teams so decisions stick.",
+        "icon": "users",
+        "color": "orange",
+        "builtIn": true,
+        "hidden": true
+      },
+      {
+        "id": "roadmapping",
+        "name": "Roadmapping",
+        "description": "Turning strategy into a sequenced plan.",
+        "icon": "map",
+        "color": "blue",
+        "builtIn": true
+      },
+      {
+        "id": "product-discovery",
+        "name": "Product Discovery",
+        "description": "Learning what customers need.",
+        "icon": "search",
+        "color": "teal",
+        "builtIn": true
+      },
+      {
+        "id": "a1b2c3d4-negotiation",
+        "name": "Negotiation",
+        "description": "",
+        "icon": "sparkles",
+        "color": "rose",
+        "builtIn": false
+      }
+    ],
+    "customMaterials": [
+      {
+        "id": "f0e1d2c3-team-playbook",
+        "type": "custom",
+        "title": "Our team's customer interview playbook",
+        "author": "Product team",
+        "url": "https://wiki.example.com/interviews",
+        "skillIds": ["product-discovery", "a1b2c3d4-negotiation"],
+        "tagline": "How our trio runs weekly interviews.",
+        "summary": "Recruiting script, interview template and synthesis board.",
+        "audience": "The product trio.",
+        "keyTakeaways": [],
+        "estimatedHours": 1,
+        "level": "beginner",
+        "cost": "free",
+        "curated": false
+      }
+    ],
+    "objectives": [
+      {
+        "id": "obj-roadmaps",
+        "quarter": "2026-Q4",
+        "title": "Lead roadmap conversations with confidence",
+        "description": "  Move our team from a feature list to an outcome-based roadmap.  ",
+        "skillIds": ["roadmapping", "a1b2c3d4-negotiation"],
+        "keyResults": [
+          { "id": "kr-roadmap-materials", "title": "Finish 3 roadmapping materials", "progressMode": "auto" },
+          {
+            "id": "kr-present-roadmap",
+            "title": "Present a Now / Next / Later roadmap at the December review",
+            "progressMode": "manual",
+            "manualProgress": 40
+          }
+        ],
+        "createdAt": "2026-10-01T07:00:00.000Z"
+      },
+      {
+        "id": "obj-no-skills",
+        "quarter": "2026-Q3",
+        "title": "Get comfortable with discovery",
+        "skillIds": [],
+        "keyResults": [{ "id": "kr-interviews", "title": "Run 12 customer interviews", "progressMode": "manual", "manualProgress": 75 }],
+        "createdAt": "2026-07-02T08:00:00.000Z"
+      },
+      {
+        "id": "obj-empty",
+        "quarter": "2027-Q1",
+        "title": "Negotiate scope with confidence",
+        "description": "",
+        "skillIds": ["a1b2c3d4-negotiation"],
+        "keyResults": [],
+        "createdAt": "2026-10-10T09:00:00.000Z"
+      }
+    ],
+    "planItems": [
+      {
+        "id": "pi-roadmaps",
+        "materialId": "book-product-roadmaps-relaunched",
+        "month": "2026-10",
+        "status": "in_progress",
+        "order": 0,
+        "skillIds": ["roadmapping", "a1b2c3d4-negotiation"],
+        "keyResultId": "kr-roadmap-materials",
+        "tasks": [
+          { "id": "pi-roadmaps-t1", "title": "Part 1: Why roadmaps", "done": true, "kind": "milestone", "completedAt": "2026-10-03T20:00:00.000Z" },
+          { "id": "pi-roadmaps-t2", "title": "Summarize in my words", "done": false, "kind": "suggested" },
+          { "id": "pi-roadmaps-t3", "title": "Draft our own theme list", "done": false, "kind": "custom" }
+        ],
+        "notes": "Page 42: themes > features.\nAsk Dana about the Q1 bets.",
+        "notesUpdatedAt": "2026-10-04T21:15:00.000Z",
+        "summary": "A roadmap is a statement of intent, not a delivery schedule. Themes tied to outcomes let the team decide how.",
+        "summaryUpdatedAt": "2026-10-12T18:30:00.000Z",
+        "reminder": { "date": "2026-10-24", "note": "Finish part 2" },
+        "estimatedHours": 7,
+        "timeLogs": [{ "id": "pi-roadmaps-l1", "date": "2026-10-03", "hours": 1.5 }],
+        "createdAt": "2026-10-01T09:00:00.000Z"
+      },
+      {
+        "id": "pi-alt-roadmaps",
+        "materialId": "article-svpg-alternative-to-roadmaps",
+        "month": "2026-09",
+        "status": "done",
+        "order": 0,
+        "skillIds": ["roadmapping"],
+        "keyResultId": "kr-roadmap-materials",
+        "tasks": [{ "id": "pi-alt-t1", "title": "Summarize in my words", "done": true, "kind": "suggested", "completedAt": "2026-09-20T10:00:00.000Z" }],
+        "notes": "",
+        "summary": "Roadmaps should show problems to solve, not features.",
+        "estimatedHours": 0.5,
+        "timeLogs": [],
+        "createdAt": "2026-09-02T09:00:00.000Z",
+        "completedAt": "2026-09-20T10:00:00.000Z"
+      },
+      {
+        "id": "pi-cert",
+        "materialId": "cert-scrum-org-pspo-i",
+        "month": "2026-08",
+        "status": "done",
+        "order": 0,
+        "skillIds": ["product-discovery"],
+        "tasks": [],
+        "notes": "   ",
+        "summary": "",
+        "summaryUpdatedAt": "2026-08-30T10:00:00.000Z",
+        "timeLogs": [
+          { "id": "pi-cert-l1", "date": "2026-08-12", "hours": 2 },
+          { "id": "pi-cert-l2", "date": "2026-08-19", "hours": 3.5 }
+        ],
+        "createdAt": "2026-08-01T09:00:00.000Z",
+        "completedAt": "2026-08-28T16:00:00.000Z"
+      },
+      {
+        "id": "pi-cert-open",
+        "materialId": "cert-scrum-org-psm-i",
+        "month": "2026-10",
+        "status": "todo",
+        "order": 0,
+        "skillIds": ["product-discovery"],
+        "tasks": [],
+        "notes": "Exam voucher expires in March.",
+        "summary": "",
+        "timeLogs": [],
+        "createdAt": "2026-10-05T09:00:00.000Z",
+        "carriedFrom": ["2026-08", "2026-09"]
+      },
+      {
+        "id": "pi-playbook",
+        "materialId": "f0e1d2c3-team-playbook",
+        "month": "2026-09",
+        "status": "backlog",
+        "order": 0,
+        "skillIds": ["product-discovery"],
+        "keyResultId": "kr-interviews",
+        "tasks": [],
+        "notes": "",
+        "summary": "",
+        "timeLogs": [],
+        "createdAt": "2026-09-10T09:00:00.000Z"
+      }
+    ],
+    "rollovers": [
+      {
+        "fromMonth": "2026-09",
+        "toMonth": "2026-10",
+        "completedAt": "2026-10-01T07:20:00.000Z",
+        "counts": { "carry_over": 1, "backlog": 1, "drop": 0 }
+      }
+    ],
+    "activity": [
+      {
+        "id": "ev-1",
+        "kind": "time_logged",
+        "day": "2026-08-12",
+        "at": "2026-08-12T20:00:00.000Z",
+        "itemId": "pi-cert",
+        "materialId": "cert-scrum-org-pspo-i",
+        "skillIds": ["product-discovery"],
+        "hours": 2,
+        "refId": "pi-cert-l1"
+      },
+      {
+        "id": "ev-2",
+        "kind": "summary_edited",
+        "day": "2026-09-20",
+        "at": "2026-09-20T10:00:00.000Z",
+        "itemId": "pi-alt-roadmaps",
+        "materialId": "article-svpg-alternative-to-roadmaps",
+        "skillIds": ["roadmapping"]
+      },
+      {
+        "id": "ev-3",
+        "kind": "notes_edited",
+        "day": "2026-10-04",
+        "at": "2026-10-04T21:15:00.000Z",
+        "itemId": "pi-roadmaps",
+        "materialId": "book-product-roadmaps-relaunched",
+        "skillIds": ["roadmapping", "a1b2c3d4-negotiation"]
+      }
+    ],
+    "savedMaterialIds": ["book-escaping-the-build-trap", "book-continuous-discovery-habits"],
+    "dashboardLayout": [
+      { "widgetId": "items-completed", "size": "large" },
+      { "widgetId": "skill-radar", "size": "medium" },
+      { "widgetId": "widget-from-the-future", "size": "small" }
+    ]
+  }
+}

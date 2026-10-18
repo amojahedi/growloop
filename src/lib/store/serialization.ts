@@ -18,9 +18,9 @@ export function serializeWorkspace(data: Workspace, now: string = new Date().toI
   return JSON.stringify(file, null, 2);
 }
 
-/** Suggested download name using the local date, e.g. "growloop-2026-10-17.json". */
-export function exportFileName(now: Date = new Date()): string {
-  return `growloop-${dayKey(now)}.json`;
+/** Suggested download name using the local date, e.g. "growloop-2026-10-17.json" ("growloop-sample-…" in sample mode). */
+export function exportFileName(now: Date = new Date(), { sample = false }: { sample?: boolean } = {}): string {
+  return `growloop-${sample ? "sample-" : ""}${dayKey(now)}.json`;
 }
 
 /**

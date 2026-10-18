@@ -1,16 +1,17 @@
 import { addMonths as addCalendarMonths } from "date-fns";
-import { BUILT_IN_SKILLS, DEMO_DATA } from "@/lib/catalog";
+import { BUILT_IN_SKILLS, DEMO_DATA, storedSkill } from "@/lib/catalog";
 import { newWorkspace } from "@/lib/domain/app-data";
 import { addMonths, addQuarters, compareMonths, dayKey, monthKey, monthsBetween, quarterOf } from "@/lib/domain/dates";
-import type { AppData, MonthKey, PlanItem, Workspace } from "@/lib/domain/types";
+import type { AppData, LegacyPlanItem } from "@/lib/domain/legacy-types";
+import type { MonthKey, Workspace } from "@/lib/domain/types";
 import { migrateAppData } from "./migrations";
 import { validateWorkspace } from "./schema";
 
-/** First-run data: an empty plan, or the sample workspace on the hosted demo. */
+/** First-run data: an empty plan, and the sample workspace for sample mode (ADR 009). */
 
-export const emptyWorkspace = (): Workspace => newWorkspace(BUILT_IN_SKILLS);
+export const emptyWorkspace = (): Workspace => newWorkspace(BUILT_IN_SKILLS.map(storedSkill));
 
-/** Upgrades authored seed data (schema v1) to the current schema via the regular migrations. */
+/** Upgrades authored seed data (schema v1) to the current schema via the regular migrations, so the seed exercises them too. */
 export function upgradeSeed(seed: AppData): Workspace {
   const result = validateWorkspace(migrateAppData(structuredClone(seed), seed.version));
   if (!result.ok) throw new Error(`Seed data is invalid: ${result.error}`);
@@ -45,7 +46,7 @@ export function shiftSeed(seed: AppData, toMonth: MonthKey): AppData {
   const quarterShift = (quarter: string) =>
     addQuarters(quarterOf(toMonth), quarterIndex(quarter) - quarterIndex(quarterOf(base)));
 
-  const shiftItem = (item: PlanItem): PlanItem => ({
+  const shiftItem = (item: LegacyPlanItem): LegacyPlanItem => ({
     ...item,
     month: month(item.month),
     createdAt: date(item.createdAt),
@@ -84,5 +85,5 @@ function quarterIndex(quarter: string): number {
 /** JSON round trip: removes keys set to `undefined` by the shifting above. */
 const dropUndefined = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
-/** The sample workspace, dated around the current month. */
-export const demoWorkspace = (today: Date = new Date()): Workspace => upgradeSeed(shiftSeed(DEMO_DATA, monthKey(today)));
+/** A fresh sample workspace, dated around `today`. Throws if the seed doesn't validate (a dev bug, see seed.test.ts). */
+export const sampleWorkspace = (today: Date = new Date()): Workspace => upgradeSeed(shiftSeed(DEMO_DATA, monthKey(today)));

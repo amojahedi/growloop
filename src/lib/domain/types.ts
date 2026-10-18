@@ -1,6 +1,11 @@
 /**
- * Core domain model. See docs/PRD.md §4 for the concept map.
- * Dates are ISO strings: full timestamps for events, "YYYY-MM" for months, "YYYY-Qn" for quarters.
+ * Core domain model (schema v4). See docs/PRD.md §4 for the concept map and
+ * docs/design/ux-flows.md §5 for the data model.
+ * Dates are ISO strings: full timestamps for events, "YYYY-MM-DD" for days,
+ * "YYYY-MM" for months, "YYYY-Qn" for quarters.
+ *
+ * Frozen after WP0 (build plan): Phase 1 packages don't change these types;
+ * new persisted fields are batched into one v5 migration.
  */
 
 export type ID = string;
@@ -105,73 +110,164 @@ export interface PlanItem {
   status: BoardStatus;
   /** Order within its board column. */
   order: number;
+  /** The card's own skills (1–3); the first is the primary skill. Starts as the material's skills. */
   skillIds: ID[];
   keyResultId?: ID;
   tasks: Task[];
-  notes: string;
-  /** Last time `notes` was edited. */
-  notesUpdatedAt?: string;
-  /** "Summarize in my words". */
-  summary: string;
-  /** Last time `summary` was edited. */
-  summaryUpdatedAt?: string;
   reminder?: Reminder;
   estimatedHours?: number;
   timeLogs: TimeLog[];
   createdAt: string;
   /** Set when status becomes "done". */
   completedAt?: string;
+  /** Certifications only: when the user confirmed they earned it (C-7). */
+  earnedAt?: string;
+  /** When the "add a summary while it's fresh" toast was shown; it is shown at most once per card. */
+  summaryNudgedAt?: string;
   /** Months this item was carried over from, oldest first. */
   carriedFrom?: MonthKey[];
 }
 
+// --- Writing (ADR 010) -------------------------------------------------------------
+
+export type NoteKind = "summary" | "item_note" | "free";
+export const NOTE_KINDS = ["summary", "item_note", "free"] as const satisfies readonly NoteKind[];
+
+/** The two notes every card can have. */
+export type CardNoteKind = Exclude<NoteKind, "free">;
+
+/**
+ * Everything the user writes. A card's summary and its notes are notes (one of
+ * each per card), so the card drawer and the Notebook edit the same record, and
+ * writing survives when the card is removed, dropped or archived. Plain text.
+ */
+export interface Note {
+  id: ID;
+  kind: NoteKind;
+  /** summary / item_note: the card it belongs to (which may since have been removed). */
+  planItemId?: ID;
+  /** summary / item_note: kept so the note stays readable after its card is gone. */
+  materialId?: ID;
+  /** Free notes only; card notes show their material's title. */
+  title?: string;
+  body: string;
+  /** Free notes: chosen (0–3). Card notes: follow the card's skills. */
+  skillIds: ID[];
+  /** Day the note is due for review, e.g. "2026-10-25". */
+  reviewAt?: string;
+  lastReviewedAt?: string;
+  /** Last time a Claude suggestion replaced the body (summaries only). */
+  refinedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// --- OKRs (ADR 007, 011) -----------------------------------------------------------
+
+export type KeyResultType = "material" | "certification" | "count";
+export const KEY_RESULT_TYPES = ["material", "certification", "count"] as const satisfies readonly KeyResultType[];
+
+/** A typed key result on exactly one skill. Progress is always computed (see okrs.ts), never typed. */
 export interface KeyResult {
   id: ID;
   title: string;
-  /** "auto" = done/total of linked plan items; "manual" = user-set progress. */
-  progressMode: "auto" | "manual";
-  /** 0–100, used when progressMode is "manual". */
-  manualProgress?: number;
+  skillId: ID;
+  type: KeyResultType;
+  /** material / certification: the library item to finish. */
+  materialId?: ID;
+  /** count: how many items tagged with the skill to finish inside the objective's quarter (1–10). */
+  count?: number;
 }
+
+export type ObjectiveStatus = "active" | "closed";
+export type ObjectiveSource = "claude" | "quick" | "manual";
+export const OBJECTIVE_SOURCES = ["claude", "quick", "manual"] as const satisfies readonly ObjectiveSource[];
 
 export interface Objective {
   id: ID;
   quarter: QuarterKey;
   title: string;
-  description?: string;
-  skillIds: ID[];
+  /** One short line linking the objective to the user's goal. */
+  why?: string;
+  status: ObjectiveStatus;
+  /** The score it closed with (0–100); set when closed. */
+  finalProgress?: number;
+  closedAt?: string;
+  /** Set by the one quarter-end move allowed per objective: the quarter it came from. */
+  movedFrom?: QuarterKey;
+  source: ObjectiveSource;
   keyResults: KeyResult[];
   createdAt: string;
 }
 
+// --- Profile -----------------------------------------------------------------------
+
+/** 1 New to it · 2 Learning · 3 Capable · 4 Strong · 5 Expert. */
+export type SkillLevelValue = 1 | 2 | 3 | 4 | 5;
+export const SKILL_LEVEL_VALUES = [1, 2, 3, 4, 5] as const satisfies readonly SkillLevelValue[];
+
+export interface SkillLevel {
+  skillId: ID;
+  current: SkillLevelValue;
+  target: SkillLevelValue;
+  updatedAt: string;
+}
+
+export type RoleId = "aspiring_pm" | "associate_pm" | "pm" | "senior_pm" | "lead_pm";
+export const ROLE_IDS = ["aspiring_pm", "associate_pm", "pm", "senior_pm", "lead_pm"] as const satisfies readonly RoleId[];
+
+export type GoalId = "promotion" | "move_into_product" | "stronger" | "leadership" | "other";
+export const GOAL_IDS = [
+  "promotion",
+  "move_into_product",
+  "stronger",
+  "leadership",
+  "other",
+] as const satisfies readonly GoalId[];
+
+export interface Profile {
+  /** Used in the greeting (≤ 40 chars). */
+  name?: string;
+  role?: RoleId;
+  goal?: GoalId;
+  /** The user's own words when the goal is "other" (≤ 80 chars). */
+  goalText?: string;
+  /** Now and Goal levels per skill, from the wizard or the skill sheet (S-5). */
+  skillLevels: SkillLevel[];
+}
+
+// --- Month-end review --------------------------------------------------------------
+
 /** What to do with an unfinished item during the month-end review. */
 export type RolloverDecision = "carry_over" | "backlog" | "drop";
 
-/** Recorded outcome of a month-end rollover review. */
+/** Recorded outcome of a month-end review. */
 export interface RolloverRecord {
   fromMonth: MonthKey;
   toMonth: MonthKey;
   completedAt: string;
   /** How many items received each decision. */
   counts?: Record<RolloverDecision, number>;
+  /** Objectives closed and moved in this review. */
+  closedObjectiveIds?: ID[];
+  movedObjectiveIds?: ID[];
+  /**
+   * Years the review offered to archive, archived or not. A declined year is
+   * not offered again; the OKR page keeps an "Archive" button for it instead.
+   */
+  yearsOffered?: number[];
 }
 
-/**
- * A workspace snapshot in schema v1: the format curated seed data (DEMO_DATA)
- * is authored in. The app stores a `Workspace` (current schema) and upgrades
- * v1 data through the migrations in src/lib/store/migrations.ts.
- */
-export interface AppData {
-  version: 1;
-  skills: Skill[];
-  /** User-added materials only; curated materials ship with the app. */
-  customMaterials: Material[];
-  objectives: Objective[];
-  planItems: PlanItem[];
-  rollovers: RolloverRecord[];
-}
+// --- Activity ----------------------------------------------------------------------
 
 export type ActivityKind = "item_completed" | "task_completed" | "notes_edited" | "summary_edited" | "time_logged";
+export const ACTIVITY_KINDS = [
+  "item_completed",
+  "task_completed",
+  "notes_edited",
+  "summary_edited",
+  "time_logged",
+] as const satisfies readonly ActivityKind[];
 
 /**
  * One entry in the append-only activity log. Streaks, active days and logged
@@ -195,17 +291,7 @@ export interface ActivityEvent {
   refId?: ID;
 }
 
-/** Schema v2: v1 plus the activity log. Kept for migrating older saves. */
-export interface WorkspaceV2 extends Omit<AppData, "version"> {
-  version: 2;
-  activity: ActivityEvent[];
-  /**
-   * Curated materials the user saved to My Library (ML-1). Optional and
-   * defaulted to [] when loading, so older saves need no migration. The user's
-   * own materials are always in the library and are not listed here.
-   */
-  savedMaterialIds?: ID[];
-}
+// --- Dashboard ---------------------------------------------------------------------
 
 export const WIDGET_SIZES = ["small", "medium", "large"] as const;
 
@@ -221,9 +307,29 @@ export interface WidgetPlacement {
   size: WidgetSize;
 }
 
-/** Everything the app stores locally (schema v3: v2 plus the dashboard layout). */
-export interface Workspace extends Omit<WorkspaceV2, "version"> {
-  version: 3;
+// --- Workspace ---------------------------------------------------------------------
+
+/**
+ * Everything the app stores for one workspace (schema v4), under
+ * `growloop:data`, or `growloop:sample` in sample mode (ADR 009). Device
+ * preferences and the Claude key live outside it and are never exported.
+ * Older shapes are in legacy-types.ts; src/lib/store/migrations.ts upgrades them.
+ */
+export interface Workspace {
+  version: 4;
+  profile: Profile;
+  skills: Skill[];
+  /** User-added materials only; curated materials ship with the app. */
+  customMaterials: Material[];
+  /** Curated materials saved to My Library (ML-1). The user's own materials are always in the library. */
+  savedMaterialIds: ID[];
+  objectives: Objective[];
+  planItems: PlanItem[];
+  notes: Note[];
+  rollovers: RolloverRecord[];
+  activity: ActivityEvent[];
+  /** Years archived in the month-end review: read-only under the OKR page's Archive tab. */
+  archivedYears: number[];
   /** Visible widgets in order; hidden widgets are omitted. `null` = the default layout. */
   dashboardLayout: WidgetPlacement[] | null;
 }

@@ -3,8 +3,11 @@
 import { createContext, use, useEffect, useMemo, useSyncExternalStore, type FocusEvent } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { CURATED_MATERIALS } from "@/lib/catalog";
+import { now, subscribeToDevClock } from "@/lib/clock";
 import { addMonths, dayKey, monthOf, quarterOf, type DayKey } from "@/lib/domain/dates";
-import type { ID, Material, MonthKey, QuarterKey, Skill } from "@/lib/domain/types";
+import { pendingReview, type PendingReview } from "@/lib/domain/month-review";
+import { dueNotes } from "@/lib/domain/notes";
+import type { ID, Material, MonthKey, Note, QuarterKey, Skill } from "@/lib/domain/types";
 import { useAppStore, type AppActions, type AppState } from "./app-store";
 import { useUIStore, type SkillPreview } from "./ui-store";
 
@@ -14,6 +17,21 @@ export const useAppData = () => useAppStore((state) => state.data);
 export const usePlanItems = () => useAppStore((state) => state.data.planItems);
 export const useObjectives = () => useAppStore((state) => state.data.objectives);
 export const useActivity = () => useAppStore((state) => state.data.activity);
+export const useNotes = () => useAppStore((state) => state.data.notes);
+export const useProfile = () => useAppStore((state) => state.data.profile);
+export const useArchivedYears = () => useAppStore((state) => state.data.archivedYears);
+
+/** One note by id. */
+export function useNote(id: ID): Note | undefined {
+  return useAppStore((state) => state.data.notes.find((note) => note.id === id));
+}
+
+/** Notes due for review today, oldest due first (Notebook badge, Due chip, dashboard widget). Only inside `<DataGate>`. */
+export function useDueNotes(): Note[] {
+  const notes = useNotes();
+  const today = useToday();
+  return useMemo(() => dueNotes(notes, today), [notes, today]);
+}
 /** The saved dashboard layout, or `null` for the default one. */
 export const useSavedDashboardLayout = () => useAppStore((state) => state.data.dashboardLayout);
 
@@ -33,10 +51,8 @@ export function useMaterials(): Material[] {
   return useMemo(() => [...CURATED_MATERIALS, ...custom], [custom]);
 }
 
-const NO_IDS: ID[] = [];
-
 /** Curated materials saved to My Library (ML-1). */
-export const useSavedMaterialIds = (): ID[] => useAppStore((state) => state.data.savedMaterialIds ?? NO_IDS);
+export const useSavedMaterialIds = (): ID[] => useAppStore((state) => state.data.savedMaterialIds);
 
 /** Everything in My Library: saved curated materials plus the user's own. */
 export function useLibraryIds(): ReadonlySet<ID> {
@@ -50,6 +66,23 @@ export function useMaterialMap(): ReadonlyMap<ID, Material> {
   return useMemo(() => new Map(materials.map((material) => [material.id, material])), [materials]);
 }
 
+/** The month-end review waiting for the user, or null (board.md §When it is due). Only inside `<DataGate>`. */
+export function usePendingReview(): PendingReview | null {
+  const { planItems, objectives, archivedYears, rollovers } = useAppStore(
+    useShallow((state) => ({
+      planItems: state.data.planItems,
+      objectives: state.data.objectives,
+      archivedYears: state.data.archivedYears,
+      rollovers: state.data.rollovers,
+    })),
+  );
+  const today = useToday();
+  return useMemo(
+    () => pendingReview({ planItems, objectives, archivedYears, rollovers }, today),
+    [planItems, objectives, archivedYears, rollovers, today],
+  );
+}
+
 // --- Actions ----------------------------------------------------------------------
 
 const pickActions = ({ data: _data, ...actions }: AppState): AppActions => actions;
@@ -61,17 +94,22 @@ export const useActions = (): AppActions => useAppStore(useShallow(pickActions))
 
 const subscribeToClock = (onChange: () => void) => {
   const timer = setInterval(onChange, 60_000);
-  return () => clearInterval(timer);
+  const unsubscribeDevClock = subscribeToDevClock(onChange);
+  return () => {
+    clearInterval(timer);
+    unsubscribeDevClock();
+  };
 };
 
 /**
- * Today's local date, refreshed every minute so the app rolls over at midnight.
+ * Today's local date, refreshed every minute so the app rolls over at midnight
+ * (and following the dev clock override in development builds).
  * `null` on the server and during hydration, where "today" is unknown.
  */
 export function useClockDay(): DayKey | null {
   return useSyncExternalStore(
     subscribeToClock,
-    () => dayKey(new Date()),
+    () => dayKey(now()),
     () => null,
   );
 }

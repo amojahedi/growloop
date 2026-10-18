@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { DEMO_DATA } from "@/lib/catalog";
 import { compareMonths } from "@/lib/domain/dates";
-import { makeDataV1, makeItem, makeObjective } from "@/lib/testing/fixtures";
+import { makeDataV1, makeLegacyItem, makeLegacyObjective } from "@/lib/testing/fixtures";
 import { validateWorkspace } from "./schema";
-import { demoWorkspace, seedBaseMonth, shiftSeed } from "./seed";
+import { emptyWorkspace, sampleWorkspace, seedBaseMonth, shiftSeed } from "./seed";
 
 const seed = () =>
   makeDataV1({
     planItems: [
-      makeItem({
+      makeLegacyItem({
         id: "carried",
         month: "2026-10",
         carriedFrom: ["2026-09"],
@@ -19,9 +19,9 @@ const seed = () =>
         timeLogs: [{ id: "log", date: "2026-10-03", hours: 1 }],
         tasks: [{ id: "t", title: "Read", done: true, kind: "custom", completedAt: "2026-10-02T10:00:00.000Z" }],
       }),
-      makeItem({ id: "september", month: "2026-09" }),
+      makeLegacyItem({ id: "september", month: "2026-09" }),
     ],
-    objectives: [makeObjective({ quarter: "2026-Q4", createdAt: "2026-10-01T07:00:00.000Z" })],
+    objectives: [makeLegacyObjective({ quarter: "2026-Q4", createdAt: "2026-10-01T07:00:00.000Z" })],
     rollovers: [{ fromMonth: "2026-09", toMonth: "2026-10", completedAt: "2026-10-01T07:20:00.000Z" }],
   });
 
@@ -54,7 +54,7 @@ describe("shiftSeed", () => {
   });
 
   it("clamps day-of-month overflow and leaves the input untouched", () => {
-    const input = makeDataV1({ planItems: [makeItem({ month: "2026-10", reminder: { date: "2026-10-31", note: "" } })] });
+    const input = makeDataV1({ planItems: [makeLegacyItem({ month: "2026-10", reminder: { date: "2026-10-31", note: "" } })] });
     const snapshot = structuredClone(input);
 
     expect(shiftSeed(input, "2026-11").planItems[0].reminder?.date).toBe("2026-11-30");
@@ -67,9 +67,9 @@ describe("shiftSeed", () => {
   });
 });
 
-describe("demoWorkspace", () => {
-  it("seeds the authored demo around the current month, as valid v2 data", () => {
-    const workspace = demoWorkspace(new Date(2027, 1, 10));
+describe("sampleWorkspace", () => {
+  it("seeds the authored sample around the current month, as valid current-schema data", () => {
+    const workspace = sampleWorkspace(new Date(2027, 1, 10));
 
     expect(validateWorkspace(workspace).ok).toBe(true);
     expect(workspace.planItems.map((item) => item.month).sort(compareMonths).at(-1)).toBe("2027-02");
@@ -77,9 +77,20 @@ describe("demoWorkspace", () => {
     expect(workspace.activity.length).toBeGreaterThan(0);
   });
 
-  it("matches the authored data in its own base month", () => {
+  it("matches the authored data in its own base month, with summaries and notes as Note records", () => {
     const base = seedBaseMonth(DEMO_DATA);
     const [year, month] = base.split("-").map(Number);
-    expect(demoWorkspace(new Date(year, month - 1, 15)).planItems).toEqual(DEMO_DATA.planItems);
+    const workspace = sampleWorkspace(new Date(year, month - 1, 15));
+
+    expect(workspace.planItems.map((item) => item.id)).toEqual(DEMO_DATA.planItems.map((item) => item.id));
+    const written = DEMO_DATA.planItems.flatMap((item) => [item.summary, item.notes]).filter((text) => text.trim());
+    expect(workspace.notes.map((note) => note.body).sort()).toEqual(written.sort());
+  });
+
+  it("starts with the built-in skills and stores no static skill data", () => {
+    const workspace = sampleWorkspace(new Date(2026, 9, 18));
+    expect(workspace.skills.length).toBe(12);
+    expect(workspace.skills.some((skill) => "objectivePhrases" in skill)).toBe(false);
+    expect(emptyWorkspace().skills.some((skill) => "objectivePhrases" in skill)).toBe(false);
   });
 });

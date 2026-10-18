@@ -6,7 +6,6 @@ import {
   completionStats,
   currentStreak,
   hoursLoggedInMonth,
-  latestReflections,
   monthActivity,
   skillInvestment,
   upcomingReminders,
@@ -120,24 +119,6 @@ describe("activity & streaks", () => {
     expect(currentStreak(activity, "2026-10-11")).toBe(2);
     expect(currentStreak(activity, "2026-10-05")).toBe(3);
     expect(currentStreak(activity, "2026-10-12")).toBe(0);
-  });
-});
-
-describe("latestReflections", () => {
-  it("lists non-empty summaries and notes, newest first", () => {
-    const items = [
-      makeItem({ id: "a", materialId: "m1", summary: "Older", summaryUpdatedAt: at("2026-10-01") }),
-      makeItem({ id: "b", materialId: "m2", notes: "Newest", notesUpdatedAt: at("2026-10-12") }),
-      makeItem({ id: "c", summary: "   ", summaryUpdatedAt: at("2026-10-13") }),
-      makeItem({ id: "d", summary: "Middle", summaryUpdatedAt: at("2026-10-05"), notes: "x" }),
-    ];
-
-    expect(latestReflections(items).map((r) => [r.itemId, r.kind, r.text])).toEqual([
-      ["b", "notes", "Newest"],
-      ["d", "summary", "Middle"],
-      ["a", "summary", "Older"],
-    ]);
-    expect(latestReflections(items, 1)).toHaveLength(1);
   });
 });
 

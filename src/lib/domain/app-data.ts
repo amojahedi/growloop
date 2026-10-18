@@ -1,24 +1,50 @@
 import { createId } from "./ids";
-import type { KeyResult, Material, Objective, QuarterKey, Skill, Workspace } from "./types";
+import type {
+  KeyResult,
+  KeyResultType,
+  Material,
+  Objective,
+  ObjectiveSource,
+  QuarterKey,
+  Skill,
+  Workspace,
+} from "./types";
 
 /** Factories for user-created records. */
 
 /** Current schema version of stored data (see src/lib/store/migrations.ts). */
-export const APP_DATA_VERSION = 3 as const;
+export const APP_DATA_VERSION = 4 as const;
 
 /** A fresh workspace: the given starter skills and nothing planned yet. */
 export function newWorkspace(skills: readonly Skill[]): Workspace {
   return {
     version: APP_DATA_VERSION,
+    profile: { skillLevels: [] },
     skills: skills.map((skill) => ({ ...skill })),
     customMaterials: [],
+    savedMaterialIds: [],
     objectives: [],
     planItems: [],
+    notes: [],
     rollovers: [],
     activity: [],
-    savedMaterialIds: [],
+    archivedYears: [],
     dashboardLayout: null,
   };
+}
+
+/**
+ * Whether the user has created anything yet (first-launch screen, sample exit):
+ * no objectives, cards, notes, saved or own materials. Skills don't count.
+ */
+export function isEmptyWorkspace(workspace: Workspace): boolean {
+  return (
+    workspace.objectives.length === 0 &&
+    workspace.planItems.length === 0 &&
+    workspace.notes.length === 0 &&
+    workspace.savedMaterialIds.length === 0 &&
+    workspace.customMaterials.length === 0
+  );
 }
 
 export type NewSkill = Pick<Skill, "name"> & Partial<Pick<Skill, "description" | "icon" | "color">>;
@@ -53,32 +79,46 @@ export function createCustomMaterial(input: NewMaterial): Material {
   };
 }
 
-export type NewKeyResult = Pick<KeyResult, "title"> & Partial<Pick<KeyResult, "progressMode" | "manualProgress">>;
+/** A key result as entered in an editor or a draft. An `id` keeps an existing KR (and its card links). */
+export interface NewKeyResult {
+  id?: string;
+  title: string;
+  skillId: string;
+  type: KeyResultType;
+  materialId?: string;
+  count?: number;
+}
 
+/** Keeps only the target that fits the type: a material for material/certification KRs, a count for count KRs. */
 export function createKeyResult(input: NewKeyResult): KeyResult {
-  return {
-    id: createId(),
-    title: input.title.trim(),
-    progressMode: input.progressMode ?? "auto",
-    ...(input.manualProgress === undefined ? {} : { manualProgress: input.manualProgress }),
-  };
+  const target =
+    input.type === "count"
+      ? input.count === undefined
+        ? {}
+        : { count: input.count }
+      : input.materialId === undefined
+        ? {}
+        : { materialId: input.materialId };
+  return { id: input.id ?? createId(), title: input.title.trim(), skillId: input.skillId, type: input.type, ...target };
 }
 
 export interface NewObjective {
   quarter: QuarterKey;
   title: string;
-  description?: string;
-  skillIds?: string[];
+  why?: string;
+  source?: ObjectiveSource;
   keyResults?: NewKeyResult[];
 }
 
 export function createObjective(input: NewObjective, now: string): Objective {
+  const why = input.why?.trim();
   return {
     id: createId(),
     quarter: input.quarter,
     title: input.title.trim(),
-    ...(input.description ? { description: input.description.trim() } : {}),
-    skillIds: input.skillIds ?? [],
+    ...(why ? { why } : {}),
+    status: "active",
+    source: input.source ?? "manual",
     keyResults: (input.keyResults ?? []).map(createKeyResult),
     createdAt: now,
   };

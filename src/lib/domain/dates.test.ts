@@ -15,7 +15,16 @@ import {
   monthsInQuarter,
   prevMonth,
   quarterOf,
+  daysBetween,
+  daysLeftInQuarter,
+  nextQuarter,
+  quarterDays,
+  quarterElapsedShare,
+  quarterOfDay,
+  quarterRange,
   toDayKey,
+  weeksLeftInQuarter,
+  yearOf,
 } from "./dates";
 
 describe("month keys", () => {
@@ -101,5 +110,37 @@ describe("days", () => {
 
   it("rejects invalid dates", () => {
     expect(() => toDayKey("not a date")).toThrow(/Invalid date/);
+  });
+});
+
+describe("quarters", () => {
+  it("knows a quarter's days, neighbours and ranges", () => {
+    expect(quarterDays("2026-Q4")).toEqual({ start: "2026-10-01", end: "2026-12-31" });
+    expect(quarterDays("2028-Q1")).toEqual({ start: "2028-01-01", end: "2028-03-31" });
+    expect(nextQuarter("2026-Q4")).toBe("2027-Q1");
+    expect(quarterRange("2026-Q3", "2027-Q1")).toEqual(["2026-Q3", "2026-Q4", "2027-Q1"]);
+    expect(quarterRange("2027-Q1", "2026-Q4")).toEqual([]);
+    expect(quarterOfDay("2026-12-31")).toBe("2026-Q4");
+    expect(yearOf("2027-Q2")).toBe(2027);
+    expect(yearOf("2026-10-18")).toBe(2026);
+  });
+
+  it("counts whole days across DST changes", () => {
+    expect(daysBetween("2026-03-28", "2026-03-30")).toBe(2);
+    expect(daysBetween("2026-10-24", "2026-10-26")).toBe(2);
+    expect(daysBetween("2026-10-02", "2026-10-01")).toBe(-1);
+  });
+
+  it("counts the days and weeks left in today's quarter, today included", () => {
+    expect(daysLeftInQuarter("2026-12-31")).toBe(1);
+    expect(daysLeftInQuarter("2026-10-01")).toBe(92);
+    expect(weeksLeftInQuarter("2026-11-18")).toBeCloseTo(44 / 7);
+  });
+
+  it("measures how much of a quarter has passed", () => {
+    expect(quarterElapsedShare("2026-Q4", "2026-09-30")).toBe(0);
+    expect(quarterElapsedShare("2026-Q4", "2026-10-01")).toBeCloseTo(1 / 92);
+    expect(quarterElapsedShare("2026-Q4", "2026-11-15")).toBeCloseTo(46 / 92);
+    expect(quarterElapsedShare("2026-Q4", "2027-02-01")).toBe(1);
   });
 });

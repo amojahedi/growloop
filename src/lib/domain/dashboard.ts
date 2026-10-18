@@ -135,35 +135,6 @@ export function currentStreak(activity: readonly ActivityEvent[], today: DayKey)
   return streak;
 }
 
-// --- Summaries & notes feed --------------------------------------------------
-
-export interface Reflection {
-  itemId: ID;
-  materialId: ID;
-  kind: "summary" | "notes";
-  text: string;
-  updatedAt: string;
-}
-
-/** Most recently edited non-empty summaries and notes, newest first. */
-export function latestReflections(items: readonly PlanItem[], limit = 5): Reflection[] {
-  const entries: Reflection[] = items.flatMap((item) => {
-    const base = { itemId: item.id, materialId: item.materialId };
-    const result: Reflection[] = [];
-    if (item.summary.trim() && item.summaryUpdatedAt) {
-      result.push({ ...base, kind: "summary", text: item.summary, updatedAt: item.summaryUpdatedAt });
-    }
-    if (item.notes.trim() && item.notesUpdatedAt) {
-      result.push({ ...base, kind: "notes", text: item.notes, updatedAt: item.notesUpdatedAt });
-    }
-    return result;
-  });
-
-  return entries
-    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
-    .slice(0, limit);
-}
-
 // --- Reminders ---------------------------------------------------------------
 
 export interface UpcomingReminder {
