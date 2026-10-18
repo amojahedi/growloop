@@ -36,6 +36,8 @@ export function WidgetFrame({ placement, widget, editing, onResize, onRemove }: 
     <li
       ref={setNodeRef}
       data-widget-id={placement.widgetId}
+      // Tour anchor (help-and-guide.md): every widget frame is targetable by id.
+      data-tour={`widget-${placement.widgetId}`}
       // Translate only: scaling would distort widgets of different sizes while they swap places.
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className={cn("flex min-w-0 flex-col gap-2", SPAN[placement.size], isDragging && "relative z-10 opacity-80")}

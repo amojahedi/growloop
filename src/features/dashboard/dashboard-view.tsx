@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { RolloverReview } from "../rollover/rollover-review";
+import { ReviewBanner } from "../review/review-banner";
 import { DashboardGrid } from "./dashboard-grid";
 import { useLayoutEditor } from "./layout-editor";
 
@@ -12,7 +12,7 @@ export function DashboardView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <RolloverReview />
+      <ReviewBanner />
       <DashboardGrid />
     </div>
   );
