@@ -5,22 +5,36 @@ import { useRouter } from "next/navigation";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/toast";
-import { useTourStore } from "@/features/help/tour-store";
+import { dismissToast, toast } from "@/components/ui/toast";
+import { holdAutoStart, useTourStore } from "@/features/help/tour-store";
 import { now } from "@/lib/clock";
 import { isEmptyWorkspace } from "@/lib/domain/app-data";
 import { updateDevicePreferences, useDevicePreferences, type DevicePreferences } from "@/lib/store/device";
 import { useActions, useAppData } from "@/lib/store/hooks";
-import { useStoreHydrated } from "@/lib/store/hydration";
+import { useBackup } from "@/lib/store/backup";
+import { useNewerVersionInAnotherTab, useStoreHydrated } from "@/lib/store/hydration";
+
+export interface FirstLaunchContext {
+  hydrated: boolean;
+  workspaceEmpty: boolean;
+  /** A copy of saved data that couldn't be read (corrupt, or from a newer build) exists. */
+  hasBackup?: boolean;
+  /** Another tab runs a newer build: this tab may not be able to read the data at all. */
+  newerVersionElsewhere?: boolean;
+}
 
 /**
  * Whether to show the first-launch screen (onboarding.md, H-6): once per
  * device, when it was never answered and the own workspace is empty, so
- * existing users never see it, without a migration. Never in sample mode.
- * Pure, for tests; `prefs` is null until the device preferences are read.
+ * existing users never see it, without a migration. An empty workspace only
+ * counts as new when nothing failed to load: a kept backup or a newer build
+ * means someone has data here, so that counts as welcome done. Never in
+ * sample mode. Pure, for tests; `prefs` is null until they are read.
  */
-export function shouldShowFirstLaunch(prefs: DevicePreferences | null, { hydrated, workspaceEmpty }: { hydrated: boolean; workspaceEmpty: boolean }): boolean {
-  return hydrated && prefs !== null && prefs.welcomeDoneAt === undefined && prefs.sampleMode !== true && workspaceEmpty;
+export function shouldShowFirstLaunch(prefs: DevicePreferences | null, context: FirstLaunchContext): boolean {
+  const { hydrated, workspaceEmpty, hasBackup = false, newerVersionElsewhere = false } = context;
+  if (!hydrated || prefs === null || prefs.welcomeDoneAt !== undefined || prefs.sampleMode === true) return false;
+  return workspaceEmpty && !hasBackup && !newerVersionElsewhere;
 }
 
 /**
@@ -33,10 +47,15 @@ export function FirstLaunch() {
   const prefs = useDevicePreferences();
   const hydrated = useStoreHydrated();
   const data = useAppData();
-  const open = shouldShowFirstLaunch(prefs, { hydrated, workspaceEmpty: isEmptyWorkspace(data) });
+  const hasBackup = useBackup() !== null;
+  const newerVersionElsewhere = useNewerVersionInAnotherTab();
+  const open = shouldShowFirstLaunch(prefs, { hydrated, workspaceEmpty: isEmptyWorkspace(data), hasBackup, newerVersionElsewhere });
   // Always mounted, so closing runs the dialog's own focus handling.
   return <FirstLaunchDialog open={open} />;
 }
+
+/** The wizard, told it was opened from here, so its Cancel lands on the Dashboard (WP2). */
+export const WIZARD_FROM_WELCOME = "/okrs/plan?from=welcome";
 
 const markWelcomeDone = () => updateDevicePreferences({ welcomeDoneAt: now().toISOString() });
 
@@ -46,11 +65,15 @@ function FirstLaunchDialog({ open }: { open: boolean }) {
   const primary = useRef<HTMLButtonElement>(null);
 
   const setYear = () => {
+    // On the way to the wizard: the tour waits for the next visit to the Dashboard.
+    holdAutoStart();
     markWelcomeDone();
-    router.push("/okrs/plan");
+    router.push(WIZARD_FROM_WELCOME);
   };
   const trySample = () => {
     markWelcomeDone();
+    // A toast about the empty workspace must not act on the sample.
+    dismissToast();
     if (!enterSampleMode()) toast({ message: "Couldn't load the sample. Try again." });
     router.push("/");
   };

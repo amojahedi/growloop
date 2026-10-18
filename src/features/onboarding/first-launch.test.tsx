@@ -5,6 +5,7 @@ import { Toaster, dismissToast } from "@/components/ui/toast";
 import { CURATED_MATERIALS } from "@/lib/catalog";
 import { STORAGE_KEY, useAppStore } from "@/lib/store/app-store";
 import { clearDevicePreferences, readDevicePreferences, updateDevicePreferences } from "@/lib/store/device";
+import { saveBackup } from "@/lib/store/backup";
 import { emptyWorkspace } from "@/lib/store/seed";
 
 const navigation = vi.hoisted(() => ({ push: vi.fn() }));
@@ -54,6 +55,12 @@ describe("shouldShowFirstLaunch", () => {
     expect(shouldShowFirstLaunch(null, ready)).toBe(false);
     expect(shouldShowFirstLaunch({}, { ...ready, hydrated: false })).toBe(false);
   });
+
+  it("counts saved data that failed to load as an existing user", () => {
+    const ready = { hydrated: true, workspaceEmpty: true };
+    expect(shouldShowFirstLaunch({}, { ...ready, hasBackup: true })).toBe(false);
+    expect(shouldShowFirstLaunch({}, { ...ready, newerVersionElsewhere: true })).toBe(false);
+  });
 });
 
 describe("FirstLaunch", () => {
@@ -71,7 +78,7 @@ describe("FirstLaunch", () => {
   it("Set your year opens the wizard and remembers the choice", async () => {
     await renderFirstLaunch();
     fireEvent.click(screen.getByRole("button", { name: "Set your year" }));
-    expect(navigation.push).toHaveBeenCalledWith("/okrs/plan");
+    expect(navigation.push).toHaveBeenCalledWith("/okrs/plan?from=welcome");
     expect(readDevicePreferences().welcomeDoneAt).toBe(new Date(2026, 9, 18, 12).toISOString());
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
@@ -109,6 +116,12 @@ describe("FirstLaunch", () => {
   it("is never shown on a device with workspace data, even without welcomeDoneAt", async () => {
     await renderFirstLaunch();
     act(() => void useAppStore.getState().saveMaterial(CURATED_MATERIALS[0].id));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("is not shown when saved data couldn't be read (a backup was kept), even with an empty workspace", async () => {
+    saveBackup("{corrupt");
+    await renderFirstLaunch();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
