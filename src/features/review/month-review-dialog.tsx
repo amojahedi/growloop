@@ -21,7 +21,7 @@ import { isMet, objectiveProgress, type MoveCheck } from "@/lib/domain/okrs";
 import type { Objective, PlanItem, RolloverDecision } from "@/lib/domain/types";
 import { useAppStore } from "@/lib/store/app-store";
 import { useActions, useMaterialMap, useNotes, usePendingReview, useSkills, useToday } from "@/lib/store/hooks";
-import { skillColorVar } from "@/lib/theme/skill-colors";
+import { SkillTag } from "@/components/skills/skill-chip";
 import { STATUS_LABELS } from "../board/board-labels";
 import { monthsLabel } from "./labels";
 import { effectiveDecision, moveHint, quarterLabel, wrappedUp, yearSummary } from "./review-model";
@@ -158,8 +158,8 @@ function ReviewBody({
               {topSkill && (
                 <>
                   <Separator />
-                  <span aria-hidden className="mr-1.5 inline-block size-2 rounded-full" style={{ backgroundColor: skillColorVar(topSkill.color) }} />
-                  <span className="font-display text-lg text-foreground">{topSkill.name}</span> grew most
+                  {/* A tag, not a button: the recap is the dialog's description. */}
+                  <SkillTag skillId={topSkill.id} className="align-middle" /> grew most
                 </>
               )}
             </p>
