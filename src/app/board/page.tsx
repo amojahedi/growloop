@@ -8,6 +8,20 @@ import { BoardView } from "@/features/board/board-view";
 
 export const metadata: Metadata = { title: "Board" };
 
+/** Board-shaped placeholder while the URL and saved data load. */
+function BoardSkeleton() {
+  return (
+    <div className="flex flex-col gap-4" aria-busy="true" aria-label="Loading">
+      <Skeleton className="h-7 w-full" />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {[0, 1, 2, 3].map((column) => (
+          <Skeleton key={column} className="h-80 rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function BoardPage() {
   return (
     <>
@@ -20,8 +34,8 @@ export default function BoardPage() {
         }
       />
       {/* BoardView reads the open card from the URL (useSearchParams), which needs a Suspense boundary when prerendering. */}
-      <Suspense>
-        <DataGate>
+      <Suspense fallback={<BoardSkeleton />}>
+        <DataGate fallback={<BoardSkeleton />}>
           <BoardView />
         </DataGate>
       </Suspense>
