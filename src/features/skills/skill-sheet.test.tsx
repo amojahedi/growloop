@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SkillChip } from "@/components/skills/skill-chip";
+import { SkillRadar } from "@/components/skills/skill-radar";
 import { CURATED_MATERIALS } from "@/lib/catalog";
 import { useAppStore } from "@/lib/store/app-store";
 import { emptyWorkspace } from "@/lib/store/seed";
@@ -121,6 +122,58 @@ describe("SkillSheet", () => {
     expect(screen.getByRole("button", { name: "Edit your level in Roadmapping" })).toHaveFocus();
   });
 
+  it("saves the defaults when Set level is accepted unchanged", () => {
+    render(<SkillSheet />);
+    open("roadmapping");
+
+    fireEvent.click(screen.getByRole("button", { name: "Set level" }));
+    expect(useAppStore.getState().data.profile.skillLevels).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+
+    expect(useAppStore.getState().data.profile.skillLevels).toMatchObject([{ skillId: "roadmapping", current: 2, target: 4 }]);
+    expect(screen.getByRole("img", { name: "Now: Learning, 2 of 5" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Goal: Strong, 4 of 5" })).toBeInTheDocument();
+  });
+
+  it("returns focus to a radar axis label that opened it", async () => {
+    // jsdom has no layout; give Recharts a size so it draws the axes.
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(private callback: ResizeObserverCallback) {}
+        observe(target: Element) {
+          this.callback([{ target, contentRect: { width: 400, height: 280 } } as ResizeObserverEntry], this as unknown as ResizeObserver);
+        }
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    const axes = [
+      { skillId: "roadmapping", name: "Roadmapping", color: "violet" as const },
+      { skillId: "product-discovery", name: "Product Discovery", color: "teal" as const },
+      { skillId: "prioritization", name: "Prioritization", color: "amber" as const },
+    ];
+    render(
+      <>
+        <SkillRadar
+          axes={axes}
+          series={[{ key: "done", label: "Completed", values: [1, 2, 3], variant: "solid" }]}
+          title="Radar"
+          onAxisClick={(skillId) => useUIStore.getState().openSkillSheet(skillId)}
+        />
+        <SkillSheet />
+      </>,
+    );
+    const axis = screen.getByRole("button", { name: "Open Roadmapping" });
+    axis.focus();
+    fireEvent.keyDown(axis, { key: "Enter" });
+    const dialog = screen.getByRole("dialog", { name: "Roadmapping" });
+
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    await waitFor(() => expect(axis).toHaveFocus());
+    vi.unstubAllGlobals();
+  });
+
   it("shows this year's objectives, board cards, finished count and notes, each linking onward", () => {
     const keyResult = makeKeyResult({ skillId: "roadmapping", type: "count", count: 2 });
     const current = makeObjective({ title: "Lead roadmap conversations", quarter: "2026-Q4", keyResults: [keyResult] });
@@ -172,6 +225,21 @@ describe("SkillSheet", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show" }));
     expect(useAppStore.getState().data.skills.find((skill) => skill.id === "roadmapping")?.hidden).toBe(false);
     expect(screen.queryByText("Hidden")).not.toBeInTheDocument();
+  });
+
+  it("won't show a hidden skill when 16 are visible, and says why", () => {
+    act(() => {
+      useAppStore.getState().setSkillHidden("roadmapping", true);
+      for (let index = 0; index < 5; index += 1) useAppStore.getState().addSkill({ name: `Extra ${index}` });
+    });
+    render(<SkillSheet />);
+    open("roadmapping");
+
+    const show = screen.getByRole("button", { name: "Show" });
+    expect(show).toHaveAttribute("aria-disabled", "true");
+    expect(show).toHaveAccessibleDescription("Keep 3 to 16 visible.");
+    fireEvent.click(show);
+    expect(useAppStore.getState().data.skills.find((skill) => skill.id === "roadmapping")?.hidden).toBe(true);
   });
 });
 

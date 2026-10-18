@@ -2,7 +2,7 @@
 
 import { ArrowRightIcon, LibraryIcon } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { DataGate } from "@/components/app/data-gate";
 import { SkillIcon } from "@/components/icons";
 import { LevelControl, LevelDots } from "@/components/skills/skill-level";
@@ -18,21 +18,6 @@ import { STATUS_LABELS } from "../board/board-labels";
 import { canShowMore, DEFAULT_LEVELS, skillSheetSummary } from "./skill-rules";
 
 /**
- * What had focus when the sheet was opened. The sheet opens from the UI store,
- * not a dialog trigger, so it returns focus to this element itself on close.
- */
-let opener: HTMLElement | SVGElement | null = null;
-if (typeof window !== "undefined") {
-  useUIStore.subscribe((state, previous) => {
-    if (state.skillSheet && !previous.skillSheet) {
-      const active = document.activeElement;
-      // SVG too: radar axis labels open the sheet.
-      opener = active instanceof HTMLElement || active instanceof SVGElement ? active : null;
-    }
-  });
-}
-
-/**
  * The skill sheet (skills.md, S-3, S-5), opened from anywhere with
  * `useUIStore.getState().openSkillSheet(skillId)` (or a `SkillChip`). Mounted
  * once in the app shell; it stacks over the card drawer when opened from it.
@@ -41,6 +26,16 @@ export function SkillSheet() {
   const skillId = useUIStore((state) => state.skillSheet);
   const closeSkillSheet = useUIStore((state) => state.closeSkillSheet);
   const skill = useSkill(skillId ?? "");
+  const open = Boolean(skill);
+  // What had focus when the sheet opened. It opens from the UI store, not a dialog
+  // trigger, so it returns focus itself. Captured in a layout effect, before the
+  // sheet's focus trap moves focus inside (radar axis labels are SVG, hence both types).
+  const openerRef = useRef<HTMLElement | SVGElement | null>(null);
+  useLayoutEffect(() => {
+    if (!open) return;
+    const active = document.activeElement;
+    openerRef.current = active instanceof HTMLElement || active instanceof SVGElement ? active : null;
+  }, [open]);
 
   useEffect(() => {
     if (skillId && !skill) {
@@ -50,13 +45,14 @@ export function SkillSheet() {
   }, [skillId, skill, closeSkillSheet]);
 
   return (
-    <Sheet open={Boolean(skill)} onOpenChange={(open) => !open && closeSkillSheet()}>
+    <Sheet open={open} onOpenChange={(next) => !next && closeSkillSheet()}>
       {skill && (
         <SheetContent
           size="skill"
           onCloseAutoFocus={() => {
+            const opener = openerRef.current;
+            openerRef.current = null;
             if (opener?.isConnected) opener.focus();
-            opener = null;
           }}
         >
           <SkillSheetHeader skill={skill} />
@@ -83,6 +79,9 @@ export function SkillSheet() {
 function SkillSheetHeader({ skill }: { skill: Skill }) {
   const { setSkillHidden } = useActions();
   const skills = useSkills({ includeHidden: true });
+  const limitsId = useId();
+  // Same pattern as Settings: still focusable, with the reason as its description.
+  const showBlocked = !canShowMore(skills);
 
   return (
     <SheetHeader className="gap-2">
@@ -103,14 +102,23 @@ function SkillSheetHeader({ skill }: { skill: Skill }) {
             <Button
               variant="ghost"
               size="xs"
-              disabled={!canShowMore(skills)}
-              onClick={() => setSkillHidden(skill.id, false)}
+              aria-disabled={showBlocked || undefined}
+              aria-describedby={showBlocked ? limitsId : undefined}
+              className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+              onClick={() => {
+                if (!showBlocked) setSkillHidden(skill.id, false);
+              }}
             >
               Show
             </Button>
           </span>
         )}
       </div>
+      {skill.hidden && showBlocked && (
+        <p id={limitsId} className="text-xs text-muted-foreground">
+          Keep 3 to 16 visible.
+        </p>
+      )}
       <SheetDescription>{skill.description || "A skill you added."}</SheetDescription>
     </SheetHeader>
   );
@@ -219,6 +227,8 @@ function LevelSection({ skill }: { skill: Skill }) {
   }, [editing]);
 
   const toggle = (next: boolean) => {
+    // Done with the defaults untouched still sets the level the controls showed.
+    if (!next && !level) setSkillLevel(skill.id, DEFAULT_LEVELS);
     focusAfterToggle.current = next ? "editor" : "toggle";
     setEditing(next);
   };
