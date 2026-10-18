@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import { CURATED_MATERIALS, DEMO_DATA } from "@/lib/catalog";
 import { addDays, addMonths, addQuarters, dayKey, monthKey, quarterOf, yearOf } from "@/lib/domain/dates";
 import { pendingReview } from "@/lib/domain/month-review";
@@ -28,6 +28,9 @@ function pastMoments(workspace: Workspace): string[] {
     ...workspace.activity.map((entry) => entry.at),
   ].filter((value): value is string => value !== undefined);
 }
+
+/** A day key is compared as a local day, a timestamp as a moment. */
+const notAfter = (moment: string, today: Date) => (moment.length === 10 ? moment <= dayKey(today) : new Date(moment) <= today);
 
 describe("sampleWorkspace on the day it was written for", () => {
   const today = new Date(`${WRITTEN_FOR}T12:00:00`);
@@ -200,7 +203,7 @@ describe("sampleWorkspace on any day", () => {
     expect(sample.notes.some((note) => note.reviewAt === day)).toBe(true);
     expect(pendingReview(sample, day)).toBeNull();
     // Nothing happened in the future.
-    expect(pastMoments(sample).every((moment) => moment.slice(0, 10) <= day && new Date(moment) <= today)).toBe(true);
+    expect(pastMoments(sample).every((moment) => notAfter(moment, today))).toBe(true);
     // Reminders in the next two weeks.
     const reminders = sample.planItems.flatMap((item) => (item.reminder ? [item.reminder.date] : []));
     expect(reminders.every((date) => date > day && date <= addDays(day, 14))).toBe(true);
@@ -264,16 +267,27 @@ describe("shiftSeed", () => {
     expect(shifted.planItems[0].reminder?.date).toBe("2027-01-26");
   });
 
-  it("spreads this month's past over the days so far, keeping the time of day", () => {
-    const shifted = shiftSeed(seed(), "2026-10-18", new Date(2026, 11, 5, 12));
-    const [carried] = shifted.planItems;
-    // Day 12 of 18 → day 4 of 5; day 2 → day 1; day 3 → day 1 (rounded).
-    expect(local(carried.completedAt)).toBe("2026-12-04 15:00");
-    expect(local(carried.tasks[0].completedAt)).toBe("2026-12-01 10:00");
+  it("stretches this month's past over the days so far, and earlier months onto their target month", () => {
+    const shifted = shiftSeed(seed(), "2026-10-18", new Date(2026, 11, 5, 23));
+    const [carried, august] = shifted.planItems;
+    // Day 12 15:00 of 18 days → about two thirds into Dec 1–5; day 2 10:00 → early on Dec 1.
+    expect(local(carried.completedAt)).toBe("2026-12-04 05:30");
+    expect(local(carried.tasks[0].completedAt)).toBe("2026-12-01 09:26");
     expect(carried.timeLogs[0].date).toBe("2026-12-01");
-    // Earlier months keep their day, clamped to the month's length.
-    expect(local(carried.createdAt)).toBe("2026-11-05 09:00");
-    expect(local(shifted.planItems[1].createdAt)).toBe("2026-10-31 10:00");
+    // Earlier months keep their place in the month: Sep 5 09:00 → Nov 5, Aug 31 10:00 → late Oct 31.
+    expect(local(carried.createdAt)?.slice(0, 10)).toBe("2026-11-05");
+    expect(local(august.createdAt)?.slice(0, 10)).toBe("2026-10-31");
+  });
+
+  it("keeps the order of any two moments, even ones that land on the same day", () => {
+    const input = seed();
+    // Created late on the 1st, completed early on the 2nd: both land on today's day 1.
+    input.planItems[0] = { ...input.planItems[0], createdAt: "2026-10-01T22:00:00", completedAt: "2026-10-02T06:00:00" };
+    input.notes[0] = { ...input.notes[0], createdAt: "2026-09-30T23:30:00", updatedAt: "2026-10-01T00:10:00" };
+    const shifted = shiftSeed(input, "2026-10-18", new Date(2026, 11, 1, 23));
+    const [item] = shifted.planItems;
+    expect(new Date(item.createdAt) <= new Date(item.completedAt!)).toBe(true);
+    expect(new Date(shifted.notes[0].createdAt) <= new Date(shifted.notes[0].updatedAt)).toBe(true);
   });
 
   it("never moves a past moment after today", () => {
@@ -296,6 +310,47 @@ describe("shiftSeed", () => {
     const snapshot = structuredClone(input);
     shiftSeed(input, "2026-10-18", new Date(2027, 5, 1));
     expect(input).toEqual(snapshot);
+  });
+});
+
+describe("sampleWorkspace in every time zone", () => {
+  const zones = ["UTC", "America/Los_Angeles", "Pacific/Honolulu", "Pacific/Kiritimati", "Asia/Kolkata", "Australia/Lord_Howe"];
+  const days = ["2026-10-01", "2026-10-18", "2026-12-31", "2027-01-01", "2027-03-31", "2027-04-01", "2027-06-30", "2027-10-05"];
+  const originalZone = process.env.TZ;
+  /** getTimezoneOffset() in January, to prove each zone took effect. */
+  const JANUARY_OFFSETS: Record<string, number> = { UTC: 0, "America/Los_Angeles": 480, "Pacific/Honolulu": 600, "Pacific/Kiritimati": -840, "Asia/Kolkata": -330, "Australia/Lord_Howe": -660 };
+  afterAll(() => {
+    process.env.TZ = originalZone;
+  });
+
+  const before = (a: string | undefined, b: string | undefined) => a === undefined || b === undefined || new Date(a) <= new Date(b);
+
+  it.each(zones)("keeps the story in order and current in %s", (zone) => {
+    process.env.TZ = zone;
+    expect(new Date(2027, 0, 15).getTimezoneOffset()).toBe(JANUARY_OFFSETS[zone]);
+    for (const day of days) {
+      const today = new Date(`${day}T00:05:00`);
+      expect(dayKey(today), `${zone} ${day}`).toBe(day);
+      const sample = sampleWorkspace(today);
+      const label = `${zone} ${day}`;
+      expect(validateWorkspace(sample).ok, label).toBe(true);
+      for (const item of sample.planItems) {
+        expect(before(item.createdAt, item.completedAt), `${label} ${item.id} created ≤ completed`).toBe(true);
+        expect(before(item.completedAt, item.earnedAt), `${label} ${item.id} completed ≤ earned`).toBe(true);
+        for (const task of item.tasks) expect(before(task.completedAt, item.completedAt ?? task.completedAt), `${label} ${task.id}`).toBe(true);
+      }
+      for (const note of sample.notes) {
+        expect(before(note.createdAt, note.updatedAt), `${label} ${note.id} created ≤ updated`).toBe(true);
+        expect(before(note.createdAt, note.refinedAt), `${label} ${note.id} created ≤ refined`).toBe(true);
+      }
+      for (const objective of sample.objectives) expect(before(objective.createdAt, objective.closedAt), label).toBe(true);
+      expect(pastMoments(sample).every((moment) => notAfter(moment, today)), `${label} nothing in the future`).toBe(true);
+      expect(dueNotes(sample.notes, day), label).toHaveLength(1);
+      expect(pendingReview(sample, day), label).toBeNull();
+      const current = sample.objectives.find((objective) => objective.quarter === quarterOf(monthKey(today)))!;
+      const countKr = current.keyResults.find((kr) => kr.type === "count")!;
+      expect(keyResultProgress(countKr, current, sample.planItems), label).toMatchObject({ done: 2, target: 3 });
+    }
   });
 });
 

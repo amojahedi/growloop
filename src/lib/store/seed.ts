@@ -7,8 +7,9 @@ import {
   addQuarters,
   dayKey,
   daysBetween,
-  daysInMonth,
+  monthKey,
   monthsBetween,
+  parseMonthKey,
   parseQuarterKey,
   quarterOf,
   toDayKey,
@@ -34,9 +35,12 @@ export const emptyWorkspace = (): Workspace => newWorkspace(BUILT_IN_SKILLS.map(
  *   objective quarters) move by whole months and quarters, so this month's
  *   board stays this month's and this quarter's objective stays this quarter's.
  * - **Things that already happened** (created, completed, earned, reviewed,
- *   logged) keep their month relative to today and their time of day. Inside
- *   the current month, days 1…writtenFor are spread over days 1…today, so
- *   nothing lands in the future; earlier months keep their day (clamped).
+ *   logged) keep their month relative to today and their place in it: each
+ *   earlier month is stretched onto its target month, and the current month
+ *   up to the end of `writtenFor` onto the current month up to the end of
+ *   today (then capped at now). The mapping is one increasing function of
+ *   time, so the order of any two moments survives (created ≤ completed,
+ *   created ≤ updated) in every time zone, and nothing lands in the future.
  * - **Days relative to today** (note review days, reminders) keep their
  *   distance from today: due today stays due today, "in 3 days" stays in 3 days.
  *
@@ -49,39 +53,29 @@ export function shiftSeed(seed: Workspace, writtenFor: DayKey, today: Date): Wor
   const toMonth = todayKey.slice(0, 7);
   const monthOffset = monthsBetween(fromMonth, toMonth);
   const quarterOffset = quarterIndex(quarterOf(toMonth)) - quarterIndex(quarterOf(fromMonth));
-  const fromDay = Number(writtenFor.slice(8, 10));
-  const toDay = Number(todayKey.slice(8, 10));
 
   const month = (value: MonthKey) => addMonths(value, monthOffset);
   const quarter = (value: QuarterKey) => addQuarters(value, quarterOffset);
   const relative = (value: DayKey) => addDays(todayKey, daysBetween(writtenFor, value));
 
-  /** The new [month, day] for a day that already happened. */
-  const pastDay = (year: number, monthIndex: number, date: number): [MonthKey, number] => {
-    const authored = `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
-    const target = addMonths(toMonth, monthsBetween(fromMonth, authored));
-    if (target === toMonth) {
-      const spread = fromDay <= 1 ? toDay : 1 + Math.round(((Math.min(date, fromDay) - 1) * (toDay - 1)) / (fromDay - 1));
-      return [target, spread];
-    }
-    return [target, Math.min(date, daysInMonth(target).length)];
+  const nowMs = today.getTime();
+  const writtenEnd = startOfDay(addDays(writtenFor, 1));
+  const todayEnd = startOfDay(addDays(todayKey, 1));
+
+  /** Where a moment that already happened lands: same place in its (shifted) month, never after now. */
+  const pastMs = (ms: number): number => {
+    const source = monthKey(new Date(ms));
+    const target = addMonths(toMonth, monthsBetween(fromMonth, source));
+    const [sourceStart, targetStart] = [startOfMonth(source), startOfMonth(target)];
+    const [sourceEnd, targetEnd] =
+      target === toMonth ? [writtenEnd, todayEnd] : [startOfMonth(addMonths(source, 1)), startOfMonth(addMonths(target, 1))];
+    const mapped = targetStart + ((ms - sourceStart) * (targetEnd - targetStart)) / (sourceEnd - sourceStart);
+    return Math.min(Math.round(mapped), nowMs);
   };
 
-  const pastDayKey = (value: DayKey): DayKey => {
-    const [y, m, d] = value.split("-").map(Number);
-    const [target, date] = pastDay(y, m - 1, d);
-    const result = `${target}-${String(date).padStart(2, "0")}`;
-    return result > todayKey ? todayKey : result;
-  };
-
-  const pastTimestamp = (value: string): string => {
-    const source = new Date(value);
-    const [target, date] = pastDay(source.getFullYear(), source.getMonth(), source.getDate());
-    const [y, m] = target.split("-").map(Number);
-    const moved = new Date(source);
-    moved.setFullYear(y, m - 1, date);
-    return (moved > today ? today : moved).toISOString();
-  };
+  const pastTimestamp = (value: string): string => new Date(pastMs(new Date(value).getTime())).toISOString();
+  /** A past day goes where its local noon goes. */
+  const pastDayKey = (value: DayKey): DayKey => dayKey(new Date(pastMs(startOfDay(value) + 12 * 3_600_000)));
   const maybePast = (value: string | undefined) => (value === undefined ? undefined : pastTimestamp(value));
 
   const shiftItem = (item: PlanItem): PlanItem => ({
@@ -133,6 +127,17 @@ export function shiftSeed(seed: Workspace, writtenFor: DayKey, today: Date): Wor
     activity: seed.activity.map((entry) => ({ ...entry, at: pastTimestamp(entry.at), day: pastDayKey(entry.day) })),
     archivedYears: finishedYears(objectives, yearOf(todayKey)),
   });
+}
+
+/** Local midnight at the start of a day / month, in ms. */
+function startOfDay(day: DayKey): number {
+  const [year, month, date] = day.split("-").map(Number);
+  return new Date(year, month - 1, date).getTime();
+}
+
+function startOfMonth(month: MonthKey): number {
+  const { year, month: m } = parseMonthKey(month);
+  return new Date(year, m - 1, 1).getTime();
 }
 
 /** Years before `currentYear` whose objectives are all closed: nothing left to wrap up. */
