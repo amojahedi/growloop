@@ -103,11 +103,8 @@ export function SkillsStep({
                   </p>
                   <div className="flex flex-wrap gap-x-6 gap-y-2">
                     <SegmentedControl
-                      legend={
-                        <>
-                          Now<span className="sr-only"> for {name}</span>
-                        </>
-                      }
+                      legend="Now"
+                      groupLabel={`Now for ${name}`}
                       size="md"
                       options={LEVEL_OPTIONS}
                       value={answer.current}
@@ -115,11 +112,8 @@ export function SkillsStep({
                     />
                     <div className="flex flex-col gap-1">
                       <SegmentedControl
-                        legend={
-                          <>
-                            Goal<span className="sr-only"> for {name}</span>
-                          </>
-                        }
+                        legend="Goal"
+                        groupLabel={`Goal for ${name}`}
                         size="md"
                         options={LEVEL_OPTIONS}
                         value={answer.target}

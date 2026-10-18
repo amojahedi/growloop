@@ -75,8 +75,11 @@ export function SegmentedControl<T extends string | number>({
   stretch = false,
   invalid,
   describedBy,
+  groupLabel,
 }: {
-  legend: ReactNode;
+  legend: string;
+  /** A fuller accessible name than the visible legend, e.g. "Now for Roadmapping" (it must start with the legend). */
+  groupLabel?: string;
   hideLegend?: boolean;
   options: readonly ChoiceOption<T>[];
   value: T | undefined;
@@ -90,7 +93,12 @@ export function SegmentedControl<T extends string | number>({
 }) {
   const name = useId();
   return (
-    <fieldset className={cn("min-w-0", stretch && "w-full")} aria-describedby={describedBy} aria-invalid={invalid || undefined}>
+    <fieldset
+      className={cn("min-w-0", stretch && "w-full")}
+      aria-label={groupLabel}
+      aria-describedby={describedBy}
+      aria-invalid={invalid || undefined}
+    >
       <legend className={hideLegend ? "sr-only" : "mb-1 text-xs font-semibold text-muted-foreground"}>{legend}</legend>
       <div
         className={cn(
