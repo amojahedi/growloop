@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { isSampleModeOn } from "./device";
 import { useActions } from "./hooks";
 import type { ValidationResult } from "./schema";
 import { exportFileName } from "./serialization";
@@ -12,7 +13,7 @@ export function useDataTransfer() {
 
   const downloadExport = useCallback(() => {
     const url = URL.createObjectURL(new Blob([exportData()], { type: "application/json" }));
-    const link = Object.assign(document.createElement("a"), { href: url, download: exportFileName() });
+    const link = Object.assign(document.createElement("a"), { href: url, download: exportFileName(new Date(), { sample: isSampleModeOn() }) });
     link.click();
     URL.revokeObjectURL(url);
   }, [exportData]);

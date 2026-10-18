@@ -5,26 +5,26 @@ import { ownKeyProvider } from "./providers/own-key";
 
 describe("selectProviderKind", () => {
   it("prefers the visitor's own key over local Claude Code", () => {
-    expect(selectProviderKind({ hasKey: true, localAvailable: true })).toBe("own-key");
-    expect(selectProviderKind({ hasKey: true, localAvailable: false })).toBe("own-key");
+    expect(selectProviderKind({ hasKey: true, localAvailable: true })).toBe("key");
+    expect(selectProviderKind({ hasKey: true, localAvailable: false })).toBe("key");
   });
 
   it("uses local Claude Code only when it is available", () => {
     expect(selectProviderKind({ hasKey: false, localAvailable: true })).toBe("local");
   });
 
-  it("is off without a key or local Claude Code", () => {
-    expect(selectProviderKind({ hasKey: false, localAvailable: false })).toBe("off");
+  it("is off (null) without a key or local Claude Code", () => {
+    expect(selectProviderKind({ hasKey: false, localAvailable: false })).toBeNull();
   });
 });
 
 describe("providers", () => {
   it("expose the same interface", () => {
-    const methods = ["recommend", "refineSummary", "enrichMaterial", "draftOkrs"];
+    const methods = ["recommend", "refineSummary", "enrichMaterial", "draftPlan"];
     for (const provider of [offProvider, localProvider, ownKeyProvider]) {
       for (const method of methods) expect(provider).toHaveProperty(method, expect.any(Function));
     }
-    expect([offProvider.kind, localProvider.kind, ownKeyProvider.kind]).toEqual(["off", "local", "own-key"]);
+    expect([offProvider.kind, localProvider.kind, ownKeyProvider.kind]).toEqual([null, "local", "key"]);
   });
 
   it("off rejects every call with a pointer to Settings", async () => {
@@ -32,10 +32,5 @@ describe("providers", () => {
       code: "off",
       message: expect.stringContaining("Settings"),
     });
-  });
-
-  it("draftOkrs is a stub until the OKR wizard implements it", async () => {
-    await expect(localProvider.draftOkrs({ answers: [], skills: [] })).rejects.toMatchObject({ code: "not-implemented" });
-    await expect(ownKeyProvider.draftOkrs({ answers: [], skills: [] })).rejects.toMatchObject({ code: "not-implemented" });
   });
 });

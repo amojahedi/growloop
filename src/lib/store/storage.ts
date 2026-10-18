@@ -1,12 +1,14 @@
 import type { PersistStorage, StorageValue } from "zustand/middleware";
 import { saveBackup } from "./backup";
+import { reportStorageError, reportStorageWrite } from "./storage-health";
 
 /**
  * localStorage adapter for the persisted store. Unlike zustand's
  * `createJSONStorage`, reads never throw: unparseable JSON is backed up and
- * treated as "nothing saved", and blocked storage (e.g. disabled cookies)
- * degrades to an in-memory session instead of leaving the app stuck loading.
- * This is the only code that touches the browser's storage for app data.
+ * treated as "nothing saved", and blocked or full storage degrades to an
+ * in-memory session (reported to useStorageHealth) instead of leaving the app
+ * stuck loading. This is the only code that touches the browser's storage for
+ * app data.
  */
 export function createSafeStorage<S>(): PersistStorage<S> {
   return {
@@ -14,7 +16,8 @@ export function createSafeStorage<S>(): PersistStorage<S> {
       let raw: string | null;
       try {
         raw = localStorage.getItem(name);
-      } catch {
+      } catch (error) {
+        reportStorageError(error);
         return null;
       }
       if (raw === null) return null;
@@ -30,15 +33,17 @@ export function createSafeStorage<S>(): PersistStorage<S> {
     setItem(name, value) {
       try {
         localStorage.setItem(name, JSON.stringify(value));
-      } catch {
+        reportStorageWrite();
+      } catch (error) {
         // Blocked or full storage: keep working in memory for this session.
+        reportStorageError(error);
       }
     },
     removeItem(name) {
       try {
         localStorage.removeItem(name);
-      } catch {
-        // Storage unavailable.
+      } catch (error) {
+        reportStorageError(error);
       }
     },
   };

@@ -1,7 +1,7 @@
 import type { ID, Material } from "@/lib/domain/types";
 import { CURATED_MATERIALS } from "./materials";
 
-export { BUILT_IN_SKILLS } from "./skills";
+export { BUILT_IN_SKILLS, objectivePhrasesFor, storedSkill, type BuiltInSkill } from "./skills";
 export { CURATED_MATERIALS } from "./materials";
 export { suggestedTasksFor, SUMMARIZE_TASK_TITLE } from "./suggested-tasks";
 export { DEMO_DATA } from "./demo";

@@ -1,9 +1,9 @@
+import type { PlanDraft } from "@/lib/domain/plan-draft";
 import { AIRequestError } from "./request-error";
 import type {
-  DraftOkrsRequest,
+  DraftPlanRequest,
   EnrichMaterialRequest,
   MaterialDraft,
-  OkrDraft,
   RecommendRequest,
   RecommendResponse,
   RefineSummaryRequest,
@@ -11,40 +11,42 @@ import type {
 } from "./schemas";
 
 /**
- * One client-side interface for every AI feature (ADR 008), backed by one of:
- *  - "own-key": the visitor's own Claude API key, called directly from the browser;
- *  - "local":   the local Claude Code CLI via the `/api/ai/*` routes (localhost only);
- *  - "off":     no AI; every call rejects with a friendly error.
+ * One client-side interface for every Claude feature (ADR 008), backed by one of:
+ *  - "key":   the visitor's own Claude API key, called directly from the browser;
+ *  - "local": the local Claude Code CLI via the `/api/ai/*` routes (localhost only);
+ *  - null:    Claude is off; every call rejects with a friendly error.
  *
- * Both real providers use the same prompts (`prompts.ts`) and validate answers
+ * The names match the settings spec (`provider: "key" | "local" | null`).
+ * Both real providers use the same prompts (`prompts/`) and validate answers
  * with the same zod schemas (`schemas.ts`), so they return identical shapes.
  */
 
-export type AIProviderKind = "own-key" | "local" | "off";
+export type AIProviderKind = "key" | "local";
 
 export interface AIProvider {
-  readonly kind: AIProviderKind;
+  /** null for the "off" provider. */
+  readonly kind: AIProviderKind | null;
   /** Up to five real materials for a skill or objective. */
   recommend: (input: RecommendRequest, signal?: AbortSignal) => Promise<RecommendResponse>;
   /** Feedback on a summary written in the user's own words. */
   refineSummary: (input: RefineSummaryRequest, signal?: AbortSignal) => Promise<SummaryFeedback>;
   /** A reviewable draft of a resource from a pasted title or link. */
   enrichMaterial: (input: EnrichMaterialRequest, signal?: AbortSignal) => Promise<MaterialDraft>;
-  /** Objectives and key results from the OKR wizard's answers. Not implemented yet. */
-  draftOkrs: (input: DraftOkrsRequest, signal?: AbortSignal) => Promise<OkrDraft>;
+  /** The OKR wizard's draft plan (unrepaired: run the shared repair step before review). Gives up after 60 s. */
+  draftPlan: (input: DraftPlanRequest, signal?: AbortSignal) => Promise<PlanDraft>;
 }
 
-/** Provider order: own key → local Claude Code (only when available) → off. */
+/** Provider order: own key → local Claude Code (only when available) → off (null). */
 export function selectProviderKind({
   hasKey,
   localAvailable,
 }: {
   hasKey: boolean;
   localAvailable: boolean;
-}): AIProviderKind {
-  if (hasKey) return "own-key";
+}): AIProviderKind | null {
+  if (hasKey) return "key";
   if (localAvailable) return "local";
-  return "off";
+  return null;
 }
 
 export const AI_OFF_MESSAGE = "Claude is off. Turn it on in Settings.";
@@ -52,13 +54,9 @@ export const AI_OFF_MESSAGE = "Claude is off. Turn it on in Settings.";
 const rejectOff = () => Promise.reject(new AIRequestError(AI_OFF_MESSAGE, "off"));
 
 export const offProvider: AIProvider = {
-  kind: "off",
+  kind: null,
   recommend: rejectOff,
   refineSummary: rejectOff,
   enrichMaterial: rejectOff,
-  draftOkrs: rejectOff,
+  draftPlan: rejectOff,
 };
-
-/** Placeholder until the OKR wizard implements drafting (prompt + schema + provider calls). */
-export const draftOkrsNotImplemented = (): Promise<never> =>
-  Promise.reject(new AIRequestError("Drafting OKRs with AI isn't available yet.", "not-implemented"));

@@ -3,6 +3,7 @@ import { makeMaterial } from "@/lib/testing/fixtures";
 import { createPlanItem } from "./create-plan-item";
 
 vi.mock("@/lib/catalog", () => ({
+  SUMMARIZE_TASK_TITLE: "Summarize in my words",
   suggestedTasksFor: () => [{ title: "Part 1", done: false, kind: "milestone" }, { title: "Summarize in my words" }, "Apply one idea at work"],
 }));
 
@@ -20,8 +21,6 @@ describe("createPlanItem", () => {
       status: "todo",
       order: 0,
       skillIds: ["discovery", "strategy"],
-      notes: "",
-      summary: "",
       estimatedHours: 8,
       timeLogs: [],
       createdAt: NOW,

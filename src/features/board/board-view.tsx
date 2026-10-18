@@ -23,7 +23,7 @@ export function BoardView() {
   const skills = useSkills({ includeHidden: true });
   const objectives = useObjectives();
   const { month, quarter } = useMonthNavigation();
-  const { movePlanItem, deletePlanItem } = useActions();
+  const { movePlanItem, removePlanItem } = useActions();
   const [skillFilter, setSkillFilter] = useState<ID>("");
   const [objectiveFilter, setObjectiveFilter] = useState<ID>("");
 
@@ -89,7 +89,7 @@ export function BoardView() {
                     key={item.id}
                     item={item}
                     material={materials.get(item.materialId)}
-                    onDelete={() => window.confirm(`Remove "${titleOf(item.id)}" from your plan?`) && deletePlanItem(item.id)}
+                    onDelete={() => window.confirm(`Remove "${titleOf(item.id)}" from your plan?`) && removePlanItem(item.id)}
                   />
                 ))}
               </BoardColumn>

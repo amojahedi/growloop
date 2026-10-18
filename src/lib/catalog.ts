@@ -6,11 +6,14 @@
 import { getMaterialById } from "@/data";
 import type { ID, Material } from "@/lib/domain/types";
 
+export type { BuiltInSkill } from "@/data";
 export {
   BUILT_IN_SKILLS,
   CURATED_MATERIALS,
   DEMO_DATA,
   materialsForSkill,
+  objectivePhrasesFor,
+  storedSkill,
   SUMMARIZE_TASK_TITLE,
   suggestedTasksFor,
 } from "@/data";

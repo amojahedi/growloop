@@ -23,7 +23,7 @@ export function parseMonthKey(month: MonthKey): { year: number; month: number } 
   return { year: Number(match[1]), month: Number(match[2]) };
 }
 
-function parseQuarterKey(quarter: QuarterKey): { year: number; quarter: number } {
+export function parseQuarterKey(quarter: QuarterKey): { year: number; quarter: number } {
   const match = QUARTER_KEY.exec(quarter);
   if (!match) throw new Error(`Invalid quarter key: "${quarter}"`);
   return { year: Number(match[1]), quarter: Number(match[2]) };
@@ -75,6 +75,15 @@ export function compareMonths(a: MonthKey, b: MonthKey): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
+/** The calendar year of a day, month or quarter key. */
+export function yearOf(key: string): number {
+  return Number(key.slice(0, 4));
+}
+
+export function quarterKey(year: number, quarter: number): QuarterKey {
+  return `${year}-Q${quarter}`;
+}
+
 export function quarterOf(month: MonthKey): QuarterKey {
   const { year, month: m } = parseMonthKey(month);
   return `${year}-Q${Math.ceil(m / 3)}`;
@@ -89,6 +98,55 @@ export function monthsInQuarter(quarter: QuarterKey): [MonthKey, MonthKey, Month
 export function addQuarters(quarter: QuarterKey, delta: number): QuarterKey {
   const [first] = monthsInQuarter(quarter);
   return quarterOf(addMonths(first, delta * 3));
+}
+
+export const nextQuarter = (quarter: QuarterKey): QuarterKey => addQuarters(quarter, 1);
+
+/** Negative when `a` is before `b`. Quarter keys sort lexicographically. */
+export const compareQuarters = compareMonths;
+
+/** Quarters from `from` to `to`, both included (empty when `to` is earlier). */
+export function quarterRange(from: QuarterKey, to: QuarterKey): QuarterKey[] {
+  const quarters: QuarterKey[] = [];
+  for (let quarter = from; compareQuarters(quarter, to) <= 0; quarter = nextQuarter(quarter)) quarters.push(quarter);
+  return quarters;
+}
+
+/** The quarter a day falls in. */
+export const quarterOfDay = (day: DayKey): QuarterKey => quarterOf(day.slice(0, 7));
+
+/** First and last day of a quarter. */
+export function quarterDays(quarter: QuarterKey): { start: DayKey; end: DayKey } {
+  const [first, , last] = monthsInQuarter(quarter);
+  return { start: `${first}-01`, end: daysInMonth(last).at(-1)! };
+}
+
+/** Whole days from `from` to `to` (negative when `to` is earlier). Immune to DST changes. */
+export function daysBetween(from: DayKey, to: DayKey): number {
+  const utc = (day: DayKey) => {
+    const [year, month, date] = day.split("-").map(Number);
+    return Date.UTC(year, month - 1, date);
+  };
+  return Math.round((utc(to) - utc(from)) / 86_400_000);
+}
+
+/** Days left in today's quarter, today included. */
+export function daysLeftInQuarter(today: DayKey): number {
+  return daysBetween(today, quarterDays(quarterOfDay(today)).end) + 1;
+}
+
+/** Weeks left in today's quarter, today included (fractional, e.g. 5.6). */
+export const weeksLeftInQuarter = (today: DayKey): number => daysLeftInQuarter(today) / 7;
+
+/**
+ * Share of a quarter that has passed by the end of `today` (0–1): 0 before it
+ * starts, 1 after it ends.
+ */
+export function quarterElapsedShare(quarter: QuarterKey, today: DayKey): number {
+  const { start, end } = quarterDays(quarter);
+  const total = daysBetween(start, end) + 1;
+  const elapsed = daysBetween(start, today) + 1;
+  return Math.min(1, Math.max(0, elapsed / total));
 }
 
 /** All day keys of a month, in order. */

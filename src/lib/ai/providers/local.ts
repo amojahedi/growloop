@@ -1,5 +1,5 @@
-import { requestMaterialDraft, requestRecommendations, requestSummaryFeedback } from "../client";
-import { draftOkrsNotImplemented, type AIProvider } from "../provider";
+import { requestDraftPlan, requestMaterialDraft, requestRecommendations, requestSummaryFeedback } from "../client";
+import type { AIProvider } from "../provider";
 
 /**
  * The local Claude Code CLI (ADR 004), reached through the `/api/ai/*` routes.
@@ -11,5 +11,5 @@ export const localProvider: AIProvider = {
   recommend: requestRecommendations,
   refineSummary: requestSummaryFeedback,
   enrichMaterial: requestMaterialDraft,
-  draftOkrs: draftOkrsNotImplemented,
+  draftPlan: requestDraftPlan,
 };

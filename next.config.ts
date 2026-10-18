@@ -14,6 +14,13 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  async redirects() {
+    return [
+      // Skills are a lens, not a page (skills.md): the old routes go to Settings → Skills.
+      // `:path*` also matches `/skills` itself. Temporary, so the routes stay free for later use.
+      { source: "/skills/:path*", destination: "/settings#skills", permanent: false },
+    ];
+  },
   async headers() {
     return [
       {

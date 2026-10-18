@@ -6,10 +6,10 @@ import {
   removeTask,
   removeTimeLog,
   renameTask,
-  setNotes,
+  setEarned,
   setReminder,
-  setSummary,
   setTaskDone,
+  summaryTask,
   taskProgress,
   withStatus,
 } from "./plan-items";
@@ -59,15 +59,30 @@ describe("tasks", () => {
   });
 });
 
-describe("reflection", () => {
-  it("tracks when notes and summary change", () => {
-    const item = setSummary(setNotes(makeItem(), "Notes", NOW), "Summary", NOW);
-    expect(item).toMatchObject({ notes: "Notes", notesUpdatedAt: NOW, summary: "Summary", summaryUpdatedAt: NOW });
+describe("summary task", () => {
+  it("finds the suggested 'Summarize in my words' task, not a custom one with the same title", () => {
+    const item = makeItem({
+      tasks: [
+        { id: "custom", title: "Summarize in my words", done: false, kind: "custom" },
+        { id: "suggested", title: "Summarize in my words", done: false, kind: "suggested" },
+      ],
+    });
+    expect(summaryTask(item)?.id).toBe("suggested");
+    expect(summaryTask(makeItem())).toBeUndefined();
+  });
+});
+
+describe("earned", () => {
+  it("marks a certification earned once and can take it back", () => {
+    const earned = setEarned(makeItem(), true, NOW);
+    expect(earned.earnedAt).toBe(NOW);
+    expect(setEarned(earned, true, "2026-12-01T00:00:00Z")).toBe(earned);
+    expect(setEarned(earned, false, NOW)).not.toHaveProperty("earnedAt");
   });
 
-  it("does not bump timestamps when nothing changed", () => {
-    const item = makeItem({ summary: "Same", summaryUpdatedAt: "2026-10-01T00:00:00Z" });
-    expect(setSummary(item, "Same", NOW)).toBe(item);
+  it("keeps earnedAt when the card leaves Done", () => {
+    const done = { ...setEarned(makeItem({ status: "done", completedAt: NOW }), true, NOW) };
+    expect(withStatus(done, "in_progress", NOW).earnedAt).toBe(NOW);
   });
 });
 

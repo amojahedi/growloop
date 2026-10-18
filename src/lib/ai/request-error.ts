@@ -11,7 +11,6 @@ export type AIClientErrorCode =
   | "rate-limited"
   | "refusal"
   | "truncated"
-  | "not-implemented"
   | "off";
 
 /** A failed AI request, with a message that is safe to show to the user. */

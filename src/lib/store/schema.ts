@@ -1,73 +1,35 @@
 import { z } from "zod";
+import type { AppData, WorkspaceV2, WorkspaceV3 } from "@/lib/domain/legacy-types";
 import {
-  MATERIAL_COSTS,
-  MATERIAL_LEVELS,
-  MATERIAL_TYPES,
-  SKILL_COLORS,
-  WIDGET_SIZES,
-  type AppData,
+  GOAL_IDS,
+  KEY_RESULT_TYPES,
+  NOTE_KINDS,
+  OBJECTIVE_SOURCES,
+  ROLE_IDS,
+  SKILL_LEVEL_VALUES,
   type Workspace,
-  type WorkspaceV2,
 } from "@/lib/domain/types";
+import { appDataV1Schema, workspaceV2Schema, workspaceV3Schema } from "./legacy-schemas";
+import {
+  activityEventSchema,
+  dayKey,
+  id,
+  materialSchema,
+  monthKey,
+  quarterKey,
+  reminderSchema,
+  skillSchema,
+  taskSchema,
+  timeLogSchema,
+  timestamp,
+  widgetPlacementSchema,
+} from "./schema-parts";
 
 /**
- * Runtime schemas for stored data. Used to validate anything that enters the
- * store from outside the type system: persisted localStorage state and
- * imported JSON. The `satisfies` clauses keep them in lockstep with the types.
+ * Runtime schema for stored data (v4). Used to validate anything that enters
+ * the store from outside the type system: persisted localStorage state and
+ * imported JSON. The `satisfies` clause keeps it in lockstep with the types.
  */
-
-const id = z.string().min(1);
-const monthKey = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Expected a month key like 2026-10");
-const quarterKey = z.string().regex(/^\d{4}-Q[1-4]$/, "Expected a quarter key like 2026-Q4");
-const timestamp = z.string().refine((value) => !Number.isNaN(Date.parse(value)), "Expected an ISO date");
-
-const skillSchema = z.object({
-  id,
-  name: z.string(),
-  description: z.string(),
-  icon: z.string(),
-  color: z.enum(SKILL_COLORS),
-  builtIn: z.boolean(),
-  hidden: z.boolean().optional(),
-});
-
-const materialSchema = z.object({
-  id,
-  type: z.enum(MATERIAL_TYPES),
-  title: z.string(),
-  author: z.string(),
-  url: z.string().optional(),
-  skillIds: z.array(id),
-  tagline: z.string(),
-  summary: z.string(),
-  audience: z.string(),
-  keyTakeaways: z.array(z.string()),
-  estimatedHours: z.number().nonnegative().optional(),
-  level: z.enum(MATERIAL_LEVELS),
-  cost: z.enum(MATERIAL_COSTS),
-  milestones: z.array(z.string()).optional(),
-  curated: z.boolean(),
-});
-
-const taskSchema = z.object({
-  id,
-  title: z.string(),
-  done: z.boolean(),
-  kind: z.enum(["milestone", "suggested", "custom"]),
-  completedAt: timestamp.optional(),
-});
-
-const reminderSchema = z.object({
-  date: timestamp,
-  note: z.string(),
-  dismissed: z.boolean().optional(),
-});
-
-const timeLogSchema = z.object({
-  id,
-  date: timestamp,
-  hours: z.number().positive(),
-});
 
 const planItemSchema = z.object({
   id,
@@ -78,33 +40,64 @@ const planItemSchema = z.object({
   skillIds: z.array(id),
   keyResultId: id.optional(),
   tasks: z.array(taskSchema),
-  notes: z.string(),
-  notesUpdatedAt: timestamp.optional(),
-  summary: z.string(),
-  summaryUpdatedAt: timestamp.optional(),
   reminder: reminderSchema.optional(),
   estimatedHours: z.number().nonnegative().optional(),
   timeLogs: z.array(timeLogSchema),
   createdAt: timestamp,
   completedAt: timestamp.optional(),
+  earnedAt: timestamp.optional(),
+  summaryNudgedAt: timestamp.optional(),
   carriedFrom: z.array(monthKey).optional(),
+});
+
+const noteSchema = z.object({
+  id,
+  kind: z.enum(NOTE_KINDS),
+  planItemId: id.optional(),
+  materialId: id.optional(),
+  title: z.string().optional(),
+  body: z.string(),
+  skillIds: z.array(id),
+  reviewAt: dayKey.optional(),
+  lastReviewedAt: timestamp.optional(),
+  refinedAt: timestamp.optional(),
+  createdAt: timestamp,
+  updatedAt: timestamp,
 });
 
 const keyResultSchema = z.object({
   id,
   title: z.string(),
-  progressMode: z.enum(["auto", "manual"]),
-  manualProgress: z.number().min(0).max(100).optional(),
+  skillId: id,
+  type: z.enum(KEY_RESULT_TYPES),
+  materialId: id.optional(),
+  count: z.number().int().positive().optional(),
 });
 
 const objectiveSchema = z.object({
   id,
   quarter: quarterKey,
   title: z.string(),
-  description: z.string().optional(),
-  skillIds: z.array(id),
+  why: z.string().optional(),
+  status: z.enum(["active", "closed"]),
+  finalProgress: z.number().min(0).max(100).optional(),
+  closedAt: timestamp.optional(),
+  movedFrom: quarterKey.optional(),
+  source: z.enum(OBJECTIVE_SOURCES),
   keyResults: z.array(keyResultSchema),
   createdAt: timestamp,
+});
+
+const skillLevelValue = z.literal([...SKILL_LEVEL_VALUES]);
+
+const profileSchema = z.object({
+  name: z.string().optional(),
+  role: z.enum(ROLE_IDS).optional(),
+  goal: z.enum(GOAL_IDS).optional(),
+  goalText: z.string().optional(),
+  skillLevels: z.array(
+    z.object({ skillId: id, current: skillLevelValue, target: skillLevelValue, updatedAt: timestamp }),
+  ),
 });
 
 const decisionCount = z.number().int().nonnegative();
@@ -114,48 +107,24 @@ const rolloverRecordSchema = z.object({
   toMonth: monthKey,
   completedAt: timestamp,
   counts: z.object({ carry_over: decisionCount, backlog: decisionCount, drop: decisionCount }).optional(),
+  closedObjectiveIds: z.array(id).optional(),
+  movedObjectiveIds: z.array(id).optional(),
+  yearsOffered: z.array(z.number().int()).optional(),
 });
 
-/** Schema v1 (before the activity log); used to upgrade old saves, imports and seed data. */
-export const appDataV1Schema = z.object({
-  version: z.literal(1),
+/** Current schema (v4). */
+export const workspaceSchema = z.object({
+  version: z.literal(4),
+  profile: profileSchema,
   skills: z.array(skillSchema),
   customMaterials: z.array(materialSchema),
+  savedMaterialIds: z.array(id),
   objectives: z.array(objectiveSchema),
   planItems: z.array(planItemSchema),
+  notes: z.array(noteSchema),
   rollovers: z.array(rolloverRecordSchema),
-}) satisfies z.ZodType<AppData>;
-
-const activityEventSchema = z.object({
-  id,
-  kind: z.enum(["item_completed", "task_completed", "notes_edited", "summary_edited", "time_logged"]),
-  day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected a day like 2026-10-17"),
-  at: timestamp,
-  itemId: id,
-  materialId: id,
-  skillIds: z.array(id),
-  hours: z.number().positive().optional(),
-  refId: id.optional(),
-});
-
-/** Schema v2 (before the dashboard layout); used to upgrade old saves and imports. */
-export const workspaceV2Schema = appDataV1Schema.extend({
-  version: z.literal(2),
   activity: z.array(activityEventSchema),
-  // Added after v2 shipped: optional with a default, so saves without it load unchanged (no version bump).
-  savedMaterialIds: z.array(id).default([]),
-}) satisfies z.ZodType<WorkspaceV2>;
-
-// Any non-empty id is accepted: unknown widgets are skipped when rendering, so a
-// layout from a newer build never invalidates the whole workspace.
-const widgetPlacementSchema = z.object({
-  widgetId: id,
-  size: z.enum(WIDGET_SIZES),
-});
-
-/** Current schema (v3). */
-export const workspaceSchema = workspaceV2Schema.extend({
-  version: z.literal(3),
+  archivedYears: z.array(z.number().int()),
   dashboardLayout: z.array(widgetPlacementSchema).nullable(),
 }) satisfies z.ZodType<Workspace>;
 
@@ -168,6 +137,11 @@ function toResult<T>(result: z.ZodSafeParseResult<T>): ValidationResult<T> {
 /** Validates unknown input as a current-schema `Workspace`, with a readable error on failure. */
 export function validateWorkspace(input: unknown): ValidationResult<Workspace> {
   return toResult(workspaceSchema.safeParse(input));
+}
+
+/** Validates unknown input as schema v3 data. */
+export function validateWorkspaceV3(input: unknown): ValidationResult<WorkspaceV3> {
+  return toResult(workspaceV3Schema.safeParse(input));
 }
 
 /** Validates unknown input as schema v2 data. */

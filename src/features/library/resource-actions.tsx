@@ -17,7 +17,7 @@ import { KeyResultLink } from "./key-result-link";
  */
 export function ResourceActions({ material }: { material: Material }) {
   const { currentMonth } = useMonthNavigation();
-  const { addPlanItem, deletePlanItem, saveMaterial, unsaveMaterial } = useActions();
+  const { addPlanItem, removePlanItem, saveMaterial, unsaveMaterial } = useActions();
   const libraryIds = useLibraryIds();
   const planned = usePlanItems().find((item) => item.materialId === material.id && item.month === currentMonth);
   // The item this component just added (enables Undo), and whether Add also saved it.
@@ -37,7 +37,7 @@ export function ResourceActions({ material }: { material: Material }) {
 
   const undo = () => {
     if (!added) return;
-    deletePlanItem(added.itemId);
+    removePlanItem(added.itemId);
     if (added.savedByAdd) unsaveMaterial(material.id);
     setAdded(undefined);
   };

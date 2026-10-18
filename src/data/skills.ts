@@ -1,10 +1,20 @@
 import type { Skill } from "@/lib/domain/types";
 
 /**
+ * A curated skill plus static data that ships with the app and is never
+ * stored: `objectivePhrases` are the quick draft's objective titles for the
+ * skill's first and second objective (docs/product/specs/okrs-and-wizard.md).
+ */
+export interface BuiltInSkill extends Skill {
+  builtIn: true;
+  objectivePhrases: readonly [first: string, second: string];
+}
+
+/**
  * Curated starter set of product management skills (PRD §5.2 S-1).
  * Ids are stable and referenced by materials, objectives and plan items.
  */
-export const BUILT_IN_SKILLS: Skill[] = [
+export const BUILT_IN_SKILLS: readonly BuiltInSkill[] = [
   {
     id: "stakeholder-management",
     name: "Stakeholder Management",
@@ -13,6 +23,7 @@ export const BUILT_IN_SKILLS: Skill[] = [
     icon: "users",
     color: "orange",
     builtIn: true,
+    objectivePhrases: ["Bring stakeholders along on big decisions", "Lead hard conversations with calm"],
   },
   {
     id: "roadmapping",
@@ -22,6 +33,7 @@ export const BUILT_IN_SKILLS: Skill[] = [
     icon: "map",
     color: "blue",
     builtIn: true,
+    objectivePhrases: ["Lead roadmap conversations with confidence", "Run an outcome-based roadmap"],
   },
   {
     id: "product-discovery",
@@ -31,6 +43,7 @@ export const BUILT_IN_SKILLS: Skill[] = [
     icon: "search",
     color: "teal",
     builtIn: true,
+    objectivePhrases: ["Make customer discovery a weekly habit", "Test ideas before they cost engineering time"],
   },
   {
     id: "prioritization",
@@ -40,6 +53,7 @@ export const BUILT_IN_SKILLS: Skill[] = [
     icon: "list-ordered",
     color: "amber",
     builtIn: true,
+    objectivePhrases: ["Say no with clear reasons", "Make trade-offs the team trusts"],
   },
   {
     id: "product-analytics",
@@ -49,6 +63,7 @@ export const BUILT_IN_SKILLS: Skill[] = [
     icon: "chart-line",
     color: "cyan",
     builtIn: true,
+    objectivePhrases: ["Make decisions with product data", "Own the metrics that matter"],
   },
   {
     id: "product-strategy",
@@ -58,6 +73,7 @@ export const BUILT_IN_SKILLS: Skill[] = [
     icon: "compass",
     color: "indigo",
     builtIn: true,
+    objectivePhrases: ["Connect the team's work to a clear strategy", "Shape strategy, not just follow it"],
   },
   {
     id: "ux-design",
@@ -67,6 +83,7 @@ export const BUILT_IN_SKILLS: Skill[] = [
     icon: "palette",
     color: "pink",
     builtIn: true,
+    objectivePhrases: ["Speak design fluently with designers", "Raise the bar on usability"],
   },
   {
     id: "communication",
@@ -76,6 +93,7 @@ export const BUILT_IN_SKILLS: Skill[] = [
     icon: "message-square",
     color: "sky",
     builtIn: true,
+    objectivePhrases: ["Write and present with clarity", "Tell stories that move decisions"],
   },
   {
     id: "leadership",
@@ -85,6 +103,7 @@ export const BUILT_IN_SKILLS: Skill[] = [
     icon: "crown",
     color: "violet",
     builtIn: true,
+    objectivePhrases: ["Grow the people around you", "Lead without the title"],
   },
   {
     id: "go-to-market",
@@ -94,6 +113,7 @@ export const BUILT_IN_SKILLS: Skill[] = [
     icon: "rocket",
     color: "rose",
     builtIn: true,
+    objectivePhrases: ["Launch with a real go-to-market plan", "Partner with sales and marketing on launches"],
   },
   {
     id: "technical-fluency",
@@ -103,6 +123,7 @@ export const BUILT_IN_SKILLS: Skill[] = [
     icon: "code",
     color: "slate",
     builtIn: true,
+    objectivePhrases: ["Hold your own in technical discussions", "Make sharper calls on technical trade-offs"],
   },
   {
     id: "experimentation",
@@ -112,5 +133,16 @@ export const BUILT_IN_SKILLS: Skill[] = [
     icon: "flask-conical",
     color: "lime",
     builtIn: true,
+    objectivePhrases: ["Run experiments that settle debates", "Make experimentation a team habit"],
   },
 ];
+
+/** The part of a built-in skill that is stored in the workspace; static data like `objectivePhrases` stays here. */
+export function storedSkill({ objectivePhrases: _phrases, ...skill }: BuiltInSkill): Skill {
+  return skill;
+}
+
+/** The quick draft's objective phrases for a built-in skill, or undefined for the user's own skills. */
+export function objectivePhrasesFor(skillId: string): BuiltInSkill["objectivePhrases"] | undefined {
+  return BUILT_IN_SKILLS.find((skill) => skill.id === skillId)?.objectivePhrases;
+}

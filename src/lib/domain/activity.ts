@@ -1,11 +1,12 @@
 import { dayKey, toDayKey } from "./dates";
 import { createId } from "./ids";
-import type { ActivityEvent, ActivityKind, ID, PlanItem } from "./types";
+import type { ActivityEvent, ActivityKind, ID, Note, PlanItem } from "./types";
 
 /**
  * The append-only activity log. Store actions don't write events by hand:
- * `syncActivity` diffs plan items before and after each change and records
- * what happened, so every action that completes, edits or logs is covered.
+ * `syncActivity` diffs plan items and `syncNoteActivity` diffs notes before and
+ * after each change and records what happened, so every action that
+ * completes, writes or logs is covered.
  *
  * Events are only ever added, with two exceptions: repeat events of the same
  * kind on the same day are collapsed (editing notes ten times on Tuesday is
@@ -13,9 +14,11 @@ import type { ActivityEvent, ActivityKind, ID, PlanItem } from "./types";
  * is a correction rather than history.
  */
 
-type NewEvent = Omit<ActivityEvent, "id">;
+export type NewEvent = Omit<ActivityEvent, "id">;
 
-function event(item: PlanItem, kind: ActivityKind, at: string, day: string, extra: Partial<NewEvent> = {}): NewEvent {
+type EventSource = Pick<PlanItem, "id" | "materialId" | "skillIds">;
+
+export function event(item: EventSource, kind: ActivityKind, at: string, day: string, extra: Partial<NewEvent> = {}): NewEvent {
   return { kind, at, day, itemId: item.id, materialId: item.materialId, skillIds: [...item.skillIds], ...extra };
 }
 
@@ -34,13 +37,6 @@ export function activityFromChange(before: PlanItem | undefined, after: PlanItem
     if (task.done && !wasDone.has(task.id)) {
       events.push(event(after, "task_completed", at, today, { refId: task.id }));
     }
-  }
-
-  if (after.notes.trim() && after.notes !== (before?.notes ?? "")) {
-    events.push(event(after, "notes_edited", at, today));
-  }
-  if (after.summary.trim() && after.summary !== (before?.summary ?? "")) {
-    events.push(event(after, "summary_edited", at, today));
   }
 
   const knownLogs = new Set(before?.timeLogs.map((log) => log.id));
@@ -102,37 +98,27 @@ export function syncActivity(
 }
 
 /**
- * Reconstructs a log from the timestamps on existing items (used when
- * upgrading v1 data, which had no log).
+ * Activity implied by a note changing (ADR 010): writing a card's summary or
+ * notes is learning activity. Free notes have no card, so they don't count.
  */
-export function backfillActivity(items: readonly PlanItem[]): ActivityEvent[] {
-  const events: NewEvent[] = items.flatMap((item) => {
-    const at = (value: string) => ({ at: new Date(value).toISOString(), day: toDayKey(value) });
-    const result: NewEvent[] = [];
-    if (item.status === "done" && item.completedAt) {
-      const { at: when, day } = at(item.completedAt);
-      result.push(event(item, "item_completed", when, day));
-    }
-    for (const task of item.tasks) {
-      if (task.done && task.completedAt) {
-        const { at: when, day } = at(task.completedAt);
-        result.push(event(item, "task_completed", when, day, { refId: task.id }));
-      }
-    }
-    if (item.notes.trim() && item.notesUpdatedAt) {
-      const { at: when, day } = at(item.notesUpdatedAt);
-      result.push(event(item, "notes_edited", when, day));
-    }
-    if (item.summary.trim() && item.summaryUpdatedAt) {
-      const { at: when, day } = at(item.summaryUpdatedAt);
-      result.push(event(item, "summary_edited", when, day));
-    }
-    for (const log of item.timeLogs) {
-      const { at: when } = at(item.createdAt);
-      result.push(event(item, "time_logged", when, toDayKey(log.date), { hours: log.hours, refId: log.id }));
-    }
-    return result;
-  });
+export function activityFromNoteChange(before: Note | undefined, after: Note, now: Date): NewEvent[] {
+  if (after.kind === "free" || !after.planItemId || !after.materialId) return [];
+  if (!after.body.trim() || after.body === (before?.body ?? "")) return [];
+  const source = { id: after.planItemId, materialId: after.materialId, skillIds: after.skillIds };
+  return [event(source, after.kind === "summary" ? "summary_edited" : "notes_edited", now.toISOString(), dayKey(now))];
+}
 
-  return appendActivity([], events.sort((a, b) => a.day.localeCompare(b.day) || a.at.localeCompare(b.at)));
+/** Updates the log for a change to the notes. Clearing or deleting a note keeps its history. */
+export function syncNoteActivity(
+  log: readonly ActivityEvent[],
+  before: readonly Note[],
+  after: readonly Note[],
+  now: Date,
+): ActivityEvent[] {
+  const previous = new Map(before.map((note) => [note.id, note]));
+  const events = after.flatMap((note) => {
+    const old = previous.get(note.id);
+    return old === note ? [] : activityFromNoteChange(old, note, now);
+  });
+  return appendActivity(log, events);
 }

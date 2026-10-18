@@ -1,6 +1,7 @@
 import { SproutIcon } from "lucide-react";
 import Link from "next/link";
 import { BackupBanner } from "@/components/app/backup-banner";
+import { SkillSheet } from "@/features/skills/skill-sheet";
 import { MonthSwitcher } from "./month-switcher";
 import { SidebarNav } from "./sidebar-nav";
 import { ThemeToggle } from "./theme-toggle";
@@ -32,6 +33,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+      {/* One skill sheet for the whole app, opened with openSkillSheet(skillId). */}
+      <SkillSheet />
     </div>
   );
 }

@@ -1,6 +1,7 @@
-import type { AppData, Material, PlanItem, Task } from "@/lib/domain/types";
+import type { AppData, LegacyPlanItem as PlanItem } from "@/lib/domain/legacy-types";
+import type { Material, Task } from "@/lib/domain/types";
 import { CURATED_MATERIALS } from "./materials";
-import { BUILT_IN_SKILLS } from "./skills";
+import { BUILT_IN_SKILLS, storedSkill } from "./skills";
 import { suggestedTasksFor } from "./suggested-tasks";
 
 /**
@@ -365,7 +366,7 @@ const PLAN_ITEMS: PlanItem[] = [
 
 export const DEMO_DATA: AppData = {
   version: 1,
-  skills: BUILT_IN_SKILLS,
+  skills: BUILT_IN_SKILLS.map(storedSkill),
   customMaterials: DEMO_CUSTOM_MATERIALS,
   objectives: [
     {

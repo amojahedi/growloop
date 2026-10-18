@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { at, makeItem } from "@/lib/testing/fixtures";
-import { activityFromChange, appendActivity, backfillActivity, syncActivity } from "./activity";
+import { at, makeItem, makeNote } from "@/lib/testing/fixtures";
+import { activityFromChange, activityFromNoteChange, appendActivity, syncActivity, syncNoteActivity } from "./activity";
 import { currentStreak, hoursLoggedInMonth, monthActivity } from "./dashboard";
 import type { ActivityEvent, PlanItem } from "./types";
 
@@ -14,26 +14,24 @@ const task = (id: string, done: boolean) => ({ id, title: id, done, kind: "custo
 describe("activityFromChange", () => {
   const base = makeItem({ id: "item", materialId: "book", skillIds: ["roadmapping"], tasks: [task("t1", false)] });
 
-  it("records completions, checked tasks, edits and time logs", () => {
+  it("records completions, checked tasks and time logs", () => {
     const after: PlanItem = {
       ...base,
       status: "done",
       tasks: [task("t1", true)],
-      notes: "n",
-      summary: "s",
       timeLogs: [{ id: "log", date: "2026-10-01", hours: 2 }],
     };
     const events = activityFromChange(base, after, on("2026-10-05"));
 
-    expect(kinds(events)).toEqual(["item_completed", "task_completed", "notes_edited", "summary_edited", "time_logged"]);
+    expect(kinds(events)).toEqual(["item_completed", "task_completed", "time_logged"]);
     expect(events[0]).toMatchObject({ day: "2026-10-05", itemId: "item", materialId: "book", skillIds: ["roadmapping"] });
     expect(events[1].refId).toBe("t1");
     // Time counts on the day studied, not the day it was entered.
-    expect(events[4]).toMatchObject({ day: "2026-10-01", hours: 2, refId: "log" });
+    expect(events[2]).toMatchObject({ day: "2026-10-01", hours: 2, refId: "log" });
   });
 
   it("records nothing for changes that aren't learning activity", () => {
-    const moved = { ...base, status: "in_progress" as const, order: 3, notes: "   " };
+    const moved = { ...base, status: "in_progress" as const, order: 3 };
     expect(activityFromChange(base, moved, on("2026-10-05"))).toEqual([]);
   });
 
@@ -42,8 +40,36 @@ describe("activityFromChange", () => {
   });
 });
 
+describe("activityFromNoteChange", () => {
+  const summary = makeNote({ id: "s", kind: "summary", planItemId: "item", materialId: "book", skillIds: ["roadmapping"], body: "" });
+
+  it("records writing a card's summary or notes, on the card's material and skills", () => {
+    const [event] = activityFromNoteChange(summary, { ...summary, body: "One idea" }, on("2026-10-05"));
+    expect(event).toMatchObject({ kind: "summary_edited", day: "2026-10-05", itemId: "item", materialId: "book", skillIds: ["roadmapping"] });
+
+    const note = { ...summary, id: "n", kind: "item_note" as const };
+    expect(kinds(activityFromNoteChange(undefined, { ...note, body: "Quote" }, on("2026-10-05")))).toEqual(["notes_edited"]);
+  });
+
+  it("ignores free notes, cleared or unchanged text and review dates", () => {
+    const written = { ...summary, body: "One idea" };
+    expect(activityFromNoteChange(undefined, makeNote({ body: "Free" }), on("2026-10-05"))).toEqual([]);
+    expect(activityFromNoteChange(written, { ...written, body: "  " }, on("2026-10-05"))).toEqual([]);
+    expect(activityFromNoteChange(written, { ...written, reviewAt: "2026-10-09" }, on("2026-10-05"))).toEqual([]);
+  });
+
+  it("keeps history when a note is cleared or deleted", () => {
+    const written = { ...summary, body: "One idea" };
+    let log = syncNoteActivity([], [summary], [written], on("2026-10-02"));
+    log = syncNoteActivity(log, [written], [], on("2026-10-03"));
+    expect(kinds(log)).toEqual(["summary_edited"]);
+    expect(currentStreak(log, "2026-10-03")).toBe(1);
+  });
+});
+
 describe("appendActivity", () => {
-  const edit = (day: string) => ({ ...activityFromChange(makeItem({ id: "i" }), makeItem({ id: "i", notes: day }), on(day))[0] });
+  const note = makeNote({ id: "n", kind: "item_note", planItemId: "i", materialId: "m", body: "" });
+  const edit = (day: string) => ({ ...activityFromNoteChange(note, { ...note, body: day }, on(day))[0] });
 
   it("collapses repeat edits on the same day but counts each day", () => {
     let log = appendActivity([], [edit("2026-10-02"), edit("2026-10-02")]);
@@ -86,33 +112,5 @@ describe("syncActivity", () => {
   it("ignores unchanged items", () => {
     const other = makeItem({ id: "other", status: "done", completedAt: at("2026-10-01") });
     expect(syncActivity([], [other], [other], on("2026-10-02"))).toEqual([]);
-  });
-});
-
-describe("backfillActivity", () => {
-  it("rebuilds a log from the timestamps on v1 items", () => {
-    const items = [
-      makeItem({
-        status: "done",
-        completedAt: at("2026-10-03"),
-        summary: "s",
-        summaryUpdatedAt: at("2026-10-04"),
-        tasks: [{ ...task("t1", true), completedAt: at("2026-10-02") }, task("t2", false)],
-        timeLogs: [{ id: "l1", date: "2026-10-03", hours: 1 }],
-      }),
-      makeItem({ notes: "n", notesUpdatedAt: at("2026-10-10") }),
-      // A summary timestamp with an empty summary is not activity.
-      makeItem({ summary: "", summaryUpdatedAt: at("2026-10-11") }),
-    ];
-    const log = backfillActivity(items);
-
-    expect(log.map((event) => [event.day, event.kind])).toEqual([
-      ["2026-10-02", "task_completed"],
-      ["2026-10-03", "time_logged"],
-      ["2026-10-03", "item_completed"],
-      ["2026-10-04", "summary_edited"],
-      ["2026-10-10", "notes_edited"],
-    ]);
-    expect(new Set(log.map((event) => event.id)).size).toBe(log.length);
   });
 });

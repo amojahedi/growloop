@@ -1,40 +1,80 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { now } from "@/lib/clock";
+import { reportStorageError, reportStorageWrite } from "./storage-health";
 
 /**
- * A copy of saved data that could not be read (corrupt JSON, failed
+ * Copies of saved data that could not be read (corrupt JSON, failed
  * validation, or a newer schema). Kept so a bad load never silently destroys
- * the user's data; the app shell offers it for download until deleted.
+ * the user's data; the app shell offers the newest for download until deleted.
+ * A new backup never replaces an older one: the last few are kept, newest
+ * first, and the same raw value is stored only once.
  */
 
-export const BACKUP_STORAGE_KEY = "growloop:data:backup";
+export const BACKUPS_STORAGE_KEY = "growloop:data:backups";
+/** Where builds before the ring kept their single backup; still read, folded into the ring on the next save. */
+export const LEGACY_BACKUP_STORAGE_KEY = "growloop:data:backup";
+export const MAX_BACKUPS = 3;
+
+export interface Backup {
+  /** ISO timestamp; empty for a backup made by an older build. */
+  savedAt: string;
+  raw: string;
+}
 
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((listener) => listener());
 
-export function readBackup(): string | null {
+function readRing(): Backup[] {
   try {
-    return localStorage.getItem(BACKUP_STORAGE_KEY);
+    const parsed: unknown = JSON.parse(localStorage.getItem(BACKUPS_STORAGE_KEY) ?? "[]");
+    return Array.isArray(parsed)
+      ? parsed.filter((entry): entry is Backup => typeof entry?.raw === "string" && typeof entry?.savedAt === "string")
+      : [];
   } catch {
-    return null;
+    return [];
   }
 }
 
-export function saveBackup(raw: string): void {
+/** Every kept backup, newest first. */
+export function readBackups(): Backup[] {
+  let legacy: string | null = null;
   try {
-    localStorage.setItem(BACKUP_STORAGE_KEY, raw);
+    legacy = localStorage.getItem(LEGACY_BACKUP_STORAGE_KEY);
   } catch {
-    // Storage unavailable or full: nothing more we can do.
+    return [];
+  }
+  const ring = readRing();
+  return legacy !== null && !ring.some((entry) => entry.raw === legacy) ? [...ring, { savedAt: "", raw: legacy }] : ring;
+}
+
+/** The newest backup's raw data, or null. */
+export function readBackup(): string | null {
+  return readBackups()[0]?.raw ?? null;
+}
+
+export function saveBackup(raw: string): void {
+  const kept = readBackups().filter((entry) => entry.raw !== raw);
+  const ring = [{ savedAt: now().toISOString(), raw }, ...kept].slice(0, MAX_BACKUPS);
+  try {
+    localStorage.setItem(BACKUPS_STORAGE_KEY, JSON.stringify(ring));
+    localStorage.removeItem(LEGACY_BACKUP_STORAGE_KEY);
+    reportStorageWrite();
+  } catch (error) {
+    // Storage unavailable or full: nothing more we can do, but the banner can say so.
+    reportStorageError(error);
   }
   notify();
 }
 
+/** Deletes every backup. */
 export function deleteBackup(): void {
   try {
-    localStorage.removeItem(BACKUP_STORAGE_KEY);
-  } catch {
-    // Storage unavailable.
+    localStorage.removeItem(BACKUPS_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_BACKUP_STORAGE_KEY);
+  } catch (error) {
+    reportStorageError(error);
   }
   notify();
 }
@@ -44,7 +84,7 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
-/** The raw backed-up data, or null. Always null on the server. */
+/** The newest backup's raw data, or null. Always null on the server. */
 export function useBackup(): string | null {
   return useSyncExternalStore(subscribe, readBackup, () => null);
 }

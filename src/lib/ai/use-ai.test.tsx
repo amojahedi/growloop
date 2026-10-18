@@ -95,7 +95,7 @@ describe("useAI provider selection", () => {
     const useAI = await loadHook();
     const { result } = renderHook(() => useAI());
 
-    await waitFor(() => expect(result.current.provider).toBe("own-key"));
+    await waitFor(() => expect(result.current.provider).toBe("key"));
     expect(result.current.status).toEqual({ state: "available" });
 
     await act(async () => {
@@ -111,7 +111,7 @@ describe("useAI provider selection", () => {
     const useAI = await loadHook();
     const { result } = renderHook(() => useAI());
 
-    expect(result.current.provider).toBe("off");
+    expect(result.current.provider).toBeNull();
     await waitFor(() => expect(result.current.provider).toBe("local"));
   });
 
@@ -121,7 +121,7 @@ describe("useAI provider selection", () => {
     const { result } = renderHook(() => useAI());
 
     await waitFor(() => expect(result.current.status.state).toBe("unavailable"));
-    expect(result.current.provider).toBe("off");
+    expect(result.current.provider).toBeNull();
 
     await act(async () => {
       await result.current.recommend.run({ context: { kind: "skill", name: "Roadmapping" } });
@@ -140,10 +140,10 @@ describe("useAI provider selection", () => {
     act(() => {
       saveApiKey("sk-ant-api03-test");
     });
-    expect(result.current.provider).toBe("own-key");
+    expect(result.current.provider).toBe("key");
 
     act(() => forgetApiKey());
-    await waitFor(() => expect(result.current.provider).toBe("off"));
+    await waitFor(() => expect(result.current.provider).toBeNull());
   });
 
   it("forgetting the key stops an action in flight and clears a key-rejected error", async () => {
@@ -171,7 +171,7 @@ describe("useAI provider selection", () => {
       await expect(pending).resolves.toBeUndefined();
     });
     expect(result.current.recommend).toMatchObject({ loading: false, data: undefined, error: undefined });
-    expect(result.current.provider).not.toBe("own-key");
+    expect(result.current.provider).not.toBe("key");
 
     // A rejected key's error disappears once the key is forgotten.
     sdk.create.mockRejectedValue(
@@ -186,5 +186,48 @@ describe("useAI provider selection", () => {
     expect(result.current.recommend.error).toMatchObject({ code: "key-rejected" });
     act(() => forgetApiKey());
     expect(result.current.recommend.error).toBeUndefined();
+  });
+});
+
+describe("shared Claude status", () => {
+  it("shares one check across components, and Check again updates all of them", async () => {
+    fetchMock.mockImplementation(() => respond({ available: false, code: "not-installed", reason: "Install Claude Code" }));
+    vi.resetModules();
+    const { useAIStatus } = await import("./status");
+    const first = renderHook(() => useAIStatus());
+    const second = renderHook(() => useAIStatus());
+
+    await waitFor(() => expect(second.result.current.local.state).toBe("unavailable"));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(first.result.current).toMatchObject({ provider: null, checking: false });
+
+    fetchMock.mockImplementation(() => respond({ available: true }));
+    act(() => first.result.current.recheck());
+    expect(second.result.current.checking).toBe(true);
+    await waitFor(() => expect(second.result.current.provider).toBe("local"));
+    expect(fetchMock).toHaveBeenLastCalledWith("/api/ai/status?fresh", { cache: "no-store" });
+  });
+
+  it("drafts a plan through local Claude Code", async () => {
+    const draft = { rationale: "Biggest gaps first.", objectives: [] };
+    fetchMock.mockImplementation((input) => (String(input).endsWith("/status") ? respond({ available: true }) : respond(draft)));
+    const useAI = await loadHook();
+    const { result } = renderHook(() => useAI());
+    await waitFor(() => expect(result.current.provider).toBe("local"));
+
+    await act(async () => {
+      await result.current.draftPlan.run({
+        role: "pm",
+        goal: "promotion",
+        skills: [{ id: "roadmapping", name: "Roadmapping", current: 2, target: 4 }],
+        quarters: ["2027-Q1"],
+        currentQuarter: "2026-Q4",
+        weeksLeftInCurrentQuarter: 3,
+        candidates: [],
+      });
+    });
+
+    expect(result.current.draftPlan.data).toEqual(draft);
+    expect(String(fetchMock.mock.calls.at(-1)![0])).toBe("/api/ai/draft-plan");
   });
 });

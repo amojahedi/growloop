@@ -1,13 +1,16 @@
 import type { z } from "zod";
-import { isDemoMode } from "@/lib/env";
+import type { PlanDraft } from "@/lib/domain/plan-draft";
 import {
   aiErrorResponseSchema,
   aiStatusSchema,
+  DRAFT_PLAN_TIMEOUT_MS,
   limitExistingTitles,
   materialDraftSchema,
+  planDraftSchema,
   recommendationsSchema,
   summaryFeedbackSchema,
   type AIStatus,
+  type DraftPlanRequest,
   type EnrichMaterialRequest,
   type MaterialDraft,
   type RecommendRequest,
@@ -16,16 +19,11 @@ import {
   type SummaryFeedback,
 } from "./schemas";
 import { AIRequestError } from "./request-error";
+import { withTimeout } from "./timeout";
 
 /** Browser-side calls to the local `/api/ai/*` routes (Claude Code bridge), with validated responses. */
 
 export { AIRequestError };
-
-export const DEMO_MODE_STATUS: AIStatus = {
-  available: false,
-  code: "demo-mode",
-  reason: "Claude Code only runs when Growloop runs on your own computer.",
-};
 
 async function requestJson<T>(path: string, schema: z.ZodType<T>, init?: RequestInit): Promise<T> {
   let response: Response;
@@ -56,7 +54,6 @@ const postJson = (body: unknown, signal?: AbortSignal): RequestInit => ({
 });
 
 export function fetchAIStatus({ fresh = false } = {}): Promise<AIStatus> {
-  if (isDemoMode) return Promise.resolve(DEMO_MODE_STATUS);
   return requestJson(`/api/ai/status${fresh ? "?fresh" : ""}`, aiStatusSchema, { cache: "no-store" });
 }
 
@@ -72,4 +69,10 @@ export function requestMaterialDraft(input: EnrichMaterialRequest, signal?: Abor
 
 export function requestSummaryFeedback(input: RefineSummaryRequest, signal?: AbortSignal): Promise<SummaryFeedback> {
   return requestJson("/api/ai/refine-summary", summaryFeedbackSchema, postJson(input, signal));
+}
+
+export function requestDraftPlan(input: DraftPlanRequest, signal?: AbortSignal): Promise<PlanDraft> {
+  return withTimeout(DRAFT_PLAN_TIMEOUT_MS, signal, (timed) =>
+    requestJson("/api/ai/draft-plan", planDraftSchema, postJson(input, timed)),
+  );
 }
