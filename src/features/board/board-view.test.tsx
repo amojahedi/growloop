@@ -1,12 +1,17 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Toaster, dismissToast } from "@/components/ui/toast";
 import { CURATED_MATERIALS } from "@/lib/catalog";
 import { useAppStore } from "@/lib/store/app-store";
 import { TodayContext } from "@/lib/store/hooks";
 import { emptyWorkspace } from "@/lib/store/seed";
 import { useUIStore } from "@/lib/store/ui-store";
-import { BoardView } from "./board-view";
+import { ResourceActions } from "../library/resource-actions";
+import { BoardMonthSwitcher } from "./board-month-switcher";
+import { BoardView, SUMMARY_NUDGE } from "./board-view";
+
+vi.mock("next/navigation", () => import("./test-navigation"));
 
 // The overlay is a visual copy of the card; without it dnd-kit measures the card itself,
 // which keeps the fake layout below simple.
@@ -15,20 +20,28 @@ vi.mock("@dnd-kit/core", async (importOriginal) => ({
   DragOverlay: () => null,
 }));
 
-const [first, second] = CURATED_MATERIALS;
+const [first, second, third] = CURATED_MATERIALS.filter((material) => material.type !== "certification");
+const certification = CURATED_MATERIALS.find((material) => material.type === "certification")!;
 
-function renderBoard() {
+function renderBoard(url = "/board") {
+  window.history.replaceState(null, "", url);
   render(
     <TodayContext value="2026-10-17">
+      <BoardMonthSwitcher />
       <BoardView />
+      <Toaster />
     </TodayContext>,
   );
 }
 
-const card = (title: string) => screen.getByRole("button", { name: new RegExp(`^${title}`) });
+const card = (title: string) => screen.getByRole("button", { name: new RegExp(`^${escape(title)}`) });
+const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const column = (name: RegExp) => screen.getByRole("region", { name });
-const itemOf = (materialId: string) => useAppStore.getState().data.planItems.find((i) => i.materialId === materialId)!;
+const state = () => useAppStore.getState();
+const itemOf = (materialId: string) => state().data.planItems.find((i) => i.materialId === materialId)!;
 const announcement = () => document.querySelector("[id^=DndLiveRegion]")?.textContent;
+const menuAnnouncement = () => document.querySelector("p[role=status]")?.textContent?.trim();
+const toastText = () => document.querySelector("[data-toaster]")?.textContent ?? "";
 
 /** jsdom has no layout: place columns side by side and cards stacked in them. */
 function fakeLayout() {
@@ -45,43 +58,378 @@ function fakeLayout() {
   });
 }
 
-// The keyboard sensor starts and moves on timers and animation frames.
+// The keyboard sensor starts and moves on timers and animation frames; focus moves after a tick.
 const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 50)));
 async function press(code: string, target: Element = document.activeElement ?? document.body) {
   fireEvent.keyDown(target, { code, key: code === "Space" ? " " : code });
   await settle();
 }
 
+function openMenu(title: string) {
+  fireEvent.keyDown(screen.getByRole("button", { name: `Actions for ${title}` }), { key: "Enter" });
+  return screen.getByRole("menu");
+}
+
+async function choose(title: string, item: string | RegExp) {
+  const menu = openMenu(title);
+  fireEvent.click(within(menu).getByRole("menuitem", { name: item }));
+  await settle();
+}
+
 beforeEach(() => {
+  localStorage.clear();
   useAppStore.setState({ data: emptyWorkspace() });
-  const { addPlanItem } = useAppStore.getState();
+  useUIStore.setState({ selectedMonth: null });
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(2026, 9, 17, 12));
+  const { addPlanItem } = state();
   addPlanItem(first.id, "2026-10");
   addPlanItem(second.id, "2026-10");
 });
-afterEach(cleanup);
 
-describe("BoardView", () => {
+afterEach(() => {
+  act(() => dismissToast());
+  cleanup();
+  vi.useRealTimers();
+});
+
+describe("BoardView cards", () => {
   it("makes every card a focusable drag handle with screen-reader instructions", () => {
     renderBoard();
     const handle = card(first.title);
     expect(handle).toHaveAttribute("tabindex", "0");
     expect(handle).toHaveAttribute("aria-roledescription", "draggable card");
     const instructions = document.getElementById(handle.getAttribute("aria-describedby")!);
-    expect(instructions).toHaveTextContent(/press space or enter/);
+    expect(instructions).toHaveTextContent(/press space to pick it up/);
+    expect(instructions).toHaveTextContent(/Press enter to open the card/);
   });
 
-  it("has no arrow buttons, and remove buttons with unique names", () => {
+  it("has a ⋯ menu per card instead of arrow and trash buttons", () => {
     renderBoard();
-    expect(screen.queryByRole("button", { name: /^Move/ })).toBeNull();
-    const names = screen.getAllByRole("button", { name: /^Remove/ }).map((button) => button.getAttribute("aria-label"));
-    expect(names).toEqual([`Remove "${first.title}"`, `Remove "${second.title}"`]);
+    expect(screen.queryByRole("button", { name: /^Move|^Remove/ })).toBeNull();
+    expect(screen.getAllByRole("button", { name: /^Actions for/ }).map((button) => button.getAttribute("aria-label"))).toEqual([
+      `Actions for ${first.title}`,
+      `Actions for ${second.title}`,
+    ]);
   });
 
-  it("removes a card after confirmation", () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
+  it("shows the progress line without Backlog, and hides it when nothing is planned", () => {
+    const { movePlanItem, addPlanItem } = state();
+    movePlanItem(itemOf(first.id).id, { status: "done" });
+    addPlanItem(third.id, "2026-10", { status: "backlog" });
     renderBoard();
-    fireEvent.click(screen.getByRole("button", { name: `Remove "${first.title}"` }));
+    expect(screen.getByText("1 of 2 done")).toBeInTheDocument();
+    cleanup();
+
+    useAppStore.setState({ data: emptyWorkspace() });
+    renderBoard();
+    expect(screen.queryByText(/ of .* done/)).toBeNull();
+  });
+
+  it("shows the KR tag on linked cards", () => {
+    const objectiveId = state().addObjective({
+      quarter: "2026-Q4",
+      title: "Get better at discovery",
+      keyResults: [{ title: "Finish it", skillId: first.skillIds[0], type: "material", materialId: first.id }],
+    });
+    const krId = state().data.objectives.find((o) => o.id === objectiveId)!.keyResults[0].id;
+    state().updatePlanItem(itemOf(first.id).id, { keyResultId: krId });
+    renderBoard();
+    expect(within(card(first.title)).getByText("Counts toward a key result")).toBeInTheDocument();
+    expect(within(card(second.title)).queryByText("Counts toward a key result")).toBeNull();
+  });
+});
+
+describe("BoardView ⋯ menu", () => {
+  it("offers Open, the other columns, the possible moves and Remove", () => {
+    renderBoard();
+    const menu = openMenu(first.title);
+    const names = within(menu)
+      .getAllByRole("menuitem")
+      .map((item) => item.getAttribute("aria-label") ?? item.textContent);
+    expect(names).toEqual(["Open", "Move to Backlog", "Move to In progress", "Move to Done", "Move down", "Remove from board"]);
+  });
+
+  it("moves a card to another column, announces it and keeps focus on it", async () => {
+    renderBoard();
+    await choose(first.title, "Move to In progress");
+
+    expect(itemOf(first.id).status).toBe("in_progress");
+    expect(within(column(/In progress/)).getByText(first.title)).toBeInTheDocument();
+    expect(menuAnnouncement()).toBe(`Moved ${first.title} to In progress.`);
+    expect(document.activeElement).toBe(card(first.title));
+  });
+
+  it("moves a card up and down within its column", async () => {
+    renderBoard();
+    await choose(first.title, "Move down");
+    expect(itemOf(first.id).order).toBe(1);
+    expect(itemOf(second.id).order).toBe(0);
+    expect(menuAnnouncement()).toBe(`Moved ${first.title} down.`);
+    expect(document.activeElement).toBe(card(first.title));
+
+    await choose(first.title, "Move up");
+    expect(itemOf(first.id).order).toBe(0);
+  });
+
+  it("schedules a Backlog card into the viewed month when it leaves Backlog", async () => {
+    state().addPlanItem(third.id, "2026-08", { status: "backlog" });
+    renderBoard();
+    expect(within(column(/Backlog/)).getByText(third.title)).toBeInTheDocument();
+    await choose(third.title, "Move to To do");
+    expect(itemOf(third.id)).toMatchObject({ status: "todo", month: "2026-10" });
+  });
+
+  it("removes a card with an undo toast and keeps its notes", async () => {
+    const itemId = itemOf(first.id).id;
+    state().setCardNote(itemId, "summary", "The one idea I'll use.");
+    renderBoard();
+    await choose(first.title, "Remove from board");
+
     expect(screen.queryByText(first.title)).toBeNull();
+    expect(toastText()).toContain("Removed from October");
+    expect(state().data.notes.find((note) => note.planItemId === itemId)?.body).toBe("The one idea I'll use.");
+    // Focus moves to the neighbour that took its place.
+    expect(document.activeElement).toBe(card(second.title));
+
+    fireEvent.click(within(document.querySelector("[data-toaster]") as HTMLElement).getByRole("button", { name: "Undo" }));
+    await settle();
+    expect(itemOf(first.id)).toMatchObject({ id: itemId, status: "todo", order: 0 });
+    expect(document.activeElement).toBe(card(first.title));
+  });
+});
+
+describe("BoardView moving to Done", () => {
+  it("asks whether a certification was earned; Yes sets earnedAt", async () => {
+    state().addPlanItem(certification.id, "2026-10");
+    renderBoard();
+    await choose(certification.title, "Move to Done");
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveAccessibleName(/^Did you earn .+\?$/);
+    fireEvent.click(within(dialog).getByRole("button", { name: "Yes, I earned it" }));
+    await settle();
+
+    expect(itemOf(certification.id).earnedAt).toBeDefined();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(card(certification.title));
+    expect(within(card(certification.title)).getByText("Earned")).toBeInTheDocument();
+  });
+
+  it("Not yet leaves it Done and offers Mark as earned on the card", async () => {
+    state().addPlanItem(certification.id, "2026-10");
+    renderBoard();
+    await choose(certification.title, "Move to Done");
+    fireEvent.click(screen.getByRole("button", { name: "Not yet" }));
+    await settle();
+
+    expect(itemOf(certification.id)).toMatchObject({ status: "done" });
+    expect(itemOf(certification.id).earnedAt).toBeUndefined();
+    fireEvent.click(screen.getByRole("button", { name: `Mark ${certification.title} as earned` }));
+    expect(itemOf(certification.id).earnedAt).toBeDefined();
+    expect(screen.queryByRole("button", { name: /as earned$/ })).toBeNull();
+  });
+
+  it("offers the summary toast once per card, and not when a summary exists", async () => {
+    renderBoard();
+    await choose(first.title, "Move to Done");
+    expect(toastText()).toContain(SUMMARY_NUDGE);
+    expect(itemOf(first.id).summaryNudgedAt).toBeDefined();
+    act(() => dismissToast());
+
+    await choose(first.title, "Move to In progress");
+    await choose(first.title, "Move to Done");
+    expect(toastText()).not.toContain(SUMMARY_NUDGE);
+
+    state().setCardNote(itemOf(second.id).id, "summary", "Already written.");
+    await choose(second.title, "Move to Done");
+    expect(toastText()).not.toContain(SUMMARY_NUDGE);
+  });
+
+  it("Write summary opens the card asking for the summary field", async () => {
+    renderBoard();
+    await choose(first.title, "Move to Done");
+    fireEvent.click(within(document.querySelector("[data-toaster]") as HTMLElement).getByRole("button", { name: "Write summary" }));
+    await settle();
+    const params = new URLSearchParams(window.location.search);
+    expect(params.get("item")).toBe(itemOf(first.id).id);
+    expect(params.get("focus")).toBe("summary");
+    expect(screen.getByRole("dialog", { name: first.title })).toBeInTheDocument();
+  });
+});
+
+describe("BoardView card drawer (?item=)", () => {
+  it("opens the drawer on click and Enter, and closes it again", async () => {
+    renderBoard();
+    fireEvent.click(card(first.title));
+    expect(window.location.search).toBe(`?item=${itemOf(first.id).id}`);
+    expect(screen.getByRole("dialog", { name: first.title })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    await act(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    expect(window.location.search).toBe("");
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    card(second.title).focus();
+    await press("Enter");
+    expect(screen.getByRole("dialog", { name: second.title })).toBeInTheDocument();
+  });
+
+  it("opens from the ⋯ menu", async () => {
+    renderBoard();
+    await choose(first.title, "Open");
+    expect(screen.getByRole("dialog", { name: first.title })).toBeInTheDocument();
+  });
+
+  it("switches to the item's month, and to the current month for Backlog items", async () => {
+    const past = state().addPlanItem(third.id, "2026-08")!;
+    renderBoard(`/board?item=${past}`);
+    await settle();
+    expect(screen.getByText("August 2026")).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: third.title })).toBeInTheDocument();
+    cleanup();
+
+    useUIStore.setState({ selectedMonth: "2026-08" });
+    state().movePlanItem(past, { status: "backlog" });
+    renderBoard(`/board?item=${past}`);
+    await settle();
+    expect(screen.getByText("October 2026")).toBeInTheDocument();
+  });
+
+  it("is where the Library's On board button leads", () => {
+    render(
+      <TodayContext value="2026-10-17">
+        <ResourceActions material={first} />
+      </TodayContext>,
+    );
+    expect(screen.getByRole("link", { name: /is on your October 2026 board/ })).toHaveAttribute(
+      "href",
+      `/board?item=${itemOf(first.id).id}`,
+    );
+  });
+
+  it("toasts for an unknown id and opens the board normally", async () => {
+    renderBoard("/board?item=gone");
+    await settle();
+    expect(toastText()).toContain("That card no longer exists.");
+    expect(window.location.search).toBe("");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(card(first.title)).toBeInTheDocument();
+  });
+});
+
+describe("BoardView past months", () => {
+  beforeEach(() => {
+    const { addPlanItem } = state();
+    addPlanItem(third.id, "2026-09");
+    addPlanItem(certification.id, "2026-09", { status: "backlog" });
+    useUIStore.setState({ selectedMonth: "2026-09" });
+  });
+
+  it("is read-only, hides Backlog and shows the banner", async () => {
+    renderBoard();
+    expect(screen.getByText("You're looking at September. Cards are read-only, but notes stay editable.")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: /Backlog/ })).toBeNull();
+    expect(card(third.title)).not.toHaveAttribute("aria-roledescription");
+
+    const menu = openMenu(third.title);
+    expect(within(menu).getAllByRole("menuitem").map((item) => item.textContent)).toEqual(["Open"]);
+  });
+
+  it("goes back to the current month from the banner", () => {
+    renderBoard();
+    fireEvent.click(screen.getByRole("button", { name: "Back to October" }));
+    expect(useUIStore.getState().selectedMonth).toBeNull();
+    expect(screen.queryByText(/You're looking at/)).toBeNull();
+  });
+
+  it("says when nothing was planned", () => {
+    useUIStore.setState({ selectedMonth: "2026-07" });
+    state().addPlanItem(third.id, "2026-06");
+    renderBoard();
+    expect(screen.getByText("Nothing was planned for July.")).toBeInTheDocument();
+  });
+});
+
+describe("BoardMonthSwitcher", () => {
+  it("goes back only, as far as the first month with a plan item", () => {
+    state().addPlanItem(third.id, "2026-09");
+    renderBoard();
+    const next = screen.getByRole("button", { name: "Next month" });
+    const previous = screen.getByRole("button", { name: "Previous month" });
+    expect(next).toHaveAttribute("aria-disabled", "true");
+    fireEvent.click(next);
+    expect(screen.getByText("October 2026")).toBeInTheDocument();
+
+    fireEvent.click(previous);
+    expect(screen.getByText("September 2026")).toBeInTheDocument();
+    expect(previous).toHaveAttribute("aria-disabled", "true");
+    fireEvent.click(previous);
+    expect(screen.getByText("September 2026")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "This month" }));
+    expect(screen.getByText("October 2026")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "This month" })).toBeNull();
+  });
+});
+
+describe("BoardView filters", () => {
+  it("filters by several skills with removable chips", async () => {
+    const skills = state().data.skills;
+    const skillOf = (id: string) => skills.find((skill) => skill.id === id)!;
+    const firstSkill = skillOf(itemOf(first.id).skillIds[0]);
+    renderBoard();
+
+    fireEvent.click(screen.getByRole("button", { name: "Skills" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: firstSkill.name }));
+    await settle();
+    expect(screen.getByRole("button", { name: `Remove filter Skill: ${firstSkill.name}` })).toBeInTheDocument();
+    expect(card(first.title)).toBeInTheDocument();
+    const secondHasSkill = itemOf(second.id).skillIds.includes(firstSkill.id);
+    expect(screen.queryByText(second.title) !== null).toBe(secondHasSkill);
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(card(second.title)).toBeInTheDocument();
+  });
+
+  it("filters by one of the quarter's objectives and says when nothing matches", async () => {
+    state().addObjective({
+      quarter: "2026-Q4",
+      title: "Lead with data",
+      keyResults: [{ title: "Finish 3", skillId: "made-up-skill", type: "count", count: 3 }],
+    });
+    state().addObjective({ quarter: "2026-Q3", title: "Last quarter's objective", keyResults: [] });
+    renderBoard();
+
+    fireEvent.keyDown(screen.getByRole("button", { name: "Objective" }), { key: "Enter" });
+    const options = screen.getAllByRole("menuitemradio").map((option) => option.textContent);
+    expect(options).toEqual(["All objectives", "Lead with data"]);
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "Lead with data" }));
+    await settle();
+
+    expect(screen.getByText("No cards match these filters.")).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: "Clear filters" })[0]);
+    expect(card(first.title)).toBeInTheDocument();
+  });
+});
+
+describe("BoardView empty states", () => {
+  it("prompts to find something when the month is empty", () => {
+    useAppStore.setState({ data: emptyWorkspace() });
+    renderBoard();
+    expect(screen.getByText("Nothing on your October board yet.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Find something to learn" })).toHaveAttribute("href", "/library");
+  });
+
+  it("explains empty columns", async () => {
+    renderBoard();
+    expect(within(column(/Backlog/)).getByText("Things you'll do, just not this month.")).toBeInTheDocument();
+    expect(within(column(/In progress/)).getByText("Drag a card here when you start.")).toBeInTheDocument();
+    expect(within(column(/Done/)).getByText("Finished cards land here.")).toBeInTheDocument();
+
+    await choose(first.title, "Move to Backlog");
+    await choose(second.title, "Move to Backlog");
+    expect(within(column(/To do/)).getByText("Pick 3 for October. Drag from Backlog, or use ⋯ → Move to To do.")).toBeInTheDocument();
   });
 });
 
@@ -112,7 +460,19 @@ describe("BoardView keyboard drag", () => {
     expect(within(column(/Done/)).getByText(first.title)).toBeInTheDocument();
     expect(itemOf(first.id).status).toBe("done");
     expect(itemOf(first.id).completedAt).toBeDefined();
-    expect(useAppStore.getState().data.activity.map((event) => event.kind)).toContain("item_completed");
+    expect(state().data.activity.map((event) => event.kind)).toContain("item_completed");
+    // Dropping in Done offers the summary toast too.
+    expect(toastText()).toContain(SUMMARY_NUDGE);
+  });
+
+  it("drops with Enter without opening the card", async () => {
+    renderBoard();
+    card(first.title).focus();
+    await press("Space");
+    await press("ArrowDown");
+    await press("Enter");
+    expect(itemOf(first.id).order).toBe(1);
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("reorders within a column", async () => {
@@ -127,12 +487,11 @@ describe("BoardView keyboard drag", () => {
     expect(within(column(/To do/)).getAllByRole("listitem")[0]).toHaveTextContent(second.title);
   });
 
-  it("does not pick up a card when Enter is pressed on its remove button", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(false);
+  it("does not pick up a card when a key is pressed on its ⋯ button", async () => {
     renderBoard();
-    const remove = screen.getByRole("button", { name: `Remove "${first.title}"` });
-    remove.focus();
-    await press("Enter", remove);
+    const actions = screen.getByRole("button", { name: `Actions for ${first.title}` });
+    actions.focus();
+    await press("Space", actions);
     expect(announcement() ?? "").not.toMatch(/Picked up/);
   });
 });

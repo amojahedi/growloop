@@ -3,6 +3,7 @@
 import {
   closestCorners,
   pointerWithin,
+  KeyboardCode,
   KeyboardSensor,
   PointerSensor,
   TouchSensor,
@@ -36,8 +37,16 @@ class MouseAndPenSensor extends PointerSensor {
 
 const SCREEN_READER_INSTRUCTIONS: ScreenReaderInstructions = {
   draggable:
-    "To pick up a card, focus it and press space or enter. Use the arrow keys to move it within and " +
-    "between columns, press space or enter again to drop it, or press escape to cancel.",
+    "Press enter to open the card. To move it, press space to pick it up, use the arrow keys to move it within " +
+    "and between columns, and press space again to drop it, or escape to cancel. The actions menu next to the " +
+    "card can move it too.",
+};
+
+// Space picks a card up; Enter is kept for opening it (board.md §Cards). Either drops it.
+const KEYBOARD_CODES = {
+  start: [KeyboardCode.Space],
+  cancel: [KeyboardCode.Esc],
+  end: [KeyboardCode.Space, KeyboardCode.Enter],
 };
 
 const id = (entry: Active | Over) => String(entry.id);
@@ -80,7 +89,7 @@ export function useBoardDrag({ columns, items, month, titleOf, onMove }: BoardDr
   const sensors = useSensors(
     useSensor(MouseAndPenSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: boardKeyboardCoordinates }),
+    useSensor(KeyboardSensor, { coordinateGetter: boardKeyboardCoordinates, keyboardCodes: KEYBOARD_CODES }),
   );
 
   const visible = toColumnIds(columns);
