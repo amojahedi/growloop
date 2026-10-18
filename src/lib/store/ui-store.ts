@@ -91,6 +91,16 @@ export function rehydrateWizardSession(): void {
   }
 }
 
+/** Forgets the wizard's answers in memory and in sessionStorage (Erase everything). */
+export function clearWizardSession(): void {
+  useUIStore.getState().resetWizard();
+  try {
+    sessionStorage.removeItem(WIZARD_SESSION_KEY);
+  } catch {
+    // Blocked storage: nothing was kept.
+  }
+}
+
 if (typeof window !== "undefined") {
   useUIStore.subscribe((state, previous) => {
     if (state.wizard === previous.wizard) return;

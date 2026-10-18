@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { z } from "zod";
+import { reportStorageError, reportStorageWrite } from "./storage-health";
 
 /**
  * Device preferences (ADR 009): state that belongs to this browser, not to the
@@ -31,8 +32,12 @@ const devicePreferencesSchema = z.object({
   sampleMode: lenient(z.boolean()),
 });
 
-/** Used when the browser blocks storage: preferences then last for this tab. */
-let memory: DevicePreferences = {};
+/**
+ * Set once a write fails (blocked or full storage): from then on this tab's
+ * copy wins over whatever storage still holds, so a flag such as sampleMode
+ * can never read differently from what was just set.
+ */
+let memory: DevicePreferences | null = null;
 /** The parsed value for a raw stored string, so snapshots stay referentially stable. */
 let cache: { raw: string | null; value: DevicePreferences } | undefined;
 
@@ -51,14 +56,16 @@ function parse(raw: string | null): DevicePreferences {
   }
 }
 
+const EMPTY: DevicePreferences = {};
+
 export function readDevicePreferences(): DevicePreferences {
+  if (memory) return memory;
   let raw: string | null;
   try {
     raw = localStorage.getItem(DEVICE_STORAGE_KEY);
   } catch {
-    return memory;
+    return EMPTY;
   }
-  if (raw === null && Object.keys(memory).length > 0) return memory;
   if (cache?.raw !== raw) cache = { raw, value: parse(raw) };
   return cache.value;
 }
@@ -66,9 +73,11 @@ export function readDevicePreferences(): DevicePreferences {
 function write(next: DevicePreferences): void {
   try {
     localStorage.setItem(DEVICE_STORAGE_KEY, JSON.stringify(next));
-    memory = {};
-  } catch {
+    memory = null;
+    reportStorageWrite();
+  } catch (error) {
     memory = next;
+    reportStorageError(error);
   }
   notify();
 }
@@ -82,11 +91,13 @@ export function updateDevicePreferences(patch: Partial<DevicePreferences>): void
 
 /** Forgets every device preference (Erase everything). */
 export function clearDevicePreferences(): void {
-  memory = {};
+  memory = null;
   try {
     localStorage.removeItem(DEVICE_STORAGE_KEY);
-  } catch {
-    // Storage unavailable: nothing is stored.
+  } catch (error) {
+    // Storage unavailable: nothing is stored, and nothing is kept in memory either.
+    memory = {};
+    reportStorageError(error);
   }
   notify();
 }

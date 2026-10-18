@@ -1,8 +1,8 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, type PersistStorage, type StorageValue } from "zustand/middleware";
 import { forgetApiKey } from "@/lib/ai/providers/key-storage";
 import { findMaterial } from "@/lib/catalog";
-import { now as clockNow } from "@/lib/clock";
+import { now as clockNow, DEV_NOW_STORAGE_KEY } from "@/lib/clock";
 import { syncActivity, syncNoteActivity } from "@/lib/domain/activity";
 import {
   APP_DATA_VERSION,
@@ -18,10 +18,10 @@ import {
 } from "@/lib/domain/app-data";
 import { moveItem, nextOrder, type MoveTarget } from "@/lib/domain/board";
 import { createPlanItem } from "@/lib/domain/create-plan-item";
-import { compareMonths, dayKey, monthOf, quarterOfDay } from "@/lib/domain/dates";
+import { compareMonths, dayKey, monthOf, quarterOfDay, yearOf, type DayKey } from "@/lib/domain/dates";
 import { applyMonthReview, type MonthReviewDecisions } from "@/lib/domain/month-review";
 import { createCardNote, createFreeNote, findCardNote, type NewFreeNote } from "@/lib/domain/notes";
-import { autoLinkKeyResult } from "@/lib/domain/okrs";
+import { autoLinkKeyResult, objectiveProgress } from "@/lib/domain/okrs";
 import type { DraftSource, PlanDraft, WizardAnswers } from "@/lib/domain/plan-draft";
 import * as planItems from "@/lib/domain/plan-items";
 import type {
@@ -51,6 +51,7 @@ import { validateWorkspace, type ValidationResult } from "./schema";
 import { emptyWorkspace, sampleWorkspace } from "./seed";
 import { parseImportedData, serializeWorkspace } from "./serialization";
 import { createSafeStorage } from "./storage";
+import { clearWizardSession } from "./ui-store";
 
 /**
  * The workspace store: every change to persisted data goes through an action
@@ -66,8 +67,11 @@ export const SAMPLE_STORAGE_KEY = "growloop:sample";
 /** The storage key the store should read and write right now. */
 export const activeStorageKey = (): string => (isSampleModeOn() ? SAMPLE_STORAGE_KEY : STORAGE_KEY);
 
-/** What is read back from storage; untrusted until validated in `merge`. */
-type PersistedState = { data: unknown };
+/**
+ * What is read back from storage; untrusted until validated in `merge`.
+ * `loadError` says why nothing usable was read (set by the workspace storage).
+ */
+type PersistedState = { data: unknown; loadError?: "invalid" | "newer" };
 
 // --- Inputs ---------------------------------------------------------------------------
 
@@ -178,9 +182,18 @@ export interface AppActions {
   addKeyResult: (objectiveId: ID, input: NewKeyResult) => ID;
   updateKeyResult: (objectiveId: ID, keyResultId: ID, patch: KeyResultPatch) => void;
   deleteKeyResult: (objectiveId: ID, keyResultId: ID) => void;
-  /** Archives a year outside the review (the OKR page's "Archive 2026" button). */
+  /**
+   * Archives an earlier year outside the review (the OKR page's "Archive 2026"
+   * button). Ignored for the current or a later year. Active objectives left in
+   * that year are closed at their current score first, so none is stranded.
+   */
   archiveYear: (year: number) => void;
-  /** Saves a wizard draft: objectives, profile, library targets and current-quarter cards (okrs-and-wizard.md §Accept all). */
+  /**
+   * Saves a wizard draft: objectives, profile, library targets and
+   * current-quarter cards (okrs-and-wizard.md §Accept all). It trusts the
+   * draft: callers must first limit it to the wizard's scope, apply the yearly
+   * cap and run the shared repair step (both engines' drafts).
+   */
   acceptPlan: (input: AcceptPlanInput) => AcceptedPlan;
   /** Removes everything `acceptPlan` created and restores what it changed. */
   undoAcceptPlan: (accepted: AcceptedPlan) => void;
@@ -230,8 +243,12 @@ export interface AppActions {
   markNoteReviewed: (id: ID) => void;
 
   // Month-end review (R-1 to R-4)
-  /** Applies the review; omitted decisions get their defaults. Undefined when nothing is pending. */
-  applyMonthReview: (decisions?: MonthReviewDecisions) => RolloverRecord | undefined;
+  /**
+   * Applies the review against the same day the dialog showed (`today` from
+   * useToday), so a review opened before midnight applies what it displayed.
+   * Omitted decisions get their defaults. Undefined when nothing is pending.
+   */
+  applyMonthReview: (decisions: MonthReviewDecisions, today: DayKey) => RolloverRecord | undefined;
 
   // Dashboard
   /** Saves the dashboard layout; `null` goes back to the default layout. */
@@ -296,6 +313,11 @@ function upsertLevel(levels: readonly SkillLevel[], level: SkillLevel): SkillLev
 function unlinkKeyResults(items: PlanItem[], keyResultIds: ReadonlySet<ID>): PlanItem[] {
   return items.map((item) => (item.keyResultId && keyResultIds.has(item.keyResultId) ? omitKey(item, "keyResultId") : item));
 }
+
+/** True while `refreshWorkspace` reloads the workspace this tab already shows (a change from another tab). */
+let refreshing = false;
+/** The own workspace as it was when sample mode was entered (the only copy when storage is blocked). */
+let ownWorkspaceCopy: Workspace | null = null;
 
 /** Builds the sample, or reports why it couldn't (a dev bug the seed test guards against). */
 function buildSample(): Workspace | undefined {
@@ -482,6 +504,8 @@ export const useAppStore = create<AppState>()(
             if (!objective) return data;
             const next: Objective = { ...objective, ...patch };
             if (patch.why !== undefined && !patch.why.trim()) delete next.why;
+            // Only the quarter-end move widens the counting window; moving by hand starts it afresh.
+            if (patch.quarter && patch.quarter !== objective.quarter) delete next.movedFrom;
             if (!keyResults) {
               return { ...data, objectives: data.objectives.map((o) => (o.id === id ? next : o)) };
             }
@@ -547,11 +571,19 @@ export const useAppStore = create<AppState>()(
             planItems: unlinkKeyResults(data.planItems, new Set([keyResultId])),
           })),
         archiveYear: (year) =>
-          update((data) =>
-            data.archivedYears.includes(year)
-              ? data
-              : { ...data, archivedYears: [...data.archivedYears, year].sort((a, b) => a - b) },
-          ),
+          update((data) => {
+            if (year >= yearOf(today()) || data.archivedYears.includes(year)) return data;
+            const at = nowIso();
+            return {
+              ...data,
+              objectives: data.objectives.map((objective) =>
+                objective.status === "active" && yearOf(objective.quarter) === year
+                  ? { ...objective, status: "closed", finalProgress: objectiveProgress(objective, data.planItems), closedAt: at }
+                  : objective,
+              ),
+              archivedYears: [...data.archivedYears, year].sort((a, b) => a - b),
+            };
+          }),
         acceptPlan: ({ draft, source, answers }) => {
           const at = nowIso();
           const month = monthOf(today());
@@ -787,8 +819,8 @@ export const useAppStore = create<AppState>()(
           updateNoteById(id, (note) => ({ ...omitKey(note, "reviewAt"), lastReviewedAt: nowIso() })),
 
         // --- Month-end review -------------------------------------------------------
-        applyMonthReview: (decisions = {}) => {
-          const result = applyMonthReview(get().data, decisions, today(), nowIso());
+        applyMonthReview: (decisions, day) => {
+          const result = applyMonthReview(get().data, decisions, day, nowIso());
           if (!result) return undefined;
           update(() => result.data);
           return result.record;
@@ -808,10 +840,13 @@ export const useAppStore = create<AppState>()(
         enterSampleMode: () => {
           const sample = buildSample();
           if (!sample) return false;
-          // Switch the key first, so writing the sample can never touch growloop:data.
+          // Kept in memory: with blocked storage it is the only copy of the own workspace.
+          if (!isSampleModeOn()) ownWorkspaceCopy = get().data;
+          // The flag first, then the key: the key always follows the flag (even if a write fails),
+          // and writing the sample can never touch growloop:data.
+          updateDevicePreferences({ sampleMode: true });
           persistApi().setOptions({ name: SAMPLE_STORAGE_KEY });
           set({ data: sample });
-          updateDevicePreferences({ sampleMode: true });
           return true;
         },
         exitSampleMode: () => {
@@ -820,13 +855,20 @@ export const useAppStore = create<AppState>()(
           persistApi().setOptions({ name: STORAGE_KEY });
           // Synchronous with localStorage: the own workspace is loaded when this returns.
           void persistApi().rehydrate();
+          // Storage blocked (or the own workspace was never written): the copy from entering is the real data.
+          const copy = ownWorkspaceCopy;
+          ownWorkspaceCopy = null;
+          if (copy && !hasStoredItem(STORAGE_KEY)) set({ data: copy });
           return { ownWorkspaceEmpty: isEmptyWorkspace(get().data) };
         },
         eraseEverything: () => {
           forgetApiKey();
           clearDevicePreferences();
+          clearWizardSession();
           removeStoredItem(SAMPLE_STORAGE_KEY);
+          removeStoredItem(DEV_NOW_STORAGE_KEY);
           deleteBackup();
+          ownWorkspaceCopy = null;
           persistApi().setOptions({ name: STORAGE_KEY });
           set({ data: emptyWorkspace() });
         },
@@ -835,35 +877,85 @@ export const useAppStore = create<AppState>()(
     {
       name: STORAGE_KEY,
       version: APP_DATA_VERSION,
-      storage: createSafeStorage<PersistedState>(),
+      storage: createWorkspaceStorage(),
       partialize: (state) => ({ data: state.data }),
       // Rehydrated explicitly after mount (see useStoreRehydration) so server and first client render match.
       skipHydration: true,
-      migrate: (persisted, version) => {
-        try {
-          return { data: migrateAppData((persisted as { data?: unknown } | null)?.data, version) };
-        } catch (error) {
-          console.warn("[growloop] Could not migrate saved data.", error);
-          return { data: undefined };
-        }
-      },
+      // Loading never writes: merge's result is kept in memory until the user changes something.
       merge: (persisted, current) => {
-        const sample = isSampleModeOn();
+        // The flag decides the key (rehydrateWorkspace and the sample-mode actions keep them in step).
+        const key = activeStorageKey();
+        const sample = key === SAMPLE_STORAGE_KEY;
         const fresh = () => ({ ...current, data: (sample && buildSample()) || emptyWorkspace() });
+        const state = persisted as PersistedState | undefined;
+
         // Nothing saved yet: first run (or a sample that was never written, e.g. blocked storage).
-        if (persisted === undefined) return fresh();
+        if (state === undefined) return refreshing ? current : fresh();
 
-        const result = validateWorkspace((persisted as { data?: unknown } | null)?.data);
-        if (result.ok) return { ...current, data: result.data };
+        const result = state.loadError ? undefined : validateWorkspace(state.data);
+        if (result?.ok) return { ...current, data: result.data };
 
+        // A refresh that can't be read keeps what this tab has; the stored value stays untouched.
+        if (refreshing) return current;
         // The sample is disposable; the user's own data is kept so it is never silently lost.
         if (!sample) backUpRawSavedData();
-        console.warn("[growloop] Saved data is invalid; starting fresh.", result.error);
+        console.warn("[growloop] Saved data couldn't be loaded; starting fresh.", state.loadError ?? result?.error);
         return fresh();
       },
     },
   ),
 );
+
+/**
+ * The persisted store's storage: the safe localStorage adapter, with migrations
+ * applied on read. Migrating here (instead of zustand's `migrate`) means a load
+ * never writes: zustand writes back after a migration, which would replace
+ * data from a newer build, or data that failed to migrate, with a fresh workspace.
+ */
+function createWorkspaceStorage(): PersistStorage<PersistedState> {
+  const base = createSafeStorage<PersistedState>();
+  return {
+    ...base,
+    getItem(name) {
+      // The safe adapter is synchronous.
+      const stored = base.getItem(name) as StorageValue<PersistedState> | null;
+      if (!stored) return null;
+      const version = typeof stored.version === "number" ? stored.version : 0;
+      if (version === APP_DATA_VERSION) return stored;
+      const failed = (loadError: "invalid" | "newer") => ({ state: { data: undefined, loadError }, version: APP_DATA_VERSION });
+      if (version > APP_DATA_VERSION) return failed("newer");
+      try {
+        return { state: { data: migrateAppData(stored.state?.data, version) }, version: APP_DATA_VERSION };
+      } catch (error) {
+        console.warn("[growloop] Could not migrate saved data.", error);
+        return failed("invalid");
+      }
+    },
+  };
+}
+
+/**
+ * Reloads the workspace this tab shows after another tab changed it. Unlike a
+ * first load, anything unreadable (a newer build, broken data) keeps this
+ * tab's data and writes nothing.
+ */
+export function refreshWorkspace(): void {
+  refreshing = true;
+  try {
+    // Synchronous with localStorage, so `merge` runs inside this call.
+    void useAppStore.persist?.rehydrate();
+  } finally {
+    refreshing = false;
+  }
+}
+
+function hasStoredItem(key: string): boolean {
+  try {
+    return localStorage.getItem(key) !== null;
+  } catch {
+    return false;
+  }
+}
 
 /** Drops keys whose value is undefined, so a patch never writes `undefined` into stored data. */
 function omitUndefined<T extends object>(value: T): Partial<T> {

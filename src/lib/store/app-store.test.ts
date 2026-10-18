@@ -30,7 +30,11 @@ vi.mock("@/lib/catalog", async () => {
 const { SAMPLE_STORAGE_KEY, STORAGE_KEY, useAppStore } = await import("./app-store");
 const { emptyWorkspace } = await import("./seed");
 const { currentStreak, hoursLoggedInMonth, monthActivity } = await import("@/lib/domain/dashboard");
-const { BACKUP_STORAGE_KEY, saveBackup } = await import("./backup");
+const { readBackup, readBackups, saveBackup } = await import("./backup");
+const { readStorageHealth, resetStorageHealth } = await import("./storage-health");
+const { useUIStore } = await import("./ui-store");
+const { handleStorageEvent, resetNewerVersionFlag, useNewerVersionInAnotherTab } = await import("./hydration");
+const { act, renderHook } = await import("@testing-library/react");
 const { clearDevicePreferences, DEVICE_STORAGE_KEY, readDevicePreferences, updateDevicePreferences } = await import("./device");
 const { rehydrateWorkspace } = await import("./hydration");
 const { API_KEY_STORAGE_KEY, readApiKey, saveApiKey } = await import("@/lib/ai/providers/key-storage");
@@ -44,6 +48,8 @@ beforeEach(() => {
   localStorage.clear();
   // Also forgets preferences kept in memory by a test with blocked storage.
   clearDevicePreferences();
+  resetStorageHealth();
+  resetNewerVersionFlag();
   useAppStore.persist.setOptions({ name: STORAGE_KEY });
   useAppStore.setState({ data: emptyWorkspace() });
   // Mid-October 2026: the current quarter is 2026-Q4.
@@ -52,6 +58,16 @@ beforeEach(() => {
 });
 
 afterEach(() => vi.useRealTimers());
+
+/** Makes every localStorage access throw, as in a browser that blocks storage. */
+function blockStorage() {
+  // jsdom's Storage keeps methods on the prototype; the Node 25 test stand-in on the instance.
+  const target: Storage = localStorage instanceof Storage ? Storage.prototype : localStorage;
+  const blocked = () => {
+    throw new DOMException("Blocked", "SecurityError");
+  };
+  for (const method of ["getItem", "setItem", "removeItem"] as const) vi.spyOn(target, method).mockImplementation(blocked);
+}
 
 describe("initial state", () => {
   it("starts with the built-in skills and an empty v4 workspace", () => {
@@ -437,11 +453,41 @@ describe("objectives", () => {
     expect(item(itemId)).not.toHaveProperty("keyResultId");
   });
 
-  it("archives a year once", () => {
-    store().archiveYear(2026);
+  it("archives an earlier year once, never the current or a later one", () => {
+    store().archiveYear(2025);
     store().archiveYear(2025);
     store().archiveYear(2026);
-    expect(data().archivedYears).toEqual([2025, 2026]);
+    store().archiveYear(2027);
+    expect(data().archivedYears).toEqual([2025]);
+  });
+
+  it("closes active objectives left in a year it archives, at their current score", () => {
+    vi.setSystemTime(new Date(2027, 0, 5, 12));
+    const open = store().addObjective({
+      quarter: "2026-Q4",
+      title: "Open",
+      keyResults: [{ title: "One", skillId: "discovery", type: "count", count: 2 }],
+    });
+    const later = store().addObjective({ quarter: "2027-Q1", title: "Later" });
+    const card = store().addPlanItem("inspired", "2026-12")!;
+    useAppStore.setState({
+      data: { ...data(), planItems: data().planItems.map((p) => (p.id === card ? { ...p, status: "done", completedAt: "2026-12-10T12:00:00.000Z" } : p)) },
+    });
+
+    store().archiveYear(2026);
+    expect(data().objectives.find((o) => o.id === open)).toMatchObject({ status: "closed", finalProgress: 50, closedAt: expect.any(String) });
+    expect(data().objectives.find((o) => o.id === later)).toMatchObject({ status: "active" });
+    expect(data().archivedYears).toEqual([2026]);
+  });
+
+  it("starts the counting window afresh when an objective is moved by hand", () => {
+    const id = store().addObjective({ quarter: "2027-Q1", title: "Moved at quarter end" });
+    useAppStore.setState({ data: { ...data(), objectives: data().objectives.map((o) => ({ ...o, movedFrom: "2026-Q4" })) } });
+
+    store().updateObjective(id, { title: "Renamed" });
+    expect(data().objectives[0].movedFrom).toBe("2026-Q4");
+    store().updateObjective(id, { quarter: "2027-Q2" });
+    expect(data().objectives[0]).not.toHaveProperty("movedFrom");
   });
 });
 
@@ -533,13 +579,22 @@ describe("month-end review", () => {
     store().logTime(drop, { date: "2026-09-20", hours: 2 });
 
     vi.setSystemTime(new Date(2026, 9, 1, 12));
-    const record = store().applyMonthReview({ items: { [drop]: "drop" } });
+    const record = store().applyMonthReview({ items: { [drop]: "drop" } }, "2026-10-01");
 
     expect(item(carry)).toMatchObject({ month: "2026-10", status: "in_progress", carriedFrom: ["2026-09"] });
     expect(item(drop)).toBeUndefined();
     expect(hoursLoggedInMonth(data().activity, "2026-09")).toBe(2);
     expect(data().rollovers).toEqual([record]);
-    expect(store().applyMonthReview()).toBeUndefined();
+    expect(store().applyMonthReview({}, "2026-10-01")).toBeUndefined();
+  });
+
+  it("applies against the day the dialog showed, not the clock at the moment of Done", () => {
+    vi.setSystemTime(new Date(2026, 9, 20, 12));
+    store().addPlanItem("inspired", "2026-10");
+    // The dialog was opened on Oct 31 for September; Done is clicked after midnight.
+    vi.setSystemTime(new Date(2026, 10, 1, 0, 5));
+    expect(store().applyMonthReview({}, "2026-10-31")).toBeUndefined();
+    expect(data().planItems[0].month).toBe("2026-10");
   });
 });
 
@@ -586,6 +641,8 @@ describe("data management", () => {
     store().addPlanItem("inspired", "2026-10");
     updateDevicePreferences({ welcomeDoneAt: "2026-10-18T10:00:00Z", tourSeenAt: "2026-10-18T10:00:00Z" });
     saveBackup("{old}");
+    useUIStore.getState().updateWizard({ step: "skills", role: "pm" });
+    localStorage.setItem("growloop:dev-now", "2027-01-01");
 
     store().eraseEverything();
 
@@ -593,8 +650,11 @@ describe("data management", () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).state.data.planItems).toEqual([]);
     expect(readApiKey()).toBeNull();
     expect(localStorage.getItem(DEVICE_STORAGE_KEY)).toBeNull();
-    expect(localStorage.getItem(BACKUP_STORAGE_KEY)).toBeNull();
+    expect(readBackup()).toBeNull();
     expect(localStorage.getItem(SAMPLE_STORAGE_KEY)).toBeNull();
+    expect(useUIStore.getState().wizard).toEqual({ step: "answers", skills: [] });
+    expect(sessionStorage.getItem("growloop:wizard")).toBeNull();
+    expect(localStorage.getItem("growloop:dev-now")).toBeNull();
   });
 });
 
@@ -631,6 +691,31 @@ describe("sample mode (ADR 009)", () => {
     expect(data()).toEqual(emptyWorkspace());
   });
 
+  it("keeps the own workspace when storage is blocked (the sample session lives in memory)", () => {
+    store().addPlanItem("roadmaps", "2026-10");
+    const own = data();
+    blockStorage();
+
+    store().enterSampleMode();
+    expect(item("sample-card")).toBeDefined();
+    expect(store().exitSampleMode()).toEqual({ ownWorkspaceEmpty: false });
+    expect(data()).toEqual(own);
+  });
+
+  it("keeps the sample-mode flag and the storage key in step when storage is full", () => {
+    const target: Storage = localStorage instanceof Storage ? Storage.prototype : localStorage;
+    updateDevicePreferences({ welcomeDoneAt: "2026-10-18T10:00:00Z" });
+    vi.spyOn(target, "setItem").mockImplementation(() => {
+      throw new DOMException("Quota", "QuotaExceededError");
+    });
+
+    store().enterSampleMode();
+    expect(readStorageHealth()).toBe("full");
+    // The write failed, but this tab's flag and key agree.
+    expect(readDevicePreferences().sampleMode).toBe(true);
+    expect(useAppStore.persist.getOptions().name).toBe(SAMPLE_STORAGE_KEY);
+  });
+
   it("loads the workspace for the current mode on rehydration (e.g. another tab switched it)", () => {
     store().addPlanItem("roadmaps", "2026-10");
     store().enterSampleMode();
@@ -652,6 +737,10 @@ describe("sample mode (ADR 009)", () => {
 
 describe("persistence", () => {
   const saved = (value: unknown, version = 4) => localStorage.setItem(STORAGE_KEY, JSON.stringify({ state: { data: value }, version }));
+  const event = (version: number, value: unknown = emptyWorkspace()) => ({
+    key: STORAGE_KEY,
+    newValue: JSON.stringify({ state: { data: value }, version }),
+  });
 
   it("saves data under a versioned key", () => {
     store().addSkill({ name: "Negotiation" });
@@ -678,8 +767,20 @@ describe("persistence", () => {
     await useAppStore.persist.rehydrate();
 
     expect(data()).toEqual(emptyWorkspace());
-    expect(localStorage.getItem(BACKUP_STORAGE_KEY)).toBe(raw);
+    expect(readBackup()).toBe(raw);
     expect(warn).toHaveBeenCalled();
+    // Loading never writes: the unreadable value stays where it was.
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(raw);
+  });
+
+  it("never replaces an earlier backup: the last three distinct copies are kept, newest first", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    for (const broken of ["{one", "{two", "{two", "{three", "{four"]) {
+      localStorage.setItem(STORAGE_KEY, broken);
+      await useAppStore.persist.rehydrate();
+    }
+    expect(readBackups().map((backup) => backup.raw)).toEqual(["{four", "{three", "{two"]);
+    expect(readBackups()[0].savedAt).toEqual(expect.any(String));
   });
 
   it("backs up unparseable JSON instead of getting stuck loading", async () => {
@@ -690,7 +791,7 @@ describe("persistence", () => {
 
     expect(useAppStore.persist.hasHydrated()).toBe(true);
     expect(data()).toEqual(emptyWorkspace());
-    expect(localStorage.getItem(BACKUP_STORAGE_KEY)).toBe("{not json");
+    expect(readBackup()).toBe("{not json");
   });
 
   it("keeps working in memory when storage is blocked", async () => {
@@ -708,6 +809,7 @@ describe("persistence", () => {
 
     store().addSkill({ name: "Negotiation" });
     expect(data().skills).toHaveLength(3);
+    expect(readStorageHealth()).toBe("blocked");
 
     // Sample mode still works for the session.
     expect(store().enterSampleMode()).toBe(true);
@@ -718,20 +820,57 @@ describe("persistence", () => {
     saved({ ...emptyWorkspace(), version: 5, skills: [] }, 5);
     vi.spyOn(console, "warn").mockImplementation(() => {});
 
+    const raw = localStorage.getItem(STORAGE_KEY);
     await useAppStore.persist.rehydrate();
     expect(data()).toEqual(emptyWorkspace());
-    expect(localStorage.getItem(BACKUP_STORAGE_KEY)).toContain('"version":5');
+    expect(readBackup()).toContain('"version":5');
+    // The newer data isn't overwritten by loading.
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(raw);
   });
 
-  it("upgrades v3 saves and writes them back as v4", async () => {
+  it("follows edits from other tabs, but ignores other builds and keeps its data when a change can't be read", () => {
+    store().addPlanItem("inspired", "2026-10");
+    const mine = data();
+    const { result } = renderHook(() => useNewerVersionInAnotherTab());
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    // A newer build wrote: ignored, and the shell can offer a reload.
+    saved({ ...emptyWorkspace(), version: 5 }, 5);
+    act(() => handleStorageEvent(event(5, { ...emptyWorkspace(), version: 5 })));
+    expect(data()).toBe(mine);
+    expect(result.current).toBe(true);
+
+    // An older build wrote: ignored too (this tab doesn't migrate under the other one's feet).
+    handleStorageEvent(event(3));
+    expect(data()).toBe(mine);
+
+    // Same version but unreadable: keep what this tab shows, write nothing, no backup.
+    saved({ version: 4, skills: "corrupt" });
+    const raw = localStorage.getItem(STORAGE_KEY);
+    handleStorageEvent(event(4, { version: 4, skills: "corrupt" }));
+    expect(data()).toBe(mine);
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(raw);
+    expect(readBackup()).toBeNull();
+
+    // A readable change from the same build is loaded.
+    const theirs = { ...emptyWorkspace(), skills: [] };
+    saved(theirs);
+    handleStorageEvent(event(4, theirs));
+    expect(data()).toEqual(theirs);
+  });
+
+  it("upgrades v3 saves, and saves them as v4 with the next change", async () => {
     const { makeDataV3, makeLegacyItem } = await import("@/lib/testing/fixtures");
     saved(makeDataV3({ skills: emptyWorkspace().skills, planItems: [makeLegacyItem({ id: "card", notes: "Kept" })] }), 3);
 
     await useAppStore.persist.rehydrate();
     expect(data().version).toBe(4);
     expect(data().notes).toEqual([expect.objectContaining({ planItemId: "card", body: "Kept" })]);
+    // Saved as v4 with the next change; loading alone leaves the v3 save untouched.
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).version).toBe(3);
+    store().addSkill({ name: "Negotiation" });
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).version).toBe(4);
-    expect(localStorage.getItem(BACKUP_STORAGE_KEY)).toBeNull();
+    expect(readBackup()).toBeNull();
   });
 
   it("upgrades v1 and v2 saves", async () => {
