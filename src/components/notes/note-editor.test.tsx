@@ -83,6 +83,17 @@ describe("NoteEditor", () => {
     expect(field()).toHaveValue("first");
   });
 
+  it("keeps unsaved typing over an outside change, and stores it next", () => {
+    const saves: string[] = [];
+    render(<Harness onSave={(body) => saves.push(body)} />);
+    fireEvent.change(field(), { target: { value: "Typing in progress" } });
+    fireEvent.click(screen.getByRole("button", { name: "Replace" }));
+    expect(field()).toHaveValue("Typing in progress");
+    act(() => vi.advanceTimersByTime(AUTOSAVE_DELAY_MS));
+    expect(saves).toEqual(["Typing in progress"]);
+    expect(field()).toHaveValue("Typing in progress");
+  });
+
   it("keeps typing that is newer than the save being echoed back", () => {
     const saves: string[] = [];
     render(<Harness onSave={(body) => saves.push(body)} />);

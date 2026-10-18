@@ -16,24 +16,36 @@ export interface Autosave {
   flush: () => void;
   /** True for 1.5 s after a change is stored. */
   saved: boolean;
+  /** True while typed text hasn't been stored (including when the last save couldn't store it). */
+  dirty: boolean;
 }
 
 /**
- * Debounced autosave for one text field. It follows outside changes to `value`
- * (Use this version, Undo, an edit in another place) without clobbering what
- * the user is typing, and stores pending text when the field unmounts, so
- * nothing typed is lost when the drawer closes or the Notebook switches notes.
+ * Debounced autosave for one text field. `save` returns `false` when it
+ * couldn't store the text (e.g. a reminder note without a date); the text then
+ * stays pending and "Saved" doesn't show.
+ *
+ * Outside changes to `value` (Use this version, Undo, an edit in another
+ * place) replace the text only while nothing typed is pending; while it is,
+ * the typing wins and is stored next. Pending text is stored when the field
+ * unmounts, so nothing typed is lost when the drawer closes or the Notebook
+ * switches notes.
  */
-export function useAutosave(value: string, save: (next: string) => void, { delay = AUTOSAVE_DELAY_MS } = {}): Autosave {
+export function useAutosave(
+  value: string,
+  save: (next: string) => boolean | void,
+  { delay = AUTOSAVE_DELAY_MS } = {},
+): Autosave {
   const [draft, setDraft] = useState(value);
   const [synced, setSynced] = useState(value);
   // The last text this field stored, so the store echoing it back isn't taken for an outside change.
   const [stored, setStored] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(false);
 
   if (value !== synced) {
     setSynced(value);
-    if (value !== stored) setDraft(value);
+    if (!dirty && value !== stored) setDraft(value);
     // Either way the echo is consumed: a later change back to the same text (Undo) is an outside change.
     setStored(null);
   }
@@ -56,10 +68,11 @@ export function useAutosave(value: string, save: (next: string) => void, { delay
     clearTimeout(timer.current);
     timer.current = undefined;
     if (!dirtyRef.current) return;
-    dirtyRef.current = false;
     const text = draftRef.current;
+    if (saveRef.current(text) === false) return;
+    dirtyRef.current = false;
+    setDirty(false);
     setStored(text);
-    saveRef.current(text);
     setSaved(true);
     clearTimeout(savedTimer.current);
     savedTimer.current = setTimeout(() => setSaved(false), SAVED_VISIBLE_MS);
@@ -69,6 +82,7 @@ export function useAutosave(value: string, save: (next: string) => void, { delay
     (next: string) => {
       draftRef.current = next;
       dirtyRef.current = true;
+      setDirty(true);
       setDraft(next);
       clearTimeout(timer.current);
       timer.current = setTimeout(flush, delay);
@@ -85,5 +99,5 @@ export function useAutosave(value: string, save: (next: string) => void, { delay
     [flush],
   );
 
-  return { draft, change, flush, saved };
+  return { draft, change, flush, saved, dirty };
 }

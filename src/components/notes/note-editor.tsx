@@ -13,7 +13,8 @@ import { useAutosave, type Autosave } from "./use-autosave";
  */
 export interface NoteEditorProps {
   value: string;
-  onSave: (body: string) => void;
+  /** Stores the text; return `false` when it couldn't be stored (it then stays pending). */
+  onSave: (body: string) => boolean | void;
   /** The field's label, shown as the section heading. */
   label: string;
   /** Keep the label for screen readers only (the Notebook shows the source above instead). */

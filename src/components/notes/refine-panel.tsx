@@ -9,7 +9,7 @@ import { toast } from "@/components/ui/toast";
 import type { SummaryFeedback } from "@/lib/ai/schemas";
 import { useAI } from "@/lib/ai/use-ai";
 import { findCardNote } from "@/lib/domain/notes";
-import type { ID } from "@/lib/domain/types";
+import type { ID, Note } from "@/lib/domain/types";
 import { useAppStore } from "@/lib/store/app-store";
 
 /** Get feedback needs a little to read (card-detail.md §Get feedback from Claude). */
@@ -110,18 +110,29 @@ export function RefinePanel({
             refineSummary.reset();
             toast({
               message: "Summary replaced",
-              action: {
-                label: "Undo",
-                onClick: () => {
-                  if (previous) useAppStore.getState().restoreNote(previous);
-                },
-              },
+              action: { label: "Undo", onClick: () => previous && undoReplace(itemId, previous) },
             });
           }}
         />
       )}
     </div>
   );
+}
+
+/**
+ * Undo for "Use this version": puts back only the earlier text and its
+ * refined mark, so a review date or other change made since is kept.
+ */
+function undoReplace(itemId: ID, previous: Note) {
+  const { setCardNote, restoreNote } = useAppStore.getState();
+  setCardNote(itemId, "summary", previous.body);
+  const current = findCardNote(useAppStore.getState().data.notes, itemId, "summary");
+  if (!current) return;
+  // setCardNote never clears refinedAt; when the earlier text wasn't refined, drop the mark too.
+  if (previous.refinedAt !== current.refinedAt) {
+    const { refinedAt: _dropped, ...rest } = current;
+    restoreNote(previous.refinedAt ? { ...rest, refinedAt: previous.refinedAt } : rest);
+  }
 }
 
 function FeedbackPanel({
