@@ -151,7 +151,7 @@ function PasteStep({
         </p>
       )}
 
-      {status.state === "checking" && <p className="text-xs text-muted-foreground">Checking AI…</p>}
+      {status.state === "checking" && <p className="text-xs text-muted-foreground">Checking Claude…</p>}
       {status.state === "unavailable" && (
         <AISetupHint status={status} onRecheck={recheck}>
           Fill in the details yourself, or <TurnOnClaudeLink>turn on Claude</TurnOnClaudeLink> to fill them for you.
