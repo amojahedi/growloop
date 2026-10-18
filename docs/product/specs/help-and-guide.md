@@ -20,7 +20,7 @@ As a new or returning user, I want a short tour of the main areas and a plain ex
 - **Auto-starts on the first visit** (owner decision, 2026-10-17), right after the first-launch screen; skippable at every step and never shown again once seen or skipped; always available from Help.
 - UI: dimmed backdrop with a spotlight cut-out around the target, a popover next to it (title, body, "3 of 7", **Back**, **Next** / **Done**, **Skip tour**). Esc skips. Focus moves into the popover; the target gets `aria-describedby` to the popover body. Reduced motion: no transitions.
 - Steps whose target isn't on screen are skipped and the count adjusts (e.g. the user removed the radar widget). On < 768 px, nav steps anchor to the menu button with the same copy.
-- Completion or skip sets `tourCompletedAt` (device preference). Replaying is always possible.
+- Showing it sets `tourSeenAt`, so it auto-starts only once; completion or skip sets `tourCompletedAt` (both device preferences). It never auto-starts outside the Dashboard (so never during the wizard), and a link followed before it appears wins: it waits for the next Dashboard visit. Replaying is always possible.
 
 | # | Target (`data-tour`) | Title | Body |
 |---|---|---|---|
@@ -71,7 +71,7 @@ A single readable page (max ~680 px text column, Linen typography), linked from 
 
 - [ ] A Help button is in the top bar on every page with Take the tour, How Growloop works, and Turn on Claude (only when off).
 - [ ] The tour runs on the Dashboard with the 7 steps above, skips missing targets, shows "n of N", and supports Back, Next, Done, Skip and Esc.
-- [ ] The tour is never auto-started; completion/skip is stored as a device preference.
+- [ ] The tour auto-starts once per device on the Dashboard after the first-launch choice (`tourSeenAt`), never during the wizard, and never again after that; completion/skip is stored as a device preference (`tourCompletedAt`).
 - [ ] Tour and guide content come from `src/content/help/*` data files, not components.
 - [ ] `/guide` renders the eight sections with working links and a Take the tour button.
 - [ ] Tour popovers are keyboard accessible with focus management and work at 375 px.
