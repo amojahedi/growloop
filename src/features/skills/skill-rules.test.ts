@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { SKILL_COLORS } from "@/lib/domain/types";
+import type { DeletedSkill } from "@/lib/store/app-store";
 import { makeItem, makeKeyResult, makeNote, makeObjective, makeSkill } from "@/lib/testing/fixtures";
 import {
   canHideMore,
   canShowMore,
   colorName,
+  deleteWouldBreakMinimum,
   firstUnusedColor,
+  restorableSkill,
   skillSheetSummary,
+  uniqueSkillName,
   validSkillName,
 } from "./skill-rules";
 
@@ -41,6 +45,34 @@ describe("validSkillName", () => {
 
   it("lets a skill keep (or recase) its own name", () => {
     expect(validSkillName("ROADMAPPING", list, "a")).toBe("ROADMAPPING");
+  });
+});
+
+describe("deleting and undoing", () => {
+  it("blocks deleting a visible skill at 3 visible, but not a hidden one", () => {
+    const list = skills(3, 1);
+    expect(deleteWouldBreakMinimum(list[0], list)).toBe(true);
+    expect(deleteWouldBreakMinimum(list[3], list)).toBe(false);
+    expect(deleteWouldBreakMinimum(list[0], skills(4))).toBe(false);
+  });
+
+  it("suffixes a taken name, within 40 characters", () => {
+    const list = [makeSkill({ name: "Negotiation" }), makeSkill({ name: "Negotiation 2" })];
+    expect(uniqueSkillName("Storytelling", list)).toBe("Storytelling");
+    expect(uniqueSkillName("negotiation", list)).toBe("negotiation 3");
+    const long = "x".repeat(40);
+    expect(uniqueSkillName(long, [makeSkill({ name: long })])).toBe(`${"x".repeat(38)} 2`);
+  });
+
+  it("restores as it was when the rules still allow it", () => {
+    const deleted: DeletedSkill = { skill: makeSkill({ id: "neg", name: "Negotiation", builtIn: false }), index: 3, items: [], materials: [], notes: [] };
+    expect(restorableSkill(deleted, skills(5))).toBe(deleted);
+  });
+
+  it("restores hidden at 16 visible, and renamed when the name was reused", () => {
+    const deleted: DeletedSkill = { skill: makeSkill({ id: "neg", name: "Negotiation", builtIn: false }), index: 3, items: [], materials: [], notes: [] };
+    const full = [...skills(15), makeSkill({ name: "Negotiation" })];
+    expect(restorableSkill(deleted, full).skill).toMatchObject({ id: "neg", name: "Negotiation 2", hidden: true });
   });
 });
 

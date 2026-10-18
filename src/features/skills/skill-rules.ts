@@ -2,6 +2,7 @@ import { columnItems } from "@/lib/domain/board";
 import { compareQuarters, monthOf, quarterOfDay, toDayKey, yearOf, type DayKey } from "@/lib/domain/dates";
 import { listedNotes } from "@/lib/domain/notes";
 import { objectiveProgress } from "@/lib/domain/okrs";
+import type { DeletedSkill } from "@/lib/store/app-store";
 import {
   SKILL_COLORS,
   type BoardStatus,
@@ -49,6 +50,35 @@ export function validSkillName(name: string, skills: readonly Skill[], exceptId?
   const key = trimmed.toLocaleLowerCase();
   const taken = skills.some((skill) => skill.id !== exceptId && skill.name.trim().toLocaleLowerCase() === key);
   return taken ? undefined : trimmed;
+}
+
+/** Deleting this skill would leave fewer than 3 on the radar (hidden skills can always go). */
+export const deleteWouldBreakMinimum = (skill: Skill, skills: readonly Skill[]): boolean =>
+  !skill.hidden && !canHideMore(skills);
+
+/**
+ * A name no other skill has: the name itself, or "Name 2", "Name 3"… (kept
+ * within 40 characters). Used when undoing a delete after the name was reused.
+ */
+export function uniqueSkillName(name: string, skills: readonly Skill[], exceptId?: ID): string {
+  if (validSkillName(name, skills, exceptId)) return name.trim();
+  for (let n = 2; ; n += 1) {
+    const suffix = ` ${n}`;
+    const candidate = `${name.trim().slice(0, MAX_SKILL_NAME_LENGTH - suffix.length).trimEnd()}${suffix}`;
+    if (validSkillName(candidate, skills, exceptId)) return candidate;
+  }
+}
+
+/**
+ * What undoing a delete puts back, under the rules that hold now: hidden when
+ * 16 skills are already visible, renamed when its name was taken meanwhile.
+ */
+export function restorableSkill(deleted: DeletedSkill, skills: readonly Skill[]): DeletedSkill {
+  const { skill } = deleted;
+  const name = uniqueSkillName(skill.name, skills, skill.id);
+  const hidden = skill.hidden || !canShowMore(skills);
+  if (name === skill.name && hidden === Boolean(skill.hidden)) return deleted;
+  return { ...deleted, skill: { ...skill, name, hidden } };
 }
 
 /** The first skill color not in use yet (in token order), or the first color when all are taken. */

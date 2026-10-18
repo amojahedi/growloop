@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 import type { Skill, SkillColor } from "@/lib/domain/types";
+import { useAppStore } from "@/lib/store/app-store";
+import { isSampleModeOn } from "@/lib/store/device";
 import { useActions, useSkills } from "@/lib/store/hooks";
 import { useUIStore } from "@/lib/store/ui-store";
 import { cn } from "@/lib/utils";
@@ -15,10 +17,12 @@ import { SkillColorPicker } from "./skill-color-picker";
 import {
   canHideMore,
   canShowMore,
+  deleteWouldBreakMinimum,
   firstUnusedColor,
   KEEP_THREE_VISIBLE,
   MAX_SKILL_NAME_LENGTH,
   PICK_A_DIFFERENT_NAME,
+  restorableSkill,
   USED_BY_KEY_RESULT,
   validSkillName,
 } from "./skill-rules";
@@ -39,15 +43,25 @@ export function SkillsSettings() {
   const showBlocked = !canShowMore(skills);
 
   const remove = (skill: Skill, index: number) => {
+    if (deleteWouldBreakMinimum(skill, skills)) return;
     const result = deleteSkill(skill.id);
     if (!result.ok) {
       if (result.reason === "used-by-key-result") toast({ message: USED_BY_KEY_RESULT });
       return;
     }
     const cards = result.removedFromItems;
+    const sampleMode = isSampleModeOn();
     toast({
       message: `Deleted ${skill.name}${cards > 0 ? ` · removed from ${cards} ${cards === 1 ? "card" : "cards"}` : ""}`,
-      action: { label: "Undo", onClick: () => restoreSkill(result.deleted) },
+      action: {
+        label: "Undo",
+        onClick: () => {
+          // Another workspace is loaded now (e.g. sample data switched in another tab).
+          if (isSampleModeOn() !== sampleMode) return;
+          // The rules that hold now: hidden at 16 visible, renamed if the name was reused.
+          restoreSkill(restorableSkill(result.deleted, useAppStore.getState().data.skills));
+        },
+      },
     });
     // The row is gone: keep focus in the list (the next row, else the add field).
     requestAnimationFrame(() => {
@@ -119,13 +133,16 @@ function SkillRow({
     }
   }, [editing]);
 
-  const stopEditing = () => {
-    refocusName.current = true;
+  /** Enter and Esc return focus to the name; Tab or a click elsewhere keeps it where it went. */
+  const stopEditing = (refocus: boolean) => {
+    refocusName.current = refocus;
     setEditing(false);
   };
 
   // Hiding is blocked at 3 visible, showing at 16; the reason stays readable on the focusable button.
   const toggleBlocked = skill.hidden ? showBlocked : hideBlocked;
+  // Deleting a visible skill at 3 visible would break the radar too.
+  const deleteBlocked = deleteWouldBreakMinimum(skill, skills);
 
   return (
     <li className="flex flex-wrap items-center gap-x-2 gap-y-1 py-2 text-sm">
@@ -186,7 +203,17 @@ function SkillRow({
           {skill.hidden ? "Show" : "Hide"}
         </Button>
         {!skill.builtIn && (
-          <Button variant="ghost" size="xs" aria-label={`Delete ${skill.name}`} onClick={onDelete}>
+          <Button
+            variant="ghost"
+            size="xs"
+            aria-label={`Delete ${skill.name}`}
+            aria-disabled={deleteBlocked || undefined}
+            aria-describedby={deleteBlocked ? keepThreeId : undefined}
+            className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+            onClick={() => {
+              if (!deleteBlocked) onDelete();
+            }}
+          >
             Delete
           </Button>
         )}
@@ -196,14 +223,23 @@ function SkillRow({
 }
 
 /** Enter or blur saves, Esc cancels; empty or duplicate names are rejected. */
-function RenameField({ skill, skills, onDone }: { skill: Skill; skills: readonly Skill[]; onDone: () => void }) {
+function RenameField({
+  skill,
+  skills,
+  onDone,
+}: {
+  skill: Skill;
+  skills: readonly Skill[];
+  /** `refocus`: finished from the keyboard (Enter or Esc), so focus goes back to the name. */
+  onDone: (refocus: boolean) => void;
+}) {
   const { updateSkill } = useActions();
   const [value, setValue] = useState(skill.name);
   const [invalid, setInvalid] = useState(false);
   const errorId = useId();
   const done = useRef(false);
 
-  const finish = (save: boolean) => {
+  const finish = (save: boolean, refocus: boolean) => {
     if (done.current) return;
     if (save) {
       const name = validSkillName(value, skills, skill.id);
@@ -214,7 +250,7 @@ function RenameField({ skill, skills, onDone }: { skill: Skill; skills: readonly
       if (name !== skill.name) updateSkill(skill.id, { name });
     }
     done.current = true;
-    onDone();
+    onDone(refocus);
   };
 
   return (
@@ -235,13 +271,13 @@ function RenameField({ skill, skills, onDone }: { skill: Skill; skills: readonly
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             event.preventDefault();
-            finish(true);
+            finish(true, true);
           } else if (event.key === "Escape") {
             event.preventDefault();
-            finish(false);
+            finish(false, true);
           }
         }}
-        onBlur={() => finish(true)}
+        onBlur={() => finish(true, false)}
       />
       {invalid && (
         <p id={errorId} role="alert" className="text-xs text-destructive">

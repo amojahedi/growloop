@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { dismissToast, Toaster } from "@/components/ui/toast";
 import type { Skill } from "@/lib/domain/types";
 import { useAppStore } from "@/lib/store/app-store";
+import { updateDevicePreferences } from "@/lib/store/device";
 import { emptyWorkspace } from "@/lib/store/seed";
 import { useUIStore } from "@/lib/store/ui-store";
 import { makeItem, makeKeyResult, makeObjective } from "@/lib/testing/fixtures";
@@ -152,6 +153,75 @@ describe("SkillsSettings", () => {
     fireEvent.click(screen.getByRole("button", { name: "Undo" }));
     expect(skills().at(-1)?.id).toBe(id);
     expect(useAppStore.getState().data.planItems[0].skillIds).toEqual(["roadmapping", id]);
+  });
+
+  it("blocks deleting a visible skill when only 3 are visible", () => {
+    let id = "";
+    act(() => {
+      id = useAppStore.getState().addSkill({ name: "Negotiation" });
+      // Leave Negotiation and two built-ins visible.
+      skills().slice(2, -1).forEach((entry) => useAppStore.getState().setSkillHidden(entry.id, true));
+    });
+    renderSettings();
+
+    const remove = screen.getByRole("button", { name: "Delete Negotiation" });
+    expect(remove).toHaveAttribute("aria-disabled", "true");
+    expect(remove).toHaveAccessibleDescription("Keep at least 3 visible so the radar works.");
+    fireEvent.click(remove);
+    expect(skills().some((entry) => entry.id === id)).toBe(true);
+
+    // A hidden own skill can still go.
+    act(() => useAppStore.getState().setSkillHidden(id, true));
+    act(() => useAppStore.getState().setSkillHidden(skills()[2].id, false));
+    fireEvent.click(screen.getByRole("button", { name: "Delete Negotiation" }));
+    expect(skills().some((entry) => entry.id === id)).toBe(false);
+  });
+
+  it("undoes a delete under the current rules: hidden at 16 visible, renamed if the name was reused", () => {
+    let id = "";
+    act(() => {
+      id = useAppStore.getState().addSkill({ name: "Negotiation" });
+    });
+    renderSettings();
+    fireEvent.click(screen.getByRole("button", { name: "Delete Negotiation" }));
+
+    // Meanwhile the name is reused and the list fills up to 16 visible.
+    act(() => {
+      useAppStore.getState().addSkill({ name: "Negotiation" });
+      for (let index = 0; index < 3; index += 1) useAppStore.getState().addSkill({ name: `Extra ${index}` });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+    const restored = skills().find((entry) => entry.id === id);
+    expect(restored).toMatchObject({ name: "Negotiation 2", hidden: true });
+    expect(skills().filter((entry) => !entry.hidden)).toHaveLength(16);
+  });
+
+  it("ignores Undo once another workspace is loaded", () => {
+    let id = "";
+    act(() => {
+      id = useAppStore.getState().addSkill({ name: "Negotiation" });
+    });
+    renderSettings();
+    fireEvent.click(screen.getByRole("button", { name: "Delete Negotiation" }));
+    act(() => updateDevicePreferences({ sampleMode: true }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+    expect(skills().some((entry) => entry.id === id)).toBe(false);
+    act(() => updateDevicePreferences({ sampleMode: undefined }));
+  });
+
+  it("returns focus to the name after Enter or Esc, but not after Tab or a click away", () => {
+    renderSettings();
+    fireEvent.click(screen.getByRole("button", { name: "Rename Roadmapping" }));
+    const input = screen.getByRole("textbox", { name: "Name of Roadmapping" });
+    const elsewhere = screen.getByRole("textbox", { name: "New skill name" });
+    // Tabbing or clicking away blurs the field, which saves it.
+    act(() => elsewhere.focus());
+    expect(input).not.toBeInTheDocument();
+
+    expect(screen.getByRole("button", { name: "Rename Roadmapping" })).toBeInTheDocument();
+    expect(elsewhere).toHaveFocus();
   });
 
   it("won't delete a skill a key result uses", () => {
