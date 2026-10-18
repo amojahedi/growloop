@@ -11,7 +11,7 @@ import { isSummarized } from "@/lib/domain/notes";
 import { objectivesForQuarter } from "@/lib/domain/okrs";
 import type { BoardStatus, ID, PlanItem } from "@/lib/domain/types";
 import { useAppStore } from "@/lib/store/app-store";
-import { useActions, useMaterialMap, useMonthNavigation, useObjectives, usePlanItems, useSkills } from "@/lib/store/hooks";
+import { useActions, useMaterialMap, useObjectives, usePlanItems, useSkills } from "@/lib/store/hooks";
 import { CardDetailDrawer } from "../card/card-detail-drawer";
 import { monthsLabel } from "../review/labels";
 import { ReviewBanner } from "../review/review-banner";
@@ -20,7 +20,7 @@ import { BoardColumn } from "./board-column";
 import { BoardFilterChips, BoardFilters } from "./board-filters";
 import { STATUS_LABELS } from "./board-labels";
 import {
-  isPastMonth,
+  isReadOnlyMonth,
   matchesFilters,
   menuMoves,
   monthProgress,
@@ -32,6 +32,7 @@ import {
 import { EarnedDialog } from "./earned-dialog";
 import { SortableBoardCard, StaticBoardCard } from "./sortable-board-card";
 import { useBoardDrag } from "./use-board-drag";
+import { useBoardMonth } from "./use-board-month";
 import { useCardParam } from "./use-card-param";
 
 const DROP_ANIMATION: DropAnimation = { duration: 220, easing: "cubic-bezier(0.2, 0.9, 0.3, 1.1)" };
@@ -88,7 +89,7 @@ export function BoardView() {
   const materials = useMaterialMap();
   const skills = useSkills();
   const objectives = useObjectives();
-  const { month, quarter, currentMonth, goToCurrentMonth } = useMonthNavigation();
+  const { month, quarter, currentMonth, goToCurrentMonth } = useBoardMonth();
   const { movePlanItem, removePlanItem, restorePlanItem, setItemEarned, markSummaryNudged } = useActions();
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   // The certification the "Did you earn…?" dialog asks about; kept after closing so focus can return to it.
@@ -97,7 +98,7 @@ export function BoardView() {
   const focusAfterRender = useFocusAfterRender();
   const { announce, region } = useAnnouncer();
 
-  const readOnly = isPastMonth(month, currentMonth);
+  const readOnly = isReadOnlyMonth(month, currentMonth);
   const statuses = visibleColumns(readOnly);
   const monthName = monthsLabel([month]);
   const quarterObjectives = objectivesForQuarter(objectives, quarter);
@@ -112,6 +113,8 @@ export function BoardView() {
     return (item && materials.get(item.materialId)?.title) ?? "Unknown material";
   };
   const focusCard = (id: ID) => focusAfterRender(cardSelector(id));
+  /** Guard for every change: only cards on the current month's board can be moved, removed or marked. */
+  const editable = (id: ID) => !readOnly && statuses.some((status) => all[status].some((item) => item.id === id));
 
   // --- Moving to Done (board.md §Moving to Done) ----------------------------------
 
@@ -126,7 +129,9 @@ export function BoardView() {
   /** Moves a card; returns true when the move opened the "Did you earn…?" dialog. */
   const move = (id: ID, target: MoveTarget): boolean => {
     const before = itemById.get(id);
-    movePlanItem(id, target);
+    if (!editable(id)) return false;
+    // Always onto this board's month (the current one).
+    movePlanItem(id, { ...target, month });
     if (!before || before.status === "done" || target.status !== "done") return false;
     const certification = materials.get(before.materialId)?.type === "certification";
     if (certification && !before.earnedAt) {
@@ -158,13 +163,15 @@ export function BoardView() {
   };
 
   const menuMove = (item: PlanItem, target: MoveTarget, kind: "column" | "up" | "down") => {
+    if (!editable(item.id)) return;
     const title = titleOf(item.id);
-    const opensDialog = move(item.id, { ...target, month });
+    const opensDialog = move(item.id, target);
     announce(kind === "column" ? movedToMessage(title, STATUS_LABELS[target.status]) : `Moved ${title} ${kind}.`);
     if (!opensDialog) focusCard(item.id);
   };
 
   const remove = (item: PlanItem) => {
+    if (!editable(item.id)) return;
     const status = statuses.find((candidate) => drag.columns[candidate].includes(item.id));
     const column = status ? drag.columns[status] : [];
     const index = column.indexOf(item.id);
@@ -186,6 +193,7 @@ export function BoardView() {
   };
 
   const markEarned = (id: ID) => {
+    if (!editable(id)) return;
     setItemEarned(id, true);
     focusCard(id);
   };

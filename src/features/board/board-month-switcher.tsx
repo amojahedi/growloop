@@ -4,8 +4,9 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { compareMonths, formatMonth } from "@/lib/domain/dates";
-import { useMonthNavigation, usePlanItems } from "@/lib/store/hooks";
+import { usePlanItems } from "@/lib/store/hooks";
 import { earliestMonth } from "./board-model";
+import { useBoardMonth } from "./use-board-month";
 
 /**
  * "‹ October 2026 ›" in the Board header (board.md §Header): opens on the
@@ -14,7 +15,7 @@ import { earliestMonth } from "./board-model";
  * Must be inside `<DataGate>`.
  */
 export function BoardMonthSwitcher() {
-  const { month, currentMonth, goToPreviousMonth, goToNextMonth, goToCurrentMonth } = useMonthNavigation();
+  const { month, currentMonth, goToPreviousMonth, goToNextMonth, goToCurrentMonth } = useBoardMonth();
   const earliest = earliestMonth(usePlanItems(), currentMonth);
   const atStart = compareMonths(month, earliest) <= 0;
   const atEnd = compareMonths(month, currentMonth) >= 0;

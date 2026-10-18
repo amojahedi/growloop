@@ -3,9 +3,10 @@ import { boardColumns, moveItem } from "@/lib/domain/board";
 import { makeItem, makeKeyResult, makeObjective } from "@/lib/testing/fixtures";
 import {
   earliestMonth,
-  isPastMonth,
+  isReadOnlyMonth,
   matchesFilters,
   menuMoves,
+  monthToOpen,
   monthProgress,
   NO_FILTERS,
   shortTitle,
@@ -39,11 +40,20 @@ describe("month range", () => {
     expect(earliestMonth([makeItem({ month: "2026-12" })], MONTH)).toBe(MONTH);
   });
 
-  it("treats earlier months as read-only and hides Backlog there", () => {
-    expect(isPastMonth("2026-09", MONTH)).toBe(true);
-    expect(isPastMonth(MONTH, MONTH)).toBe(false);
+  it("only lets the current month be edited, and hides Backlog elsewhere", () => {
+    expect(isReadOnlyMonth("2026-09", MONTH)).toBe(true);
+    expect(isReadOnlyMonth("2026-11", MONTH)).toBe(true);
+    expect(isReadOnlyMonth(MONTH, MONTH)).toBe(false);
     expect(visibleColumns(true)).toEqual(["todo", "in_progress", "done"]);
     expect(visibleColumns(false)).toEqual(["backlog", "todo", "in_progress", "done"]);
+  });
+});
+
+describe("monthToOpen", () => {
+  it("opens an item on its month, Backlog and later months on the current one", () => {
+    expect(monthToOpen({ month: "2026-08", status: "done" }, MONTH)).toBe("2026-08");
+    expect(monthToOpen({ month: "2026-08", status: "backlog" }, MONTH)).toBe(MONTH);
+    expect(monthToOpen({ month: "2026-12", status: "todo" }, MONTH)).toBe(MONTH);
   });
 });
 

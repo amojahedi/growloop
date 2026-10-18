@@ -358,6 +358,26 @@ describe("BoardView past months", () => {
   });
 });
 
+describe("BoardView never shows a later month", () => {
+  it("shows the current month, editable, when a later one is selected elsewhere", async () => {
+    useUIStore.setState({ selectedMonth: "2026-12" });
+    renderBoard();
+    await settle();
+    expect(screen.getByText("October 2026")).toBeInTheDocument();
+    expect(useUIStore.getState().selectedMonth).toBeNull();
+    expect(card(first.title)).toHaveAttribute("aria-roledescription", "draggable card");
+  });
+
+  it("opens a later month's item on the current month", async () => {
+    const later = state().addPlanItem(third.id, "2026-12")!;
+    renderBoard(`/board?item=${later}`);
+    await settle();
+    expect(screen.getByText("October 2026")).toBeInTheDocument();
+    expect(useUIStore.getState().selectedMonth).toBeNull();
+    expect(screen.getByRole("dialog", { name: third.title })).toBeInTheDocument();
+  });
+});
+
 describe("BoardMonthSwitcher", () => {
   it("goes back only, as far as the first month with a plan item", () => {
     state().addPlanItem(third.id, "2026-09");

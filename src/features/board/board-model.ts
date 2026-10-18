@@ -23,8 +23,13 @@ export function earliestMonth(items: readonly PlanItem[], currentMonth: MonthKey
   return items.reduce((earliest, item) => (compareMonths(item.month, earliest) < 0 ? item.month : earliest), currentMonth);
 }
 
-/** Past months are read-only (B-5). */
-export const isPastMonth = (month: MonthKey, currentMonth: MonthKey) => compareMonths(month, currentMonth) < 0;
+/** Only the current month is editable (B-5); the board never shows a later one, and past months are read-only. */
+export const isReadOnlyMonth = (month: MonthKey, currentMonth: MonthKey) => month !== currentMonth;
+
+/** The month `?item=` opens on: the item's own, except Backlog (and anything after this month) opens on the current one. */
+export function monthToOpen(item: Pick<PlanItem, "month" | "status">, currentMonth: MonthKey): MonthKey {
+  return item.status === "backlog" || compareMonths(item.month, currentMonth) > 0 ? currentMonth : item.month;
+}
 
 /** Backlog is a rolling pool that belongs to the current month, so past months hide it. */
 export const visibleColumns = (readOnly: boolean): readonly BoardStatus[] =>

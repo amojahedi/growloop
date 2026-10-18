@@ -6,6 +6,7 @@ import { toast } from "@/components/ui/toast";
 import type { ID } from "@/lib/domain/types";
 import { useAppStore } from "@/lib/store/app-store";
 import { useMonthNavigation } from "@/lib/store/hooks";
+import { monthToOpen } from "./board-model";
 
 export const ITEM_PARAM = "item";
 /**
@@ -22,8 +23,9 @@ export const UNKNOWN_CARD_MESSAGE = "That card no longer exists.";
  * from elsewhere), so Back closes the drawer and links can open any card.
  * Updates go through the native History API, which Next's router picks up.
  *
- * On arrival the board switches to the item's month (Backlog items open on the
- * current month); an unknown id toasts once and is dropped from the URL.
+ * On arrival the board switches to the item's month (Backlog items, and any
+ * item after this month, open on the current month); an unknown id toasts
+ * once and is dropped from the URL.
  */
 export function useCardParam() {
   const searchParams = useSearchParams();
@@ -75,7 +77,7 @@ export function useCardParam() {
     const item = useAppStore.getState().data.planItems.find((candidate) => candidate.id === itemId);
     if (!item) return;
     found.current = itemId;
-    setMonth(item.status === "backlog" ? currentMonth : item.month);
+    setMonth(monthToOpen(item, currentMonth));
     // Only when the id changes: moving the open card mustn't move the board.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemId]);
