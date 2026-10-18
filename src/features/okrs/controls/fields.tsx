@@ -2,7 +2,7 @@
 
 import { cn } from "cn";
 import { MinusIcon, PencilIcon, PlusIcon } from "lucide-react";
-import { useId, useLayoutEffect, useRef, type ComponentProps } from "react";
+import { useId, useLayoutEffect, useRef, useState, type ComponentProps } from "react";
 import { MAX_COUNT, MIN_COUNT } from "@/lib/domain/okrs";
 
 /**
@@ -68,7 +68,11 @@ export function InlineTextField({
   );
 }
 
-/** "N items" for a count key result: − / number / +, 1–10. */
+/**
+ * "N items" for a count key result: − / number / +, 1–10. The field can be
+ * cleared while typing (it settles on blur), and the buttons stay focusable
+ * at the limits so keyboard focus never drops.
+ */
 export function CountStepper({
   id,
   value,
@@ -81,16 +85,25 @@ export function CountStepper({
   describedBy?: string;
 }) {
   const labelId = useId();
+  const [draft, setDraft] = useState<string | null>(null);
   const set = (next: number) => onChange(Math.min(MAX_COUNT, Math.max(MIN_COUNT, Math.round(next))));
   const buttonClass =
-    "grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40";
+    "grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent";
+  const atMin = value <= MIN_COUNT;
+  const atMax = value >= MAX_COUNT;
   return (
     <div role="group" aria-labelledby={labelId} className="inline-flex items-center gap-1">
       <span id={labelId} className="sr-only">
         Number of items
       </span>
       <div className="inline-flex items-center rounded-lg border border-input bg-card p-0.5">
-        <button type="button" className={buttonClass} onClick={() => set(value - 1)} disabled={value <= MIN_COUNT} aria-label="Fewer items">
+        <button
+          type="button"
+          className={buttonClass}
+          onClick={() => !atMin && set(value - 1)}
+          aria-disabled={atMin || undefined}
+          aria-label="Fewer items"
+        >
           <MinusIcon className="size-3.5" aria-hidden />
         </button>
         <input
@@ -99,16 +112,30 @@ export function CountStepper({
           inputMode="numeric"
           min={MIN_COUNT}
           max={MAX_COUNT}
-          value={value}
+          value={draft ?? value}
           aria-label="Number of items"
           aria-describedby={describedBy}
           onChange={(event) => {
-            const next = Number(event.target.value);
-            if (event.target.value !== "" && Number.isFinite(next)) set(next);
+            const text = event.target.value;
+            setDraft(text);
+            const next = Number(text);
+            if (text !== "" && Number.isFinite(next) && next >= MIN_COUNT && next <= MAX_COUNT) set(next);
+          }}
+          onBlur={() => {
+            // Settle on a valid number: out-of-range values clamp, an empty field keeps the last one.
+            const next = Number(draft);
+            if (draft !== null && draft !== "" && Number.isFinite(next)) set(next);
+            setDraft(null);
           }}
           className="h-7 w-8 [appearance:textfield] bg-transparent text-center text-sm font-semibold tabular-nums outline-none focus-visible:rounded-md focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         />
-        <button type="button" className={buttonClass} onClick={() => set(value + 1)} disabled={value >= MAX_COUNT} aria-label="More items">
+        <button
+          type="button"
+          className={buttonClass}
+          onClick={() => !atMax && set(value + 1)}
+          aria-disabled={atMax || undefined}
+          aria-label="More items"
+        >
           <PlusIcon className="size-3.5" aria-hidden />
         </button>
       </div>

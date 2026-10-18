@@ -4,7 +4,6 @@ import { cn } from "cn";
 import { ChevronDownIcon } from "lucide-react";
 import type { ID, Skill } from "@/lib/domain/types";
 import { skillColorVar, skillTextColor } from "@/lib/theme/skill-colors";
-import { useUIStore } from "@/lib/store/ui-store";
 import { chipClassName } from "./choice-controls";
 
 /** The skill's color as a small dot. */
@@ -15,39 +14,6 @@ export function SkillDot({ skill, className }: { skill: Pick<Skill, "color"> | u
       className={cn("inline-block size-2 shrink-0 rounded-full bg-muted-foreground", className)}
       style={skill ? { backgroundColor: skillColorVar(skill.color) } : undefined}
     />
-  );
-}
-
-/**
- * A skill chip that opens the skill sheet (skills.md). Hidden skills stay
- * visible on key results, muted.
- */
-export function SkillChip({ skill, skillId, className }: { skill: Skill | undefined; skillId: ID; className?: string }) {
-  const openSkillSheet = useUIStore((state) => state.openSkillSheet);
-  const muted = !skill || skill.hidden;
-  const name = skill?.name ?? "Unknown skill";
-  const content = (
-    <>
-      <SkillDot skill={skill} className={muted ? "opacity-50" : undefined} />
-      <span className="truncate">{name}</span>
-    </>
-  );
-  const base = cn(
-    "inline-flex h-6 max-w-full min-w-0 items-center gap-1.5 rounded-full border bg-card px-2 text-xs font-semibold",
-    muted && "border-dashed text-muted-foreground",
-    className,
-  );
-  if (!skill) return <span className={base}>{content}</span>;
-  return (
-    <button
-      type="button"
-      className={cn(base, "transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none")}
-      style={muted ? undefined : { color: skillTextColor(skill.color) }}
-      onClick={() => openSkillSheet(skillId)}
-      aria-label={`${name}${skill.hidden ? " (hidden)" : ""}: open skill`}
-    >
-      {content}
-    </button>
   );
 }
 

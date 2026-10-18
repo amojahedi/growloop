@@ -2,7 +2,7 @@
 
 import { cn } from "cn";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
-import { useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { MATERIAL_TYPE_ICONS } from "@/components/icons";
 import type { ID, Material } from "@/lib/domain/types";
 
@@ -103,6 +103,12 @@ export function MaterialCombobox({
 
   const activeId = open && matches[active] ? `${listId}-${matches[active].id}` : undefined;
 
+  // Keep the active option visible while arrowing through a long list.
+  useEffect(() => {
+    if (!activeId) return;
+    document.getElementById(activeId)?.scrollIntoView?.({ block: "nearest" });
+  }, [activeId]);
+
   return (
     <div className="relative w-full min-w-0">
       <input
@@ -111,7 +117,7 @@ export function MaterialCombobox({
         type="text"
         role="combobox"
         aria-label={label}
-        aria-expanded={open}
+        aria-expanded={open && matches.length > 0}
         aria-controls={listId}
         aria-autocomplete="list"
         aria-activedescendant={activeId}
@@ -147,10 +153,9 @@ export function MaterialCombobox({
         id={listId}
         role="listbox"
         aria-label={label}
-        hidden={!open}
+        hidden={!open || matches.length === 0}
         className="absolute top-full right-0 left-0 z-30 mt-1 max-h-64 overflow-y-auto rounded-lg border bg-popover p-1 text-popover-foreground shadow-md"
       >
-        {matches.length === 0 && <li className="px-2 py-1.5 text-sm text-muted-foreground">No matches</li>}
         {matches.map((material, index) => {
           const Icon = MATERIAL_TYPE_ICONS[material.type];
           const isSelected = material.id === value;
@@ -182,6 +187,10 @@ export function MaterialCombobox({
           );
         })}
       </ul>
+      {/* Outside the listbox (it may only hold options), and announced as the list empties. */}
+      <p role="status" className={open && matches.length === 0 ? "absolute top-full right-0 left-0 z-30 mt-1 rounded-lg border bg-popover px-2.5 py-1.5 text-sm text-muted-foreground shadow-md" : "sr-only"}>
+        {open && matches.length === 0 ? "No matches" : ""}
+      </p>
     </div>
   );
 }
