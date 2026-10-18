@@ -9,12 +9,13 @@ import { useMonthNavigation } from "@/lib/store/hooks";
 import { monthToOpen } from "./board-model";
 
 export const ITEM_PARAM = "item";
-/**
- * Asks the card drawer to focus a field when it opens ("Write summary" →
- * `focus=summary`). Proposed contract for WP4's drawer; ignored until it reads it.
- */
+/** The drawer field to focus when the card opens ("Write summary" → `focus=summary`). */
 export const FOCUS_PARAM = "focus";
-export type CardFocus = "summary";
+/** Mirrors `CardDetailDrawer`'s `focus` prop (WP4). */
+export type CardFocus = "summary" | "notes";
+
+const parseFocus = (value: string | null): CardFocus | undefined =>
+  value === "summary" || value === "notes" ? value : undefined;
 
 export const UNKNOWN_CARD_MESSAGE = "That card no longer exists.";
 
@@ -31,6 +32,7 @@ export function useCardParam() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const itemId = searchParams.get(ITEM_PARAM) || null;
+  const focus = parseFocus(searchParams.get(FOCUS_PARAM));
   const exists = useAppStore((state) => (itemId ? state.data.planItems.some((item) => item.id === itemId) : false));
   const { currentMonth, setMonth } = useMonthNavigation();
   // True while the open card is a history entry this page pushed, so closing can step back instead.
@@ -53,8 +55,14 @@ export function useCardParam() {
       if (options.focus) params.set(FOCUS_PARAM, options.focus);
       else params.delete(FOCUS_PARAM);
       found.current = id;
-      window.history.pushState(null, "", `${pathname}?${params.toString()}`);
-      pushed.current = true;
+      const url = `${pathname}?${params.toString()}`;
+      // A card already in the URL is replaced, not stacked: Back still leaves the drawer in one step.
+      if (new URLSearchParams(window.location.search).has(ITEM_PARAM)) {
+        window.history.replaceState(null, "", url);
+      } else {
+        window.history.pushState(null, "", url);
+        pushed.current = true;
+      }
     },
     [pathname],
   );
@@ -95,5 +103,5 @@ export function useCardParam() {
     }
   }, [itemId, exists, urlWithout]);
 
-  return { itemId: exists ? itemId : null, openCard, closeCard };
+  return { itemId: exists ? itemId : null, focus: exists ? focus : undefined, openCard, closeCard };
 }

@@ -12,7 +12,7 @@ import { objectivesForQuarter } from "@/lib/domain/okrs";
 import type { BoardStatus, ID, PlanItem } from "@/lib/domain/types";
 import { useAppStore } from "@/lib/store/app-store";
 import { useActions, useMaterialMap, useObjectives, usePlanItems, useSkills } from "@/lib/store/hooks";
-import { CardDetailDrawer } from "../card/card-detail-drawer";
+import { CardDetailDrawer, type CardDetailDrawerProps } from "../card/card-detail-drawer";
 import { monthsLabel } from "../review/labels";
 import { ReviewBanner } from "../review/review-banner";
 import { BoardCard } from "./board-card";
@@ -33,7 +33,7 @@ import { EarnedDialog } from "./earned-dialog";
 import { SortableBoardCard, StaticBoardCard } from "./sortable-board-card";
 import { useBoardDrag } from "./use-board-drag";
 import { useBoardMonth } from "./use-board-month";
-import { useCardParam } from "./use-card-param";
+import { useCardParam, type CardFocus } from "./use-card-param";
 
 const DROP_ANIMATION: DropAnimation = { duration: 220, easing: "cubic-bezier(0.2, 0.9, 0.3, 1.1)" };
 
@@ -94,7 +94,7 @@ export function BoardView() {
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   // The certification the "Did you earn…?" dialog asks about; kept after closing so focus can return to it.
   const [earned, setEarned] = useState<{ id: ID; open: boolean } | null>(null);
-  const { itemId: openItemId, openCard, closeCard } = useCardParam();
+  const { itemId: openItemId, focus: openFocus, openCard, closeCard } = useCardParam();
   const focusAfterRender = useFocusAfterRender();
   const { announce, region } = useAnnouncer();
 
@@ -331,8 +331,9 @@ export function BoardView() {
         onAnswer={answerEarned}
         onCloseAutoFocus={() => earned && focusNow(cardSelector(earned.id))}
       />
-      <CardDetailDrawer
+      <CardDrawer
         itemId={openItemId}
+        focus={openFocus}
         onClose={() => {
           const id = openItemId;
           closeCard();
@@ -341,6 +342,18 @@ export function BoardView() {
       />
     </div>
   );
+}
+
+/**
+ * The card drawer with the field to focus (`?focus=`).
+ * TODO(WP4): once feat/wp4-card-notebook is merged, CardDetailDrawer declares
+ * `focus?: "summary" | "notes"`: render it directly with `focus={focus}` and
+ * delete this wrapper. Until then the prop is passed through a spread, which
+ * compiles against the WP0 stub (it ignores it) and type-checks against WP4's.
+ */
+function CardDrawer({ focus, ...props }: CardDetailDrawerProps & { focus?: CardFocus }) {
+  const drawerProps: CardDetailDrawerProps & { focus?: CardFocus } = { ...props, focus };
+  return <CardDetailDrawer {...drawerProps} />;
 }
 
 function EmptyBoard({
