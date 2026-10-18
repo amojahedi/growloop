@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
 import { formatQuarter, nextQuarter, yearOf } from "@/lib/domain/dates";
-import { defaultDecisions, reviewRecap, type ObjectiveDecision, type PendingReview } from "@/lib/domain/month-review";
-import { checkMoveToNextQuarter, isMet, objectiveProgress } from "@/lib/domain/okrs";
+import { defaultDecisions, moveChecks, reviewRecap, type ObjectiveDecision, type PendingReview } from "@/lib/domain/month-review";
+import { isMet, objectiveProgress, type MoveCheck } from "@/lib/domain/okrs";
 import type { Objective, RolloverDecision } from "@/lib/domain/types";
 import { useActions, useMaterialMap, useNotes, useObjectives, usePendingReview, usePlanItems, useSkills, useToday } from "@/lib/store/hooks";
 import { STATUS_LABELS } from "../board/board-labels";
@@ -51,9 +51,11 @@ function ReviewContent({ pending, onDone }: { pending: PendingReview; onDone: ()
   const months = monthsLabel(pending.months);
   const recap = reviewRecap(items, notes, skills, pending.months);
   const topSkill = skills.find((skill) => skill.id === recap.topSkillId);
+  // The same sequential checks the store applies, so what's offered is what happens.
+  const checks = moveChecks(pending, { objectives, planItems: items }, today, decisions.objectives);
 
   const done = () => {
-    applyMonthReview(decisions);
+    applyMonthReview(decisions, today);
     toast({ message: `${months} ${pending.months.length > 1 ? "are" : "is"} wrapped up.` });
     onDone();
   };
@@ -117,7 +119,7 @@ function ReviewContent({ pending, onDone }: { pending: PendingReview; onDone: ()
                 key={objective.id}
                 objective={objective}
                 score={objectiveProgress(objective, items)}
-                move={checkMoveToNextQuarter(objective, objectives, today)}
+                move={checks.get(objective.id)!}
                 value={decisions.objectives[objective.id]}
                 onChange={(value) =>
                   setDecisions((current) => ({ ...current, objectives: { ...current.objectives, [objective.id]: value } }))
@@ -160,7 +162,7 @@ function ObjectiveRow({
 }: {
   objective: Objective;
   score: number;
-  move: ReturnType<typeof checkMoveToNextQuarter>;
+  move: MoveCheck;
   value: ObjectiveDecision;
   onChange: (value: ObjectiveDecision) => void;
 }) {
@@ -181,7 +183,7 @@ function ObjectiveRow({
       ) : (
         <div role="radiogroup" aria-label={`What to do with "${objective.title}"`} className="flex flex-wrap gap-3">
           <label className="flex items-center gap-1.5">
-            <input type="radio" name={name} checked={value === "close"} onChange={() => onChange("close")} />
+            <input type="radio" name={name} checked={value === "close" || !move.ok} onChange={() => onChange("close")} />
             Close at {score}%
           </label>
           {!(move.ok === false && move.reason === "outside-window") && (
@@ -189,7 +191,7 @@ function ObjectiveRow({
               <input
                 type="radio"
                 name={name}
-                checked={value === "move"}
+                checked={value === "move" && move.ok}
                 disabled={!move.ok}
                 onChange={() => onChange("move")}
               />

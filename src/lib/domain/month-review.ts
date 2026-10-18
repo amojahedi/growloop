@@ -1,7 +1,7 @@
 import { nextOrder } from "./board";
 import { addMonths, compareMonths, compareQuarters, monthOf, prevMonth, yearOf, type DayKey } from "./dates";
 import { summarizedItemIds } from "./notes";
-import { checkMoveToNextQuarter, endedActiveObjectives, isMet, objectiveProgress } from "./okrs";
+import { checkMoveToNextQuarter, endedActiveObjectives, isMet, objectiveProgress, type MoveCheck } from "./okrs";
 import { withStatus } from "./plan-items";
 import type {
   ID,
@@ -126,6 +126,32 @@ export function defaultDecisions(pending: PendingReview): ResolvedDecisions {
   };
 }
 
+// --- The one move ------------------------------------------------------------------
+
+/**
+ * Whether each ended objective can make its one move, decided in review order
+ * as if the earlier choices were already applied: a move into another year
+ * takes a slot, so two objectives can't both claim the last one. The dialog
+ * shows these and `applyMonthReview` uses the same result, so they agree.
+ * Met objectives never move.
+ */
+export function moveChecks(
+  pending: PendingReview,
+  data: Pick<Workspace, "objectives" | "planItems">,
+  today: DayKey,
+  decisions: Readonly<Record<ID, ObjectiveDecision>>,
+): Map<ID, MoveCheck> {
+  const checks = new Map<ID, MoveCheck>();
+  let working = [...data.objectives];
+  for (const objective of pending.quarters.flatMap((block) => block.objectives)) {
+    const check = checkMoveToNextQuarter(objective, working, today);
+    checks.set(objective.id, check);
+    const moves = check.ok && decisions[objective.id] === "move" && !isMet(objectiveProgress(objective, data.planItems));
+    if (moves) working = working.map((o) => (o.id === objective.id ? { ...o, quarter: check.to, movedFrom: o.quarter } : o));
+  }
+  return checks;
+}
+
 // --- Recap --------------------------------------------------------------------------
 
 export interface ReviewRecap {
@@ -214,12 +240,13 @@ export function applyMonthReview(
 
   const closed: ID[] = [];
   const moved: ID[] = [];
+  const checks = moveChecks(pending, data, today, decisions.objectives);
   let objectives = data.objectives;
   for (const objective of pending.quarters.flatMap((block) => block.objectives)) {
     const score = objectiveProgress(objective, data.planItems);
-    const move = decisions.objectives[objective.id] === "move" && !isMet(score) ? checkMoveToNextQuarter(objective, objectives, today) : undefined;
+    const move = checks.get(objective.id);
     const next: Objective =
-      move?.ok === true
+      move?.ok === true && decisions.objectives[objective.id] === "move" && !isMet(score)
         ? { ...objective, quarter: move.to, movedFrom: objective.quarter }
         : { ...objective, status: "closed", finalProgress: score, closedAt: now };
     (next.status === "closed" ? closed : moved).push(objective.id);

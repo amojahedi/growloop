@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { at, makeData, makeItem, makeKeyResult, makeNote, makeObjective, makeSkill } from "@/lib/testing/fixtures";
-import { applyMonthReview, defaultDecisions, defaultItemDecision, pendingReview, reviewRecap } from "./month-review";
+import { applyMonthReview, defaultDecisions, defaultItemDecision, moveChecks, pendingReview, reviewRecap } from "./month-review";
 import type { Workspace } from "./types";
 
 const NOW = "2026-11-01T08:00:00.000Z";
@@ -184,6 +184,31 @@ describe("applyMonthReview: quarter close", () => {
     const done = { ...card, status: "done" as const, completedAt: at("2026-09-20") };
     const result = applyMonthReview(makeData({ objectives: [objective], planItems: [done] }), { objectives: { q3: "move" } }, "2026-10-01", NOW)!;
     expect(result.data.objectives[0]).toMatchObject({ status: "closed", finalProgress: 100 });
+  });
+});
+
+describe("moveChecks: the one move, decided in order", () => {
+  // 2027 has room for one more objective; two Q4 objectives both want to move into it.
+  const first = makeObjective({ id: "first", quarter: "2026-Q4" });
+  const second = makeObjective({ id: "second", quarter: "2026-Q4" });
+  const taken = Array.from({ length: 3 }, (_, i) => makeObjective({ quarter: `2027-Q${i + 2}` }));
+  const data = makeData({ objectives: [first, second, ...taken] });
+  const pending = pendingReview(data, "2027-01-05")!;
+
+  it("lets only the first claim the last slot, and the dialog and apply agree", () => {
+    const both = { first: "move", second: "move" } as const;
+    const checks = moveChecks(pending, data, "2027-01-05", both);
+    expect(checks.get("first")).toEqual({ ok: true, to: "2027-Q1" });
+    expect(checks.get("second")).toEqual({ ok: false, reason: "year-full", to: "2027-Q1" });
+
+    const result = applyMonthReview(data, { objectives: both, archive: { 2026: false } }, "2027-01-05", NOW)!;
+    expect(result.data.objectives.find((o) => o.id === "first")).toMatchObject({ quarter: "2027-Q1", status: "active" });
+    expect(result.data.objectives.find((o) => o.id === "second")).toMatchObject({ quarter: "2026-Q4", status: "closed" });
+  });
+
+  it("frees the slot again when the first one closes instead", () => {
+    const checks = moveChecks(pending, data, "2027-01-05", { first: "close", second: "move" });
+    expect(checks.get("second")).toEqual({ ok: true, to: "2027-Q1" });
   });
 });
 

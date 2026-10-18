@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Toaster, dismissToast } from "@/components/ui/toast";
 import { CURATED_MATERIALS } from "@/lib/catalog";
 import { useAppStore } from "@/lib/store/app-store";
@@ -22,11 +22,15 @@ function renderBanner(today = "2026-10-05") {
 beforeEach(() => {
   localStorage.clear();
   useAppStore.setState({ data: emptyWorkspace() });
+  // The store stamps changes with the clock; keep it on the day the banner is rendered for.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(2026, 9, 5, 12));
 });
 
 afterEach(() => {
   act(() => dismissToast());
   cleanup();
+  vi.useRealTimers();
 });
 
 describe("ReviewBanner", () => {
