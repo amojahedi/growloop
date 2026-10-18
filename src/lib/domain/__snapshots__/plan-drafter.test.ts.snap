@@ -1,0 +1,104 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`quickDraft > drafts the rest of 2026 and 2027 from the catalog (snapshot) 1`] = `
+{
+  "objectives": [
+    {
+      "keyResults": [
+        {
+          "materialId": "book-product-roadmaps-relaunched",
+          "skillId": "roadmapping",
+          "title": "Finish Product Roadmaps Relaunched",
+          "type": "material",
+        },
+        {
+          "count": 4,
+          "skillId": "roadmapping",
+          "title": "Complete 4 Roadmapping items",
+          "type": "count",
+        },
+      ],
+      "quarter": "2026-Q4",
+      "title": "Lead roadmap conversations with confidence",
+      "why": "Builds your case for promotion.",
+    },
+    {
+      "keyResults": [
+        {
+          "materialId": "book-inspired",
+          "skillId": "product-discovery",
+          "title": "Finish Inspired",
+          "type": "material",
+        },
+        {
+          "count": 3,
+          "skillId": "product-discovery",
+          "title": "Complete 3 Product Discovery items",
+          "type": "count",
+        },
+      ],
+      "quarter": "2027-Q1",
+      "title": "Make customer discovery a weekly habit",
+      "why": "Builds your case for promotion.",
+    },
+    {
+      "keyResults": [
+        {
+          "materialId": "book-influence-without-authority",
+          "skillId": "stakeholder-management",
+          "title": "Finish Influence Without Authority",
+          "type": "material",
+        },
+        {
+          "count": 2,
+          "skillId": "stakeholder-management",
+          "title": "Complete 2 Stakeholder Management items",
+          "type": "count",
+        },
+      ],
+      "quarter": "2027-Q2",
+      "title": "Bring stakeholders along on big decisions",
+      "why": "Builds your case for promotion.",
+    },
+    {
+      "keyResults": [
+        {
+          "materialId": "book-shape-up",
+          "skillId": "roadmapping",
+          "title": "Finish Shape Up",
+          "type": "material",
+        },
+        {
+          "count": 4,
+          "skillId": "roadmapping",
+          "title": "Complete 4 Roadmapping items",
+          "type": "count",
+        },
+      ],
+      "quarter": "2027-Q3",
+      "title": "Run an outcome-based roadmap",
+      "why": "Builds your case for promotion.",
+    },
+    {
+      "keyResults": [
+        {
+          "materialId": "book-continuous-discovery-habits",
+          "skillId": "product-discovery",
+          "title": "Finish Continuous Discovery Habits",
+          "type": "material",
+        },
+        {
+          "count": 3,
+          "skillId": "product-discovery",
+          "title": "Complete 3 Product Discovery items",
+          "type": "count",
+        },
+      ],
+      "quarter": "2027-Q4",
+      "title": "Test ideas before they cost engineering time",
+      "why": "Builds your case for promotion.",
+    },
+  ],
+  "rationale": "Biggest gaps first: Roadmapping, Product Discovery, then Stakeholder Management.",
+}
+`;
