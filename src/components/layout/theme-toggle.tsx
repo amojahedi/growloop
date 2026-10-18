@@ -24,7 +24,7 @@ export function ThemeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label="Color mode">
+        <Button variant="ghost" size="icon" className="rounded-full" aria-label="Color mode">
           {/* Pure CSS swap keyed off the `dark` class next-themes sets before paint, so no mismatch on hydration. */}
           <SunIcon className="dark:hidden" />
           <MoonIcon className="hidden dark:block" />

@@ -7,7 +7,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "Growloop", template: "%s · Growloop" },
-  description: "Plan, track and reflect on your learning: quarterly OKRs, monthly plans and a curated library for product people.",
+  description:
+    "Grow on purpose, a month at a time. Set a few goals for the year, learn a little each month, and keep what sticks.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
