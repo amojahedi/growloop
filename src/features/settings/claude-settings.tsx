@@ -53,13 +53,25 @@ export function ClaudeSettings() {
   const inputId = useId();
   const noticeId = useId();
   const errorId = useId();
+  const labelId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
+  const savedRef = useRef<HTMLParagraphElement>(null);
+  // Where focus goes once the field swaps: to the masked key after saving (not
+  // to Forget key, so a repeated Enter can't forget it), to the input after forgetting.
+  const focusAfterSwap = useRef<"saved" | "input" | null>(null);
   const [hasDraft, setHasDraft] = useState(false);
   const [checking, setChecking] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>();
   const checkRef = useRef<AbortController | null>(null);
 
   useEffect(() => () => checkRef.current?.abort(), []);
+
+  useEffect(() => {
+    const target = focusAfterSwap.current;
+    focusAfterSwap.current = null;
+    if (target === "saved" && hasKey) savedRef.current?.focus();
+    if (target === "input" && !hasKey) inputRef.current?.focus();
+  }, [hasKey]);
 
   const save = async () => {
     const input = inputRef.current;
@@ -79,6 +91,7 @@ export function ClaudeSettings() {
     try {
       await validateApiKey(key, controller.signal);
       if (controller.signal.aborted) return;
+      focusAfterSwap.current = "saved";
       const stored = saveApiKey(key);
       if (input) input.value = "";
       setHasDraft(false);
@@ -109,6 +122,7 @@ export function ClaudeSettings() {
   };
 
   const forget = () => {
+    focusAfterSwap.current = "input";
     forgetApiKey();
     setFeedback(undefined);
     toast({ message: "Key forgotten. It's no longer stored in this browser." });
@@ -136,21 +150,30 @@ export function ClaudeSettings() {
         <p className="text-sm text-muted-foreground">Each Claude action uses your own API credit, usually a few cents.</p>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor={inputId} className="text-xs font-medium text-muted-foreground">
-            Your Claude API key
-            {!hasKey && local.status.state === "available" && (
-              <span className="font-normal"> · Optional: use an API key instead</span>
-            )}
-          </label>
+          {hasKey ? (
+            <p id={labelId} className="text-xs font-medium text-muted-foreground">
+              Your Claude API key
+            </p>
+          ) : (
+            <label htmlFor={inputId} className="text-xs font-medium text-muted-foreground">
+              Your Claude API key
+              {local.status.state === "available" && <span className="font-normal"> · Optional: use an API key instead</span>}
+            </label>
+          )}
           {hasKey ? (
             <div className="flex flex-wrap items-center gap-2">
               <p
-                id={inputId}
-                className="min-w-0 flex-1 rounded-lg border border-input px-2.5 py-1 font-mono text-sm text-muted-foreground"
-                aria-label={`Saved key ending in ${last4}`}
+                ref={savedRef}
+                tabIndex={-1}
+                role="group"
+                aria-labelledby={labelId}
+                className="min-w-0 flex-1 rounded-lg border border-input px-2.5 py-1 font-mono text-sm text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                {"•".repeat(24)}
-                {last4}
+                <span className="sr-only">Saved key ending in {last4}</span>
+                <span aria-hidden>
+                  {"•".repeat(24)}
+                  {last4}
+                </span>
               </p>
               <Button type="button" variant="destructive" size="sm" onClick={forget}>
                 Forget key
