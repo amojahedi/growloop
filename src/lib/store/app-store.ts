@@ -265,6 +265,14 @@ export interface AppActions {
   eraseEverything: () => void;
 
   // --- Phase 1 additions go below, one marked section per package. ---
+
+  // --- Phase 1 · WP4 card detail & Notebook ---
+  /**
+   * `setCardNote` for read-only cards (past months, archived years): writes the
+   * note the same way, but the first summary never ticks "Summarize in my
+   * words", because the card's tasks are frozen.
+   */
+  setReadOnlyCardNote: (itemId: ID, kind: CardNoteKind, body: string) => ID | undefined;
 }
 
 export interface AppState extends AppActions {
@@ -871,6 +879,18 @@ export const useAppStore = create<AppState>()(
           ownWorkspaceCopy = null;
           persistApi().setOptions({ name: STORAGE_KEY });
           set({ data: emptyWorkspace() });
+        },
+
+        // --- Phase 1 · WP4 card detail & Notebook ---
+        setReadOnlyCardNote: (itemId, kind, body) => {
+          const { data } = get();
+          // An existing note is only rewritten, which never touches tasks.
+          if (findCardNote(data.notes, itemId, kind)) return get().setCardNote(itemId, kind, body);
+          const item = data.planItems.find((candidate) => candidate.id === itemId);
+          if (!item || !body.trim()) return undefined;
+          const note = createCardNote(item, kind, body, nowIso());
+          update((current) => ({ ...current, notes: [...current.notes, note] }));
+          return note.id;
         },
       };
     },
