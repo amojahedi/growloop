@@ -38,7 +38,15 @@ afterEach(() => {
 describe("dashboard edit mode", () => {
   it("shows the default widgets, without hours", () => {
     renderDashboard();
-    expect(widgetIds()).toEqual(["items-completed", "okr-progress", "skill-radar", "reminders", "learning-streak", "notes"]);
+    expect(widgetIds()).toEqual([
+      "items-completed",
+      "okr-progress",
+      "skill-radar",
+      "due-for-review",
+      "reminders",
+      "learning-streak",
+      "notes",
+    ]);
     expect(screen.queryByText(/hours/i)).toBeNull();
     expect(screen.queryByRole("button", { name: /^Move / })).toBeNull();
   });
@@ -48,8 +56,8 @@ describe("dashboard edit mode", () => {
     fireEvent.click(button("Customize"));
 
     expect(document.activeElement).toBe(button("Done"));
-    expect(screen.getAllByRole("button", { name: /^Move / })).toHaveLength(6);
-    expect(screen.getAllByRole("group", { name: /^Size of / })).toHaveLength(6);
+    expect(screen.getAllByRole("button", { name: /^Move / })).toHaveLength(7);
+    expect(screen.getAllByRole("group", { name: /^Size of / })).toHaveLength(7);
     expect(screen.queryByRole("button", { name: "Remove Items completed" })).toBeNull();
     expect(button("Remove Skill radar")).toBeInTheDocument();
   });
@@ -80,6 +88,7 @@ describe("dashboard edit mode", () => {
       { widgetId: "items-completed", size: "small" },
       { widgetId: "okr-progress", size: "medium" },
       { widgetId: "skill-radar", size: "large" },
+      { widgetId: "due-for-review", size: "small" },
       { widgetId: "reminders", size: "small" },
       { widgetId: "notes", size: "medium" },
       { widgetId: "learning-streak", size: "small" },
@@ -104,7 +113,7 @@ describe("dashboard edit mode", () => {
 
     fireEvent.click(button("Customize"));
     fireEvent.click(button("Reset to default"));
-    expect(widgetIds()).toHaveLength(6);
+    expect(widgetIds()).toHaveLength(7);
     fireEvent.click(button("Done"));
 
     expect(savedLayout()).toBeNull();

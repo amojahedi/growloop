@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { WIDGET_COLUMNS } from "@/lib/domain/dashboard-layout";
+import { hiddenWidgets, resolveLayout } from "@/lib/domain/dashboard-layout";
 import { DEFAULT_LAYOUT, getWidget, WIDGETS } from "./widget-registry";
 
 describe("widget registry", () => {
@@ -13,9 +13,9 @@ describe("widget registry", () => {
     expect(getWidget("nope")).toBeUndefined();
   });
 
-  it("ships the six dashboard widgets and nothing about hours", () => {
+  it("ships the seven dashboard widgets and nothing about hours", () => {
     expect(WIDGETS.map((widget) => widget.id).sort()).toEqual(
-      ["items-completed", "learning-streak", "notes", "okr-progress", "reminders", "skill-radar"].sort(),
+      ["due-for-review", "items-completed", "learning-streak", "notes", "okr-progress", "reminders", "skill-radar"].sort(),
     );
     expect(WIDGETS.some((widget) => /hour/i.test(`${widget.id} ${widget.title} ${widget.description}`))).toBe(false);
   });
@@ -25,13 +25,26 @@ describe("widget registry", () => {
     expect(DEFAULT_LAYOUT[0].widgetId).toBe("items-completed");
   });
 
-  it("fills whole rows of the 3-column grid by default", () => {
-    let row = 0;
-    for (const placement of DEFAULT_LAYOUT) {
-      row += WIDGET_COLUMNS[placement.size];
-      expect(row).toBeLessThanOrEqual(3);
-      if (row === 3) row = 0;
-    }
-    expect(row).toBe(0);
+  it("follows the dashboard spec's default order, with Due for review small after Skill radar", () => {
+    expect(DEFAULT_LAYOUT.map((placement) => placement.widgetId)).toEqual([
+      "items-completed",
+      "okr-progress",
+      "skill-radar",
+      "due-for-review",
+      "reminders",
+      "learning-streak",
+      "notes",
+    ]);
+    expect(getWidget("due-for-review")).toMatchObject({ title: "Due for review", description: "Notes you asked to see again.", defaultSize: "small" });
+  });
+
+  it("never injects Due for review into a layout saved before it existed, but offers it in the gallery", () => {
+    const saved = [
+      { widgetId: "items-completed", size: "small" as const },
+      { widgetId: "notes", size: "medium" as const },
+    ];
+    const layout = resolveLayout(saved, WIDGETS);
+    expect(layout.map((placement) => placement.widgetId)).not.toContain("due-for-review");
+    expect(hiddenWidgets(layout, WIDGETS).map((widget) => widget.id)).toContain("due-for-review");
   });
 });
