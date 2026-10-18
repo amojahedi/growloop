@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BUILT_IN_SKILLS, CURATED_MATERIALS, storedSkill } from "@/lib/catalog";
-import { makeItem, makeMaterial, makeSkill } from "@/lib/testing/fixtures";
+import { makeItem, makeKeyResult, makeMaterial, makeObjective, makeSkill } from "@/lib/testing/fixtures";
 import { wizardScope } from "./okrs";
 import type { WizardAnswers } from "./plan-draft";
 import {
@@ -96,6 +96,12 @@ describe("quickDraft", () => {
     expect(objectives.flatMap((o) => o.keyResults).some((kr) => kr.type === "certification")).toBe(false);
   });
 
+  it("skips materials active objectives already target", () => {
+    const first = draft().objectives[0].keyResults[0].materialId!;
+    const saved = [makeObjective({ quarter: "2027-Q1", keyResults: [makeKeyResult({ type: "material", materialId: first })] })];
+    expect(draft({ objectives: saved }).objectives.map((o) => o.keyResults[0].materialId)).not.toContain(first);
+  });
+
   it("never reuses a material and skips finished ones", () => {
     const first = draft();
     const ids = first.objectives.map((o) => o.keyResults[0].materialId);
@@ -127,7 +133,7 @@ describe("quickDraft", () => {
     expect(rationaleLine(["A", "B"])).toBe("Biggest gaps first: A, then B.");
   });
 
-  it("falls back to a count KR and generic titles for a custom skill without materials", () => {
+  it("falls back to count KRs and generic titles for a custom skill without materials", () => {
     const custom = makeSkill({ id: "negotiation", name: "Negotiation", builtIn: false });
     const result = quickDraft({
       answers: { ...answers, skills: [{ skillId: "negotiation", current: 1, target: 2 }, answers.skills[0]] },
@@ -141,9 +147,10 @@ describe("quickDraft", () => {
     expect(first.keyResults[0].skillId).toBe("product-discovery");
     expect(result.objectives[1]).toMatchObject({
       title: "Get stronger at Negotiation",
+      // Its own count, plus one on the next skill by gap, so no two KRs count the same items.
       keyResults: [
-        { type: "count", count: 1, title: "Complete 1 Negotiation item" },
-        { type: "count", count: 2, title: "Complete 2 Negotiation items" },
+        { skillId: "negotiation", type: "count", count: 2, title: "Complete 2 Negotiation items" },
+        { skillId: "product-discovery", type: "count", count: 3, title: "Complete 3 Product Discovery items" },
       ],
     });
     expect(third.title).toBe("Test ideas before they cost engineering time");
@@ -157,6 +164,7 @@ describe("quickDraft", () => {
       skills,
       materials: CURATED_MATERIALS,
       objectives: [],
+      items: [],
       today: TODAY,
     });
     expect(repaired).toEqual({ ok: true, draft: plan });

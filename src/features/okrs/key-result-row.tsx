@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { formatMonth } from "@/lib/domain/dates";
 import { keyResultProgress } from "@/lib/domain/okrs";
-import type { KeyResult, Material, Objective, PlanItem, Skill } from "@/lib/domain/types";
+import type { KeyResult, Material, Objective, PlanItem } from "@/lib/domain/types";
 import { useActions, useLibraryIds, useMonthNavigation } from "@/lib/store/hooks";
-import { SkillChip } from "./controls/skill-controls";
+import { SkillChip } from "@/components/skills/skill-chip";
 import { BOARD_STATUS_LABELS, keyResultStatus } from "./labels";
 
 /**
@@ -23,7 +23,7 @@ export function KeyResultRow({
   objective,
   items,
   material,
-  skill,
+  linkedMaterial,
   editable,
   onPickAnother,
 }: {
@@ -32,7 +32,8 @@ export function KeyResultRow({
   items: readonly PlanItem[];
   /** The target material (material and certification KRs), if it still exists. */
   material: Material | undefined;
-  skill: Skill | undefined;
+  /** The linked card's own material (a card linked by hand may be for another item). */
+  linkedMaterial: (id: string) => Material | undefined;
   /** Active and not archived: actions are offered. */
   editable: boolean;
   /** Opens the editor ("Material missing" → Pick another). */
@@ -71,7 +72,7 @@ export function KeyResultRow({
 
   return (
     <li className="flex flex-col gap-1 border-t pt-2.5 first:border-t-0 first:pt-0">
-      <SkillChip skill={skill} skillId={keyResult.skillId} className="self-start" />
+      <SkillChip skillId={keyResult.skillId} className="self-start" />
       <div className="flex items-start gap-2 text-sm">
         <TypeIcon aria-hidden className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
         <span className="sr-only">{typeName}:</span>
@@ -88,7 +89,7 @@ export function KeyResultRow({
           className="ml-5.5 flex min-w-0 items-center gap-1 rounded-sm text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
         >
           <CornerDownRightIcon aria-hidden className="size-3 shrink-0" />
-          <span className="truncate">{material?.title ?? "Linked card"}</span>
+          <span className="truncate">{linkedMaterial(linked.materialId)?.title ?? "Linked card"}</span>
           <span className="shrink-0">· {BOARD_STATUS_LABELS[linked.status]}</span>
         </Link>
       )}

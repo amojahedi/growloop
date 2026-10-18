@@ -51,9 +51,12 @@ function pickSkills(...names: string[]) {
   for (const name of names) click(screen.getByRole("checkbox", { name }));
 }
 
+/** A skill's row is a group named by the skill, holding the shared "Now" and "Goal" level controls. */
+const levelGroup = (skill: string, which: "Now" | "Goal") =>
+  within(screen.getByRole("group", { name: skill })).getByRole("group", { name: which });
+
 function setLevel(skill: string, which: "Now" | "Goal", value: number) {
-  const group = screen.getByRole("group", { name: `${which} for ${skill}` });
-  click(within(group).getByRole("radio", { name: new RegExp(`^${value},`) }));
+  click(within(levelGroup(skill, which)).getByRole("radio", { name: new RegExp(`^${value} `) }));
 }
 
 beforeEach(() => {
@@ -121,8 +124,8 @@ describe("PlanWizard: questions", () => {
     pickSkills("Roadmapping");
     expect(screen.getByText("Pick at least one more.")).toBeInTheDocument();
     // Defaults: Now 2, Goal 4.
-    expect(within(screen.getByRole("group", { name: "Now for Roadmapping" })).getByRole("radio", { name: "2, Learning" })).toBeChecked();
-    expect(within(screen.getByRole("group", { name: "Goal for Roadmapping" })).getByRole("radio", { name: "4, Strong" })).toBeChecked();
+    expect(within(levelGroup("Roadmapping", "Now")).getByRole("radio", { name: "2 Learning" })).toBeChecked();
+    expect(within(levelGroup("Roadmapping", "Goal")).getByRole("radio", { name: "4 Strong" })).toBeChecked();
 
     pickSkills("Prioritization", "Communication", "Leadership");
     expect(screen.getByText("Four is plenty for a year.")).toBeInTheDocument();
@@ -145,7 +148,7 @@ describe("PlanWizard: questions", () => {
     expect(radio("A step into leadership")).toBeChecked();
     click(screen.getByRole("button", { name: "Next" }));
     pickSkills("Roadmapping");
-    expect(within(screen.getByRole("group", { name: "Now for Roadmapping" })).getByRole("radio", { name: "3, Capable" })).toBeChecked();
+    expect(within(levelGroup("Roadmapping", "Now")).getByRole("radio", { name: "3 Capable" })).toBeChecked();
   });
 
   it("says so when every quarter in the window already has an objective", () => {
@@ -266,6 +269,58 @@ describe("PlanWizard: quick draft and review", () => {
   });
 });
 
+describe("PlanWizard: a draft restored from the session", () => {
+  function restore(objectives: object[]) {
+    useUIStore.setState({
+      wizard: {
+        step: "review",
+        role: "pm",
+        goal: "promotion",
+        skills: [
+          { skillId: "roadmapping", current: 1, target: 4 },
+          { skillId: "product-discovery", current: 2, target: 4 },
+        ],
+        draft: { source: "quick", plan: { rationale: "Restored.", objectives } as never },
+      },
+    });
+  }
+  const restored = (quarter: string, title: string) => ({
+    key: title,
+    quarter,
+    title,
+    why: "",
+    keyResults: [
+      { key: `${title}-1`, skillId: "roadmapping", type: "count", count: 3, title: "Complete 3 Roadmapping items", titleEdited: false },
+      { key: `${title}-2`, skillId: "product-discovery", type: "count", count: 2, title: "Complete 2 Product Discovery items", titleEdited: false },
+    ],
+  });
+
+  it("shows objectives in taken, past or skipped quarters with a problem, and saves nothing until they move", () => {
+    useAppStore.setState({ data: { ...emptyWorkspace(), objectives: [makeObjective({ quarter: "2027-Q1", title: "Saved meanwhile" })] } });
+    restore([restored("2025-Q4", "From last year"), restored("2027-Q1", "Taken since"), restored("2027-Q2", "Fine")]);
+    renderWizard();
+
+    // Every draft objective is visible, even in a year outside the scope.
+    expect(screen.getByRole("heading", { name: "2025" })).toBeInTheDocument();
+    expect(screen.getByText("Q4 2025 can't be planned any more.")).toBeInTheDocument();
+    expect(screen.getByText("Q1 2027 is already planned.")).toBeInTheDocument();
+    click(screen.getByRole("button", { name: "Fix 2 things to accept" }));
+    expect(useAppStore.getState().data.objectives).toHaveLength(1);
+  });
+
+  it("keeps a skill hidden since it was picked as a chip that can be unpicked", () => {
+    useAppStore.getState().setSkillHidden("roadmapping", true);
+    useUIStore.setState({ wizard: { step: "skills", role: "pm", goal: "promotion", skills: [{ skillId: "roadmapping", current: 1, target: 4 }] } });
+    renderWizard();
+    const chip = screen.getByRole("checkbox", { name: "Roadmapping" });
+    expect(chip).toBeChecked();
+    expect(screen.getByRole("group", { name: "Roadmapping" })).toBeInTheDocument();
+    click(chip);
+    expect(useUIStore.getState().wizard.skills).toEqual([]);
+    expect(screen.queryByRole("checkbox", { name: "Roadmapping" })).not.toBeInTheDocument();
+  });
+});
+
 describe("PlanWizard: Claude", () => {
   beforeEach(() => {
     ai.provider = "key";
@@ -312,8 +367,9 @@ describe("PlanWizard: Claude", () => {
     expect(screen.queryByText(/Quick draft from your answers/)).not.toBeInTheDocument();
     const articles = screen.getAllByRole("article");
     expect(articles).toHaveLength(1);
-    // The invented material became a count KR, and a second KR was added.
-    expect(within(articles[0]).getAllByRole("group", { name: "Number of items" })).toHaveLength(2);
+    // The invented material became a count KR, and a material from the catalog filled the second slot.
+    expect(within(articles[0]).getAllByRole("group", { name: "Number of items" })).toHaveLength(1);
+    expect((within(articles[0]).getByRole("combobox", { name: "Material" }) as HTMLInputElement).value).not.toBe("");
     expect(sessionStorage.getItem("growloop:wizard")).not.toContain("fintech");
 
     click(screen.getByRole("button", { name: "Accept all" }));
@@ -328,6 +384,9 @@ describe("PlanWizard: Claude", () => {
     answerAll();
     click(screen.getByRole("button", { name: "Draft with Claude" }));
     expect(screen.getByText("Claude is drafting your plan. This can take up to a minute.")).toBeInTheDocument();
+    // Focus moves from the vanished Draft button to the way out, described by the status line.
+    expect(document.activeElement).toHaveAccessibleName("Use the quick draft instead");
+    expect(document.activeElement).toHaveAccessibleDescription("Claude is drafting your plan. This can take up to a minute.");
 
     click(screen.getByRole("button", { name: "Use the quick draft instead" }));
     expect(ai.draftPlan.reset).toHaveBeenCalled();

@@ -8,7 +8,8 @@ import { MIN_WEEKS_TO_PLAN_CURRENT_QUARTER, roomInYear } from "@/lib/domain/okrs
 import type { DraftSource } from "@/lib/domain/plan-draft";
 import type { Material, Objective, QuarterKey, Skill } from "@/lib/domain/types";
 import {
-  allProblems,
+  problemsOf,
+  validateForms,
   blankObjective,
   fieldIds,
   fixLabel,
@@ -58,9 +59,11 @@ export function PlanReview({
   onRestore: (form: ObjectiveForm, index: number) => void;
 }) {
   const forms = draft.objectives;
-  const problems = allProblems(forms, saved, lookup);
+  // Placement is checked too: a draft restored from the session may sit in a quarter that has since been taken or closed.
+  const problems = validateForms(forms, { lookup, saved, today, checkPlacement: true });
   const inScope = new Set(scope);
-  const years = [...new Set(scope.map(yearOf))];
+  // Scope years, plus any year a (restored) draft objective sits in, so nothing in the draft is invisible.
+  const years = [...new Set([...scope, ...forms.map((form) => form.quarter)].map(yearOf))].sort((a, b) => a - b);
   const now = quarterOfDay(today);
 
   const setForms = (objectives: ObjectiveForm[]) => onChange({ ...draft, objectives });
@@ -138,7 +141,7 @@ export function PlanReview({
                       lookup={lookup}
                       skills={skills}
                       materials={materials}
-                      problems={problems.filter((problem) => problem.fieldId.startsWith(`objective-${form.key}-`))}
+                      problems={problemsOf(problems, form)}
                       showAllProblems={showAllProblems}
                       menu={
                         <ObjectiveMenu

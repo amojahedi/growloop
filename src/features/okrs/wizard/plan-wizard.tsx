@@ -16,12 +16,12 @@ import { quickDraft } from "@/lib/domain/plan-drafter";
 import { repairDraft } from "@/lib/domain/plan-repair";
 import { useActions, useObjectives, usePlanItems, useProfile, useSkills, useToday } from "@/lib/store/hooks";
 import { useUIStore, type WizardSession } from "@/lib/store/ui-store";
-import { allProblems, draftFromForms, formFromDraft, reviewDraftFrom, type ObjectiveForm, type ReviewDraft } from "../editor-model";
+import { draftFromForms, validateForms, formFromDraft, reviewDraftFrom, type ObjectiveForm, type ReviewDraft } from "../editor-model";
 import { focusSoon } from "../focus";
 import { pluralize, scopeYearsPhrase, scopeYearsRange } from "../labels";
 import { useEditorData } from "../use-editor-data";
 import { AnswersStep, answersComplete, type AnswersValue } from "./answers-step";
-import { DraftFailedView, DraftingView } from "./drafting-view";
+import { DraftFailedView, DraftingView, QuickDraftFailedView } from "./drafting-view";
 import { PlanReview } from "./plan-review";
 import { SkillsStep, skillsComplete } from "./skills-step";
 
@@ -33,7 +33,12 @@ import { SkillsStep, skillsComplete } from "./skills-step";
  * the pasted CV stays in this component's memory only.
  */
 
-type Drafting = { kind: "idle" } | { kind: "drafting" } | { kind: "failed"; reason?: string };
+type Drafting =
+  | { kind: "idle" }
+  | { kind: "drafting" }
+  | { kind: "failed"; reason?: string }
+  /** The quick draft found nothing to plan (it can't fail otherwise, but the review must never show an empty plan). */
+  | { kind: "quick-failed" };
 
 const REVIEW_HEADING_ID = "wizard-review-heading";
 
@@ -118,6 +123,7 @@ export function PlanWizard() {
     skills: allSkills,
     materials,
     objectives,
+    items,
     today,
   });
 
@@ -135,10 +141,11 @@ export function PlanWizard() {
   const draftQuick = (forAnswers: WizardAnswers, basis: string) => {
     // Cancels a Claude request in flight ("Use the quick draft instead").
     ai.draftPlan.reset();
-    const plan = quickDraft({ answers: forAnswers, scope, today, skills: allSkills, materials, items });
+    const plan = quickDraft({ answers: forAnswers, scope, today, skills: allSkills, materials, items, objectives });
     const repaired = repairDraft(plan, repairContext(forAnswers));
     contextUsed.current = context;
     if (repaired.ok) showDraft(repaired.draft, "quick", basis);
+    else setDrafting({ kind: "quick-failed" });
   };
 
   const draftWithClaude = async (forAnswers: WizardAnswers, basis: string) => {
@@ -185,7 +192,7 @@ export function PlanWizard() {
 
   const accept = () => {
     if (!review || !wizard.draft || review.objectives.length === 0) return;
-    const problems = allProblems(review.objectives, objectives, lookup);
+    const problems = validateForms(review.objectives, { lookup, saved: objectives, today, checkPlacement: true });
     if (problems.length > 0 || !answers) {
       setShowAllProblems(true);
       if (problems[0]) focusSoon(problems[0].fieldId);
@@ -251,6 +258,13 @@ export function PlanWizard() {
         </div>
         {drafting.kind === "drafting" ? (
           <DraftingView scope={scope} today={today} onUseQuickDraft={() => startDraft("quick")} />
+        ) : drafting.kind === "quick-failed" ? (
+          <QuickDraftFailedView
+            onBack={() => {
+              setDrafting({ kind: "idle" });
+              goTo("skills");
+            }}
+          />
         ) : drafting.kind === "failed" ? (
           <DraftFailedView reason={drafting.reason} onRetry={() => startDraft("auto")} onUseQuickDraft={() => startDraft("quick")} />
         ) : (
@@ -300,6 +314,7 @@ export function PlanWizard() {
       ) : (
         <SkillsStep
           skills={visibleSkills}
+          allSkills={allSkills}
           value={wizard.skills}
           savedLevels={profile.skillLevels}
           onChange={(skills) => updateWizard({ skills })}

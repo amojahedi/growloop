@@ -1,6 +1,6 @@
 import { objectivePhrasesFor } from "@/lib/catalog";
 import { quarterOfDay, weeksLeftInQuarter, type DayKey } from "./dates";
-import { MAX_COUNT, MIN_COUNT } from "./okrs";
+import { activeObjectives, MAX_COUNT, MIN_COUNT } from "./okrs";
 import {
   doneMaterialIds,
   PLAN_DRAFT_LIMITS,
@@ -10,7 +10,7 @@ import {
   type WizardAnswers,
   type WizardSkillAnswer,
 } from "./plan-draft";
-import type { GoalId, ID, Material, MaterialLevel, PlanItem, QuarterKey, Skill } from "./types";
+import type { GoalId, ID, Material, MaterialLevel, Objective, PlanItem, QuarterKey, Skill } from "./types";
 import { MATERIAL_LEVELS } from "./types";
 
 /**
@@ -120,6 +120,15 @@ export function rationaleLine(skillNames: readonly string[]): string {
 
 // --- Material choice (step 5) ---------------------------------------------------------
 
+/** Materials that active objectives already target: a draft doesn't target them again. */
+export function reservedMaterialIds(objectives: readonly Objective[]): Set<ID> {
+  return new Set(
+    activeObjectives(objectives).flatMap((objective) =>
+      objective.keyResults.flatMap((keyResult) => (keyResult.type !== "count" && keyResult.materialId ? [keyResult.materialId] : [])),
+    ),
+  );
+}
+
 /** Level for a skill's first objective from its Now level: 1–2 beginner, 3 intermediate, 4–5 advanced. */
 export function levelIndexFromNow(current: number): number {
   return current <= 2 ? 0 : current === 3 ? 1 : 2;
@@ -177,14 +186,16 @@ export interface QuickDraftInput {
   materials: readonly Material[];
   /** Plan items; finished materials are never proposed. */
   items: readonly PlanItem[];
+  /** Saved objectives; materials active ones target are not proposed again. */
+  objectives?: readonly Objective[];
 }
 
-export function quickDraft({ answers, scope, today, skills, materials, items }: QuickDraftInput): PlanDraft {
+export function quickDraft({ answers, scope, today, skills, materials, items, objectives: saved = [] }: QuickDraftInput): PlanDraft {
   const ordered = orderSkillsByGap(answers.skills);
   if (ordered.length === 0) return { rationale: "", objectives: [] };
   const names = new Map(skills.map((skill) => [skill.id, skill.name]));
   const nameOf = (id: ID) => names.get(id) ?? id;
-  const exclude = new Set(doneMaterialIds(items));
+  const exclude = new Set([...doneMaterialIds(items), ...reservedMaterialIds(saved)]);
   const occurrences = new Map<ID, number>();
 
   const objectives = scope.map((quarter, index): DraftObjective => {
@@ -198,24 +209,32 @@ export function quickDraft({ answers, scope, today, skills, materials, items }: 
     // Step 5: one level higher on each later occurrence of the skill.
     const level = Math.min(levelIndexFromNow(answer.current) + occurrence - 1, MATERIAL_LEVELS.length - 1);
     const material = pickMaterial({ skillId, level, materials, exclude });
-    let first: DraftKeyResult;
-    if (material) {
-      exclude.add(material.id);
-      first = { skillId, type: "material", materialId: material.id, title: materialKeyResultTitle(material) };
-    } else {
-      // No material for the skill (e.g. a custom skill): a first, smaller count KR instead.
-      first = { skillId, type: "count", count: 1, title: countKeyResultTitle(1, name) };
-    }
 
     // Step 6.
-    const count = countForGap(skillGap(answer), weeksAhead(quarter, today));
-    const second: DraftKeyResult = { skillId, type: "count", count, title: countKeyResultTitle(count, name) };
+    const weeks = weeksAhead(quarter, today);
+    const count = countForGap(skillGap(answer), weeks);
+    const counted: DraftKeyResult = { skillId, type: "count", count, title: countKeyResultTitle(count, name) };
+
+    let keyResults: DraftKeyResult[];
+    if (material) {
+      exclude.add(material.id);
+      keyResults = [{ skillId, type: "material", materialId: material.id, title: materialKeyResultTitle(material) }, counted];
+    } else {
+      // No material for the skill (e.g. a custom skill): its count KR, plus a count KR on the next
+      // skill by gap, so no two KRs count the same items.
+      const other = ordered.find((candidate) => candidate.skillId !== skillId)!;
+      const otherCount = countForGap(skillGap(other), weeks);
+      keyResults = [
+        counted,
+        { skillId: other.skillId, type: "count", count: otherCount, title: countKeyResultTitle(otherCount, nameOf(other.skillId)) },
+      ];
+    }
 
     return {
       quarter,
       title: objectiveTitle({ id: skillId, name }, occurrence),
       why: whyLine(answers),
-      keyResults: [first, second],
+      keyResults,
     };
   });
 

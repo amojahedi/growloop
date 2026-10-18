@@ -1,7 +1,17 @@
 import type { NewKeyResult } from "@/lib/domain/app-data";
-import { yearOf } from "@/lib/domain/dates";
+import { formatQuarter, quarterOfDay, weeksLeftInQuarter, yearOf, type DayKey } from "@/lib/domain/dates";
 import { createId } from "@/lib/domain/ids";
-import { MAX_OBJECTIVES_PER_YEAR, roomInYear } from "@/lib/domain/okrs";
+import {
+  activeObjectives,
+  isPlannable,
+  MAX_COUNT,
+  MAX_KEY_RESULTS,
+  MAX_OBJECTIVES_PER_YEAR,
+  MIN_COUNT,
+  MIN_KEY_RESULTS,
+  MIN_WEEKS_TO_PLAN_CURRENT_QUARTER,
+  roomInYear,
+} from "@/lib/domain/okrs";
 import { PLAN_DRAFT_LIMITS, type DraftObjective, type PlanDraft } from "@/lib/domain/plan-draft";
 import { keyResultAutoTitle } from "@/lib/domain/plan-drafter";
 import type { ID, KeyResult, KeyResultType, Material, Objective, QuarterKey, Skill } from "@/lib/domain/types";
@@ -17,8 +27,11 @@ import type { ID, KeyResult, KeyResultType, Material, Objective, QuarterKey, Ski
 
 export interface KeyResultForm {
   key: string;
-  /** A saved key result's id (keeps its card links). */
+  /** A saved key result's id. It is kept on save (with its card links) only while the target is unchanged. */
   id?: ID;
+  /** The saved key result's type and material, to tell whether the target changed. */
+  savedType?: KeyResultType;
+  savedMaterialId?: ID;
   /** "" until picked. */
   skillId: ID;
   type: KeyResultType;
@@ -141,6 +154,8 @@ export function formFromObjective(objective: Objective, lookup: EditorLookup): O
     keyResults: objective.keyResults.map((keyResult: KeyResult) => ({
       key: keyResult.id,
       id: keyResult.id,
+      savedType: keyResult.type,
+      ...(keyResult.materialId ? { savedMaterialId: keyResult.materialId } : {}),
       skillId: keyResult.skillId,
       type: keyResult.type,
       ...(keyResult.materialId ? { materialId: keyResult.materialId } : {}),
@@ -176,7 +191,7 @@ export function reviewDraftFrom(plan: PlanDraft | undefined): ReviewDraft | unde
               skillId: text(kr.skillId),
               type: kr.type,
               ...(typeof kr.materialId === "string" ? { materialId: kr.materialId } : {}),
-              ...(typeof kr.count === "number" ? { count: kr.count } : {}),
+              ...(typeof kr.count === "number" ? { count: safeCount(kr.count) } : {}),
               title: text(kr.title),
               titleEdited: kr.titleEdited === true,
             },
@@ -191,6 +206,15 @@ export function reviewDraftFrom(plan: PlanDraft | undefined): ReviewDraft | unde
 
 const clean = (text: string, max: number) => text.trim().slice(0, max);
 
+/** A usable item count: whole, 1–10 (NaN and absurd values from a stored session become the default). */
+export function safeCount(count: number | undefined): number {
+  return count === undefined || !Number.isFinite(count) ? DEFAULT_COUNT : Math.min(MAX_COUNT, Math.max(MIN_COUNT, Math.round(count)));
+}
+
+/** Whether a saved key result keeps its id: same type and target, so cards linked to it still belong to it. */
+const keepsId = (keyResult: KeyResultForm) =>
+  keyResult.id !== undefined && keyResult.type === keyResult.savedType && keyResult.materialId === keyResult.savedMaterialId;
+
 /** The draft `acceptPlan` saves: editor-only fields removed, empty KR titles generated. */
 export function draftFromForms(rationale: string, forms: readonly ObjectiveForm[], lookup: EditorLookup): PlanDraft {
   return {
@@ -204,13 +228,14 @@ export function draftFromForms(rationale: string, forms: readonly ObjectiveForm[
   };
 }
 
-/** The key results to save for an editor value (saved ones keep their ids). */
+/** The key results to save for an editor value (saved ones keep their ids while their target is unchanged). */
 export function newKeyResultsFrom(form: ObjectiveForm, lookup: EditorLookup): (NewKeyResult & { title: string })[] {
   return form.keyResults.map((keyResult) => ({
-    ...(keyResult.id ? { id: keyResult.id } : {}),
+    // A new type or target is a new key result: its old cards are unlinked rather than silently re-pointed.
+    ...(keepsId(keyResult) ? { id: keyResult.id } : {}),
     skillId: keyResult.skillId,
     type: keyResult.type,
-    ...(keyResult.type === "count" ? { count: keyResult.count ?? DEFAULT_COUNT } : { materialId: keyResult.materialId }),
+    ...(keyResult.type === "count" ? { count: safeCount(keyResult.count) } : { materialId: keyResult.materialId }),
     title: clean(keyResult.title, PLAN_DRAFT_LIMITS.keyResultTitle) || autoTitle(keyResult, lookup),
   }));
 }
@@ -227,59 +252,121 @@ export const fieldIds = {
   title: (form: Pick<ObjectiveForm, "key">) => `objective-${form.key}-title`,
   why: (form: Pick<ObjectiveForm, "key">) => `objective-${form.key}-why`,
   menu: (form: Pick<ObjectiveForm, "key">) => `objective-${form.key}-menu`,
+  /** The message about where the objective sits (quarter taken or closed, year full); focusable. */
+  placement: (form: Pick<ObjectiveForm, "key">) => `objective-${form.key}-placement`,
+  /** The key result list, for "Two or three key results per objective."; focusable. */
+  keyResults: (form: Pick<ObjectiveForm, "key">) => `objective-${form.key}-krs`,
   addKeyResult: (form: Pick<ObjectiveForm, "key">) => `objective-${form.key}-add-kr`,
   skill: (form: Pick<ObjectiveForm, "key">, kr: Pick<KeyResultForm, "key">) => `objective-${form.key}-kr-${kr.key}-skill`,
   target: (form: Pick<ObjectiveForm, "key">, kr: Pick<KeyResultForm, "key">) => `objective-${form.key}-kr-${kr.key}-target`,
   krTitle: (form: Pick<ObjectiveForm, "key">, kr: Pick<KeyResultForm, "key">) => `objective-${form.key}-kr-${kr.key}-title`,
 };
 
-/** Problems inside one objective: a title, and a skill and a target for every key result. */
-export function objectiveProblems(form: ObjectiveForm, lookup: EditorLookup): Problem[] {
-  const problems: Problem[] = [];
-  if (!form.title.trim()) problems.push({ fieldId: fieldIds.title(form), message: "Give it a title." });
-  for (const keyResult of form.keyResults) {
-    if (!keyResult.skillId) problems.push({ fieldId: fieldIds.skill(form, keyResult), message: "Pick a skill." });
-    if (keyResult.type === "count") continue;
-    const material = keyResult.materialId ? lookup.materials.get(keyResult.materialId) : undefined;
-    const fits = material !== undefined && (keyResult.type === "certification" ? material.type === "certification" : material.type !== "certification");
-    if (!fits) {
-      problems.push({
-        fieldId: fieldIds.target(form, keyResult),
-        message: keyResult.type === "certification" ? "Pick a certification." : "Pick a material.",
-      });
-    }
+/** Problems that are shown at once (they follow from a structural change, not from a field the user left). */
+export const isStructural = (problem: Problem, form: Pick<ObjectiveForm, "key">) =>
+  problem.fieldId === fieldIds.placement(form) || problem.fieldId === fieldIds.keyResults(form);
+
+export interface ValidationContext {
+  lookup: EditorLookup;
+  /** Objectives already saved, minus any being edited (for the cap, taken quarters and materials in use). */
+  saved: readonly Objective[];
+  today: DayKey;
+  /**
+   * Check that each objective may sit in its quarter (new objectives and the
+   * wizard's review). Off when editing a saved objective, whose quarter the
+   * editor doesn't change.
+   */
+  checkPlacement: boolean;
+}
+
+const byQuarter = (a: ObjectiveForm, b: ObjectiveForm) => (a.quarter < b.quarter ? -1 : a.quarter > b.quarter ? 1 : 0);
+
+/** Where an objective may not sit: a quarter with an active objective, outside the plannable window, or too close to its end. */
+function placementProblem(form: ObjectiveForm, context: ValidationContext): Problem | undefined {
+  const fieldId = fieldIds.placement(form);
+  const label = formatQuarter(form.quarter);
+  if (activeObjectives(context.saved).some((objective) => objective.quarter === form.quarter)) {
+    return { fieldId, message: `${label} is already planned.` };
   }
-  return problems;
+  if (!isPlannable(form.quarter, context.today)) return { fieldId, message: `${label} can't be planned any more.` };
+  if (form.quarter === quarterOfDay(context.today) && weeksLeftInQuarter(context.today) < MIN_WEEKS_TO_PLAN_CURRENT_QUARTER) {
+    return { fieldId, message: `Fewer than ${MIN_WEEKS_TO_PLAN_CURRENT_QUARTER} weeks are left in ${label}.` };
+  }
+  return undefined;
 }
 
 /**
  * "2027 already has 4 objectives.": objectives that would take a year past
- * the cap, latest first. `saved` are the objectives already stored (minus the
- * ones being edited).
+ * the cap, latest first.
  */
 export function yearCapProblems(forms: readonly ObjectiveForm[], saved: readonly Objective[]): Problem[] {
   const room = new Map<number, number>();
   const problems: Problem[] = [];
-  const ordered = [...forms].sort((a, b) => (a.quarter < b.quarter ? -1 : a.quarter > b.quarter ? 1 : 0));
-  for (const form of ordered) {
+  for (const form of [...forms].sort(byQuarter)) {
     const year = yearOf(form.quarter);
     const left = room.get(year) ?? roomInYear(saved, year);
     if (left <= 0) {
-      problems.push({ fieldId: fieldIds.menu(form), message: `${year} already has ${MAX_OBJECTIVES_PER_YEAR} objectives.` });
+      problems.push({ fieldId: fieldIds.placement(form), message: `${year} already has ${MAX_OBJECTIVES_PER_YEAR} objectives.` });
     }
     room.set(year, left - 1);
   }
   return problems;
 }
 
-/** Every problem across several objectives, in reading order (column by column, top to bottom). */
-export function allProblems(forms: readonly ObjectiveForm[], saved: readonly Objective[], lookup: EditorLookup): Problem[] {
-  const cap = yearCapProblems(forms, saved);
-  const ordered = [...forms].sort((a, b) => (a.quarter < b.quarter ? -1 : a.quarter > b.quarter ? 1 : 0));
-  return ordered.flatMap((form) => [
-    ...cap.filter((problem) => problem.fieldId === fieldIds.menu(form)),
-    ...objectiveProblems(form, lookup),
-  ]);
+/**
+ * Every problem across one or more objectives, in reading order (column by
+ * column, top to bottom): placement and the yearly cap, a title, 2–3 key
+ * results, and per key result an existing skill and a fitting target that no
+ * other key result uses.
+ */
+export function validateForms(forms: readonly ObjectiveForm[], context: ValidationContext): Problem[] {
+  const { lookup } = context;
+  const cap = yearCapProblems(forms, context.saved);
+  // Materials targeted by saved active objectives, then by earlier key results here.
+  const used = new Set(
+    activeObjectives(context.saved).flatMap((objective) =>
+      objective.keyResults.flatMap((keyResult) => (keyResult.type !== "count" && keyResult.materialId ? [keyResult.materialId] : [])),
+    ),
+  );
+  const problems: Problem[] = [];
+  for (const form of [...forms].sort(byQuarter)) {
+    const placement = context.checkPlacement ? placementProblem(form, context) : undefined;
+    if (placement) problems.push(placement);
+    else problems.push(...cap.filter((problem) => problem.fieldId === fieldIds.placement(form)));
+
+    if (!form.title.trim()) problems.push({ fieldId: fieldIds.title(form), message: "Give it a title." });
+    if (form.keyResults.length < MIN_KEY_RESULTS || form.keyResults.length > MAX_KEY_RESULTS) {
+      problems.push({ fieldId: fieldIds.keyResults(form), message: "Two or three key results per objective." });
+    }
+    for (const keyResult of form.keyResults) {
+      const target = fieldIds.target(form, keyResult);
+      if (!keyResult.skillId || !lookup.skills.has(keyResult.skillId)) {
+        problems.push({ fieldId: fieldIds.skill(form, keyResult), message: "Pick a skill." });
+      }
+      if (keyResult.type === "count") {
+        const count = keyResult.count;
+        if (count === undefined || !Number.isInteger(count) || count < MIN_COUNT || count > MAX_COUNT) {
+          problems.push({ fieldId: target, message: `Pick ${MIN_COUNT} to ${MAX_COUNT} items.` });
+        }
+        continue;
+      }
+      const material = keyResult.materialId ? lookup.materials.get(keyResult.materialId) : undefined;
+      if (!material || !fitsKeyResult(material, keyResult.type, keyResult.skillId)) {
+        problems.push({ fieldId: target, message: keyResult.type === "certification" ? "Pick a certification." : "Pick a material." });
+        continue;
+      }
+      if (used.has(material.id)) problems.push({ fieldId: target, message: "Already used by another key result." });
+      used.add(material.id);
+    }
+  }
+  return problems;
 }
+
+/** Problems for one objective (see validateForms). */
+export const objectiveProblems = (form: ObjectiveForm, context: ValidationContext): Problem[] => validateForms([form], context);
+
+/** Problems belonging to one objective, from a list made by validateForms. */
+export const problemsOf = (problems: readonly Problem[], form: Pick<ObjectiveForm, "key">): Problem[] =>
+  problems.filter((problem) => problem.fieldId.startsWith(`objective-${form.key}-`));
 
 export const fixLabel = (count: number) => `Fix ${count} ${count === 1 ? "thing" : "things"} to accept`;

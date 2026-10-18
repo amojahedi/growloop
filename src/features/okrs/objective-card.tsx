@@ -4,7 +4,7 @@ import { cn } from "cn";
 import type { ReactNode } from "react";
 import type { DayKey } from "@/lib/domain/dates";
 import { objectivePace, objectiveProgress } from "@/lib/domain/okrs";
-import type { ID, Material, Objective, PlanItem, Skill } from "@/lib/domain/types";
+import type { ID, Material, Objective, PlanItem } from "@/lib/domain/types";
 import { KeyResultRow } from "./key-result-row";
 import { paceLabel, quarterLabel } from "./labels";
 import { ProgressRing } from "./progress-ring";
@@ -17,7 +17,6 @@ export function ObjectiveCard({
   objective,
   items,
   materials,
-  skills,
   today,
   editable,
   menu,
@@ -26,7 +25,6 @@ export function ObjectiveCard({
   objective: Objective;
   items: readonly PlanItem[];
   materials: ReadonlyMap<ID, Material>;
-  skills: ReadonlyMap<ID, Skill>;
   today: DayKey;
   /** Active and not in an archived year. */
   editable: boolean;
@@ -76,7 +74,7 @@ export function ObjectiveCard({
             objective={objective}
             items={items}
             material={keyResult.materialId ? materials.get(keyResult.materialId) : undefined}
-            skill={skills.get(keyResult.skillId)}
+            linkedMaterial={(id) => materials.get(id)}
             editable={editable}
             onPickAnother={onPickAnother}
           />

@@ -8,6 +8,9 @@ import { quarterLabel } from "./labels";
 /** Q1–Q4 of a year, the layout shared by the OKR page and the wizard's review (so a draft shows the shape of the year). */
 export const quartersOf = (year: number): QuarterKey[] => [1, 2, 3, 4].map((quarter) => quarterKey(year, quarter));
 
+/** The column's id: a focus target of last resort when the card that had focus moves or goes. */
+export const quarterColumnId = (quarter: QuarterKey) => `quarter-${quarter}`;
+
 export function QuarterGrid({
   children,
   label,
@@ -42,10 +45,12 @@ export function QuarterColumn({
 }) {
   return (
     <section
+      id={quarterColumnId(quarter)}
+      tabIndex={-1}
       role="listitem"
       aria-label={formatQuarter(quarter)}
       className={cn(
-        "flex min-w-0 flex-col gap-3 rounded-2xl p-2",
+        "flex min-w-0 flex-col gap-3 rounded-2xl p-2 outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
         isNow ? "bg-brand-soft/60 ring-1 ring-primary/15" : "bg-muted/40",
         collapseOnMobile && "max-md:hidden",
       )}

@@ -18,14 +18,13 @@ import {
   formFromObjective,
   newKeyResultsFrom,
   objectiveProblems,
-  yearCapProblems,
   type ObjectiveForm,
 } from "./editor-model";
 import { focusSoon } from "./focus";
 import { ObjectiveCard } from "./objective-card";
 import { ObjectiveEditor } from "./objective-editor";
 import { ObjectiveMenu } from "./objective-menu";
-import { AddObjectiveButton, EmptyQuarter, QuarterColumn, QuarterGrid, quartersOf } from "./quarter-grid";
+import { AddObjectiveButton, EmptyQuarter, QuarterColumn, quarterColumnId, QuarterGrid, quartersOf } from "./quarter-grid";
 import { useEditorData } from "./use-editor-data";
 
 /**
@@ -38,7 +37,8 @@ import { useEditorData } from "./use-editor-data";
 const ARCHIVE_TAB = "archive";
 const PLAN_PATH = "/okrs/plan";
 const addButtonId = (quarter: QuarterKey) => `add-objective-${quarter}`;
-const tabId = (value: string) => `okrs-tab-${value}`;
+/** Selector for a year tab (Radix owns the tab's id, which names its panel). */
+const tabSelector = (value: string) => `[data-year-tab="${value}"]`;
 const PLAN_LINK_ID = "okrs-plan-my-year";
 
 /** The year tabs, in order: unarchived years with objectives or in the plannable window, then Archive. */
@@ -86,7 +86,7 @@ export function OkrsView() {
         {tabs.map((tab) => (
           <Tabs.Trigger
             key={tab}
-            id={tabId(tab)}
+            data-year-tab={tab}
             value={tab}
             className="inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs"
           >
@@ -122,6 +122,15 @@ function YearPanel({ year, isCurrentYear, onArchived }: { year: number; isCurren
   const inYear = objectives.filter((objective) => yearOf(objective.quarter) === year);
   const room = roomInYear(objectives, year);
 
+  /** A new objective must fit its quarter; a saved one being edited keeps its quarter. */
+  const problemsFor = (current: Editing) =>
+    objectiveProblems(current.form, {
+      lookup,
+      saved: current.kind === "edit" ? objectives.filter((o) => o.id !== current.id) : objectives,
+      today,
+      checkPlacement: current.kind === "new",
+    });
+
   const startNew = (quarter: QuarterKey) => {
     const form = blankObjective(quarter);
     setEditing({ kind: "new", form });
@@ -136,14 +145,14 @@ function YearPanel({ year, isCurrentYear, onArchived }: { year: number; isCurren
   };
   const cancel = () => {
     if (!editing) return;
-    focusSoon(editing.kind === "edit" ? fieldIds.menu(editing.form) : addButtonId(editing.form.quarter));
+    const quarter = editing.form.quarter;
+    focusSoon(editing.kind === "edit" ? fieldIds.menu(editing.form) : addButtonId(quarter), quarterColumnId(quarter));
     setEditing(null);
   };
   const save = () => {
     if (!editing) return;
     const { form } = editing;
-    const others = editing.kind === "edit" ? objectives.filter((o) => o.id !== editing.id) : objectives;
-    const problems = [...yearCapProblems([form], others), ...objectiveProblems(form, lookup)];
+    const problems = problemsFor(editing);
     if (problems.length > 0) {
       setShowAll(true);
       focusSoon(problems[0].fieldId);
@@ -173,7 +182,9 @@ function YearPanel({ year, isCurrentYear, onArchived }: { year: number; isCurren
   const move = (objective: Objective, quarter: QuarterKey) => {
     const from = objective.quarter;
     updateObjective(objective.id, { quarter });
-    focusSoon(fieldIds.menu({ key: objective.id }));
+    // Moved to another year: its card is on that year's tab now.
+    if (yearOf(quarter) !== year) focusSoon(tabSelector(String(yearOf(quarter))));
+    else focusSoon(fieldIds.menu({ key: objective.id }), quarterColumnId(quarter));
     toast({
       message: `Moved to ${formatQuarter(quarter)}.`,
       // A hand move clears `movedFrom`, which undo can't put back; only offer it when there is none.
@@ -184,9 +195,7 @@ function YearPanel({ year, isCurrentYear, onArchived }: { year: number; isCurren
   const remove = (objective: Objective) => {
     const deleted = deleteObjective(objective.id);
     if (!deleted) return;
-    focusSoon(
-      objectives.length === 1 ? PLAN_LINK_ID : isPlannable(objective.quarter, today) ? addButtonId(objective.quarter) : tabId(String(year)),
-    );
+    focusSoon(PLAN_LINK_ID, addButtonId(objective.quarter), quarterColumnId(objective.quarter), tabSelector(String(year)));
     toast({ message: "Objective deleted.", action: { label: "Undo", onClick: () => restoreObjective(deleted) } });
   };
 
@@ -244,7 +253,7 @@ function YearPanel({ year, isCurrentYear, onArchived }: { year: number; isCurren
                       lookup={lookup}
                       skills={visibleSkills}
                       materials={materials}
-                      problems={[...yearCapProblems([editing.form], objectives.filter((o) => o.id !== objective.id)), ...objectiveProblems(editing.form, lookup)]}
+                      problems={problemsFor(editing)}
                       showAllProblems={showAll}
                       footer={<EditorButtons onCancel={cancel} onSave={save} />}
                     />
@@ -256,7 +265,6 @@ function YearPanel({ year, isCurrentYear, onArchived }: { year: number; isCurren
                     objective={objective}
                     items={items}
                     materials={lookup.materials}
-                    skills={lookup.skills}
                     today={today}
                     editable={editable}
                     onPickAnother={editable ? () => startEdit(objective) : undefined}
@@ -284,7 +292,7 @@ function YearPanel({ year, isCurrentYear, onArchived }: { year: number; isCurren
                   lookup={lookup}
                   skills={visibleSkills}
                   materials={materials}
-                  problems={[...yearCapProblems([editing.form], objectives), ...objectiveProblems(editing.form, lookup)]}
+                  problems={problemsFor(editing)}
                   showAllProblems={showAll}
                   footer={<EditorButtons onCancel={cancel} onSave={save} saveLabel="Add objective" />}
                 />
@@ -338,7 +346,6 @@ function ArchivePanel({ years }: { years: readonly number[] }) {
                       objective={objective}
                       items={items}
                       materials={lookup.materials}
-                      skills={lookup.skills}
                       today={today}
                       editable={false}
                     />

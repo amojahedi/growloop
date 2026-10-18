@@ -4,11 +4,11 @@ import { Loader2Icon, SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LEVEL_LABELS, PLAN_DRAFT_LIMITS, type WizardSkillAnswer } from "@/lib/domain/plan-draft";
 import { SKILL_LEVEL_VALUES, type ID, type Skill, type SkillLevel, type SkillLevelValue } from "@/lib/domain/types";
-import { FieldMessage, SegmentedControl } from "../controls/choice-controls";
+import { LevelControl } from "@/components/skills/skill-level";
+import { FieldMessage } from "../controls/choice-controls";
 import { SkillCheckboxChip, SkillDot } from "../controls/skill-controls";
 import { StepHeading } from "./step-heading";
 
-const LEVEL_OPTIONS = SKILL_LEVEL_VALUES.map((value) => ({ value, label: String(value), srLabel: `${value}, ${LEVEL_LABELS[value]}` }));
 const LEVEL_LEGEND = SKILL_LEVEL_VALUES.map((value) => `${value} ${LEVEL_LABELS[value]}`).join(" · ");
 export const DEFAULT_LEVELS = { current: 2, target: 4 } as const satisfies Pick<WizardSkillAnswer, "current" | "target">;
 
@@ -20,6 +20,7 @@ export const skillsComplete = (skills: readonly WizardSkillAnswer[]): boolean =>
 /** Step 2 of 2, "What do you want to grow?": 2–4 focus skills, each with a Now and a Goal level. */
 export function SkillsStep({
   skills,
+  allSkills,
   value,
   savedLevels,
   onChange,
@@ -31,6 +32,8 @@ export function SkillsStep({
 }: {
   /** Visible skills, in display order. */
   skills: readonly Skill[];
+  /** Every skill, hidden ones included (names for skills picked before they were hidden). */
+  allSkills: readonly Skill[];
   /** Picked skills, in pick order. */
   value: readonly WizardSkillAnswer[];
   /** Levels saved in the profile, used when a skill is picked. */
@@ -45,8 +48,10 @@ export function SkillsStep({
   focusHeading: boolean;
 }) {
   const picked = new Set(value.map((answer) => answer.skillId));
+  // A skill hidden since it was picked (a restored session) stays as a chip, so it can be unpicked.
+  const chips = [...skills, ...allSkills.filter((skill) => skill.hidden && picked.has(skill.id) && !skills.includes(skill))];
   const full = value.length >= PLAN_DRAFT_LIMITS.maxSkills;
-  const names = new Map(skills.map((skill) => [skill.id, skill]));
+  const names = new Map(allSkills.map((skill) => [skill.id, skill]));
 
   const toggle = (skillId: ID, checked: boolean) => {
     if (!checked) return onChange(value.filter((answer) => answer.skillId !== skillId));
@@ -72,7 +77,7 @@ export function SkillsStep({
       <fieldset className="flex flex-col gap-2.5" aria-describedby="wizard-skills-hint">
         <legend className="mb-2.5 text-sm font-semibold">Pick 2 to 4 skills</legend>
         <div className="flex flex-wrap gap-2">
-          {skills.map((skill) => (
+          {chips.map((skill) => (
             <SkillCheckboxChip
               key={skill.id}
               skill={skill}
@@ -96,34 +101,34 @@ export function SkillsStep({
               const invalid = answer.target <= answer.current;
               const errorId = `wizard-level-${answer.skillId}-error`;
               return (
-                <li key={answer.skillId} className="flex flex-col gap-2 px-4 py-3 sm:grid sm:grid-cols-[11rem_1fr] sm:items-start sm:gap-6">
-                  <p className="flex items-center gap-2 text-sm font-semibold sm:pt-6">
-                    <SkillDot skill={skill} className="size-2.5" />
-                    {name}
-                  </p>
-                  <div className="flex flex-wrap gap-x-6 gap-y-2">
-                    <SegmentedControl
-                      legend="Now"
-                      groupLabel={`Now for ${name}`}
-                      size="md"
-                      options={LEVEL_OPTIONS}
-                      value={answer.current}
-                      onChange={(current: SkillLevelValue) => setLevel(answer.skillId, { current })}
-                    />
-                    <div className="flex flex-col gap-1">
-                      <SegmentedControl
-                        legend="Goal"
-                        groupLabel={`Goal for ${name}`}
-                        size="md"
-                        options={LEVEL_OPTIONS}
-                        value={answer.target}
-                        invalid={invalid}
-                        describedBy={invalid ? errorId : undefined}
-                        onChange={(target: SkillLevelValue) => setLevel(answer.skillId, { target })}
-                      />
+                <li key={answer.skillId} className="px-4 py-3">
+                  {/* The row is a group named by the skill, holding the shared Now and Goal controls (S-5). */}
+                  <fieldset
+                    className="flex flex-col gap-2 sm:grid sm:grid-cols-[11rem_1fr] sm:items-center sm:gap-6"
+                    aria-describedby={invalid ? errorId : undefined}
+                  >
+                    <legend className="sr-only">{name}</legend>
+                    <p aria-hidden className="flex items-center gap-2 text-sm font-semibold">
+                      <SkillDot skill={skill} className="size-2.5" />
+                      {name}
+                      {skill?.hidden && <span className="font-normal text-muted-foreground">(hidden)</span>}
+                    </p>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex flex-wrap gap-x-6 gap-y-2">
+                        <LevelControl
+                          label="Now"
+                          value={answer.current}
+                          onChange={(current: SkillLevelValue) => setLevel(answer.skillId, { current })}
+                        />
+                        <LevelControl
+                          label="Goal"
+                          value={answer.target}
+                          onChange={(target: SkillLevelValue) => setLevel(answer.skillId, { target })}
+                        />
+                      </div>
                       {invalid && <FieldMessage id={errorId}>Set a goal above where you are.</FieldMessage>}
                     </div>
-                  </div>
+                  </fieldset>
                 </li>
               );
             })}

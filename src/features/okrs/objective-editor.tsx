@@ -17,6 +17,7 @@ import {
   DEFAULT_COUNT,
   fieldIds,
   fitsKeyResult,
+  isStructural,
   type EditorLookup,
   type KeyResultChange,
   type KeyResultForm,
@@ -76,7 +77,7 @@ export function ObjectiveEditor({
   const touch = (fieldId: string) => setTouched((current) => (current.has(fieldId) ? current : new Set(current).add(fieldId)));
   const problemFor = (fieldId: string) => {
     const problem = problems.find((candidate) => candidate.fieldId === fieldId);
-    return problem && (showAllProblems || touched.has(fieldId)) ? problem : undefined;
+    return problem && (showAllProblems || touched.has(fieldId) || isStructural(problem, value)) ? problem : undefined;
   };
   const errorId = useId();
 
@@ -94,10 +95,11 @@ export function ObjectiveEditor({
   const removeKeyResult = (key: string) => {
     if (value.keyResults.length <= MIN_KEY_RESULTS) return;
     update({ keyResults: value.keyResults.filter((kr) => kr.key !== key) });
-    focusSoon(fieldIds.addKeyResult(value));
+    focusSoon(fieldIds.addKeyResult(value), fieldIds.keyResults(value));
   };
 
-  const capProblem = problems.find((problem) => problem.fieldId === fieldIds.menu(value));
+  const placementProblem = problemFor(fieldIds.placement(value));
+  const countProblem = problemFor(fieldIds.keyResults(value));
   const titleProblem = problemFor(fieldIds.title(value));
   const titleId = fieldIds.title(value);
 
@@ -130,13 +132,20 @@ export function ObjectiveEditor({
         value={value.why}
         onChange={(event) => update({ why: event.target.value })}
       />
-      {capProblem && (
-        <p className="mt-1 text-xs font-medium text-destructive" role="note">
-          {capProblem.message}
+      {placementProblem && (
+        // Focusable, so "Fix N things" can land here: Move to quarter… or Remove in the ⋯ menu fixes it.
+        <p id={fieldIds.placement(value)} tabIndex={-1} className="mt-1 rounded-sm text-xs font-medium text-destructive outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+          {placementProblem.message}
         </p>
       )}
 
-      <ol className="mt-3 flex flex-col gap-2" aria-label="Key results">
+      <ol
+        id={fieldIds.keyResults(value)}
+        tabIndex={-1}
+        className="mt-3 flex flex-col gap-2 rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        aria-label="Key results"
+        aria-describedby={countProblem ? `${errorId}-count` : undefined}
+      >
         {value.keyResults.map((keyResult, index) => (
           <KeyResultEditor
             key={keyResult.key}
@@ -154,6 +163,9 @@ export function ObjectiveEditor({
           />
         ))}
       </ol>
+      {countProblem && (
+        <FieldMessage id={`${errorId}-count`}>{countProblem.message}</FieldMessage>
+      )}
 
       {value.keyResults.length < MAX_KEY_RESULTS && (
         <button

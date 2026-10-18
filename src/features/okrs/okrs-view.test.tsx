@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Toaster, dismissToast } from "@/components/ui/toast";
 import { CURATED_MATERIALS } from "@/lib/catalog";
@@ -104,6 +104,13 @@ describe("OKR page: tabs and columns", () => {
     expect(yearTabs([], [], TODAY)).toEqual(["2026", "2027"]);
   });
 
+  it("names each year tab and its panel", () => {
+    renderPage();
+    const tab = screen.getByRole("tab", { name: "2026" });
+    const panel = screen.getByRole("tabpanel", { name: "2026" });
+    expect(tab).toHaveAttribute("aria-controls", panel.id);
+  });
+
   it("opens on the current year, follows ?year= and changes it from the tabs", () => {
     seed([makeObjective({ quarter: "2027-Q2", title: "Next year's", keyResults: [makeKeyResult()] })]);
     search.params = new URLSearchParams("year=2027");
@@ -184,6 +191,51 @@ describe("OKR page: objective actions and read-only states", () => {
     fireEvent.click(within(editor).getByRole("button", { name: "Save" }));
     expect(useAppStore.getState().data.objectives[0].title).toBe("New title");
     expect(screen.getByRole("heading", { name: "New title" })).toBeInTheDocument();
+  });
+
+  it("unlinks a card when its key result gets a new type or target", () => {
+    const keyResult = makeKeyResult({ id: "kr", type: "material", materialId: book.id, skillId: "roadmapping", title: "Finish it" });
+    seed([makeObjective({ quarter: "2026-Q4", title: "Retarget", keyResults: [keyResult, makeKeyResult({ skillId: "roadmapping" })] })], {
+      planItems: [makeItem({ id: "card", materialId: book.id, keyResultId: "kr" })],
+    });
+    renderPage();
+    openMenu("Retarget");
+    fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
+    const editor = screen.getByRole("article", { name: "Edit objective in Q4 2026" });
+    fireEvent.click(within(editor).getAllByRole("radio", { name: "Count" })[0]);
+    fireEvent.click(within(editor).getByRole("button", { name: "Save" }));
+    const { objectives, planItems } = useAppStore.getState().data;
+    expect(objectives[0].keyResults[0]).toMatchObject({ type: "count" });
+    expect(objectives[0].keyResults[0].id).not.toBe("kr");
+    expect(planItems[0].keyResultId).toBeUndefined();
+  });
+
+  it("shows the linked card's own material", () => {
+    const other = CURATED_MATERIALS.find((m) => m.id !== book.id && m.type === "book")!;
+    const keyResult = makeKeyResult({ id: "kr", type: "material", materialId: book.id, skillId: "roadmapping" });
+    seed([makeObjective({ quarter: "2026-Q4", keyResults: [keyResult, makeKeyResult()] })], {
+      planItems: [makeItem({ id: "card", materialId: other.id, keyResultId: "kr", status: "in_progress" })],
+    });
+    renderPage();
+    expect(screen.getByRole("link", { name: new RegExp(other.title.slice(0, 15)) })).toHaveAttribute("href", "/board?item=card");
+  });
+
+  it("keeps focus on something that exists after Delete and after a move to another year", async () => {
+    seed([
+      makeObjective({ quarter: "2026-Q4", title: "Stays", keyResults: [makeKeyResult(), makeKeyResult({ skillId: "prioritization" })] }),
+      makeObjective({ quarter: "2026-Q4", title: "Goes", keyResults: [makeKeyResult(), makeKeyResult({ skillId: "prioritization" })] }),
+    ]);
+    renderPage();
+    openMenu("Goes");
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
+    await waitFor(() => expect(document.activeElement).toHaveAccessibleName("Add objective to Q4 2026"));
+
+    openMenu("Stays");
+    fireEvent.pointerMove(screen.getByRole("menuitem", { name: "Move to quarter…" }));
+    fireEvent.keyDown(screen.getByRole("menuitem", { name: "Move to quarter…" }), { key: "ArrowRight" });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Q1 2027" }));
+    expect(useAppStore.getState().data.objectives[0].quarter).toBe("2027-Q1");
+    await waitFor(() => expect(document.activeElement).toHaveAccessibleName("2027"));
   });
 
   it("deletes with Undo, unlinking cards without deleting them", () => {
