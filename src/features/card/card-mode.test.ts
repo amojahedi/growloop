@@ -101,6 +101,7 @@ describe("key result link", () => {
 describe("shortTitle", () => {
   it("uses a trailing abbreviation in brackets, else the title", () => {
     expect(shortTitle("Certified Scrum Product Owner (CSPO)")).toBe("CSPO");
+    expect(shortTitle("Professional Scrum Product Owner I (PSPO I)")).toBe("PSPO I");
     expect(shortTitle("Google Project Management Certificate")).toBe("Google Project Management Certificate");
   });
 });

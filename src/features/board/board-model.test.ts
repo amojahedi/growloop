@@ -9,7 +9,6 @@ import {
   monthToOpen,
   monthProgress,
   NO_FILTERS,
-  shortTitle,
   visibleColumns,
   worksToward,
 } from "./board-model";
@@ -120,15 +119,5 @@ describe("menuMoves", () => {
   it("only offers the given columns (past months have no Backlog)", () => {
     expect(menuMoves(columns, "d", items, MONTH, visibleColumns(true)).moveTo).toEqual(["todo", "done"]);
     expect(menuMoves(columns, "missing", items, MONTH)).toEqual({ moveTo: [] });
-  });
-});
-
-describe("shortTitle", () => {
-  it("uses a trailing abbreviation in brackets, else the title", () => {
-    expect(shortTitle("Certified Scrum Product Owner (CSPO)")).toBe("CSPO");
-    expect(shortTitle("Professional Scrum Product Owner I (PSPO I)")).toBe("PSPO I");
-    expect(shortTitle("Google Project Management Professional Certificate")).toBe(
-      "Google Project Management Professional Certificate",
-    );
   });
 });

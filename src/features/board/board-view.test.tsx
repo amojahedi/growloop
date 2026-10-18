@@ -9,7 +9,8 @@ import { emptyWorkspace } from "@/lib/store/seed";
 import { useUIStore } from "@/lib/store/ui-store";
 import { ResourceActions } from "../library/resource-actions";
 import { BoardMonthSwitcher } from "./board-month-switcher";
-import { BoardView, SUMMARY_NUDGE } from "./board-view";
+import { SUMMARY_NUDGE } from "../card/use-done-follow-ups";
+import { BoardView } from "./board-view";
 
 vi.mock("next/navigation", () => import("./next-navigation.test-utils"));
 
