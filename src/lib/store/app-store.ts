@@ -618,6 +618,8 @@ export const useAppStore = create<AppState>()(
               const onBoard = items.find(
                 (item) =>
                   item.materialId === keyResult.materialId &&
+                  // A card already counting toward another key result keeps its link; the new KR gets its own card (WP2).
+                  !item.keyResultId &&
                   (item.month === month || (item.status === "backlog" && compareMonths(item.month, month) <= 0)),
               );
               if (onBoard) {
