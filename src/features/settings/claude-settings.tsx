@@ -25,8 +25,8 @@ type Feedback = { tone: "info" | "success" | "error"; text: string };
 const KEY_DIDNT_WORK = "That key didn't work. Check it and try again.";
 const UNREACHABLE = "Couldn't reach Anthropic. Check your connection and try again.";
 
-const STATUS_LINE: Record<AIProviderKind | "checking", { on: boolean; text: string }> = {
-  "own-key": { on: true, text: "Claude is on · your API key" },
+const STATUS_LINE: Record<AIProviderKind | "checking" | "off", { on: boolean; text: string }> = {
+  key: { on: true, text: "Claude is on · your API key" },
   local: { on: true, text: "Claude is on · Claude Code on this computer" },
   checking: { on: false, text: "Checking Claude…" },
   off: { on: false, text: "Claude is off" },
@@ -46,7 +46,7 @@ export function ClaudeSettings() {
   const last4 = useApiKeyLast4();
   const local = useLocalClaudeStatus();
   const provider = selectProviderKind({ hasKey, localAvailable: local.status.state === "available" });
-  const status = STATUS_LINE[!hasKey && local.status.state === "checking" ? "checking" : provider];
+  const status = STATUS_LINE[!hasKey && local.status.state === "checking" ? "checking" : (provider ?? "off")];
 
   const inputId = useId();
   const noticeId = useId();
@@ -114,7 +114,7 @@ export function ClaudeSettings() {
 
   // Claude Code only exists when the server is reached via localhost.
   const showClaudeCode =
-    local.status.state !== "unavailable" || (local.status.code !== "disabled" && local.status.code !== "demo-mode");
+    local.status.state !== "unavailable" || local.status.code !== "disabled";
 
   return (
     <div id="claude" className="scroll-mt-6">

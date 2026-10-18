@@ -117,6 +117,59 @@ describe("own-key provider", () => {
     expect(sdk.create.mock.calls[0][0].output_config.effort).toBe("low");
   });
 
+  it("drafts the wizard's plan at medium effort with the draft-plan schema", async () => {
+    const draft = {
+      rationale: "Biggest gaps first: Roadmapping.",
+      objectives: [
+        {
+          quarter: "2027-Q1",
+          title: "Lead roadmap conversations with confidence",
+          why: "Builds your case for promotion.",
+          keyResults: [{ skillId: "roadmapping", type: "count", count: 3, title: "Complete 3 Roadmapping items" }],
+        },
+      ],
+    };
+    sdk.create.mockResolvedValue(message(JSON.stringify(draft)));
+
+    const result = await ownKeyProvider.draftPlan({
+      role: "pm",
+      goal: "promotion",
+      skills: [{ id: "roadmapping", name: "Roadmapping", current: 2, target: 4 }],
+      quarters: ["2027-Q1"],
+      currentQuarter: "2026-Q4",
+      weeksLeftInCurrentQuarter: 3,
+      candidates: [],
+    });
+
+    expect(result).toEqual(draft);
+    const [params] = sdk.create.mock.calls[0];
+    expect(params.output_config.effort).toBe("medium");
+    expect(params.system).toContain("pragmatic career coach");
+    expect(params.output_config.format.schema.properties.objectives.items.properties.quarter.enum).toEqual(["2027-Q1"]);
+  });
+
+  it("gives up on a draft after 60 seconds", async () => {
+    vi.useFakeTimers();
+    try {
+      sdk.create.mockImplementation(hangUntilAborted);
+      const pending = ownKeyProvider.draftPlan({
+        role: "pm",
+        goal: "promotion",
+        skills: [{ id: "roadmapping", name: "Roadmapping", current: 2, target: 4 }],
+        quarters: ["2027-Q1"],
+        currentQuarter: "2026-Q4",
+        weeksLeftInCurrentQuarter: 3,
+        candidates: [],
+      });
+      const assertion = expect(pending).rejects.toMatchObject({ code: "timeout" });
+      await vi.waitFor(() => expect(sdk.create).toHaveBeenCalled());
+      await vi.advanceTimersByTimeAsync(60_000);
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("keeps only the user's own skill ids in a draft", async () => {
     sdk.create.mockResolvedValue(
       message(JSON.stringify({ type: "book", title: "Inspired", author: "", tagline: "", summary: "", skillIds: ["discovery", "made-up"] })),

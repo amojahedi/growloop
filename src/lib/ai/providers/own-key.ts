@@ -1,18 +1,28 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { parseJsonText } from "../parse";
-import { buildEnrichMaterialPrompt, buildRecommendPrompt, buildRefineSummaryPrompt, type PromptSpec } from "../prompts";
-import { AI_OFF_MESSAGE, draftOkrsNotImplemented, type AIProvider } from "../provider";
+import {
+  buildDraftPlanPrompt,
+  buildEnrichMaterialPrompt,
+  buildRecommendPrompt,
+  buildRefineSummaryPrompt,
+  type PromptSpec,
+} from "../prompts";
+import { AI_OFF_MESSAGE, type AIProvider } from "../provider";
 import { AIRequestError } from "../request-error";
 import {
+  DRAFT_PLAN_TIMEOUT_MS,
+  draftPlanRequestSchema,
   enrichMaterialRequestSchema,
   materialDraftSchema,
+  planDraftSchema,
   recommendationsSchema,
   recommendRequestSchema,
   refineSummaryRequestSchema,
   restrictDraftSkills,
   summaryFeedbackSchema,
 } from "../schemas";
+import { withTimeout } from "../timeout";
 import { readApiKey } from "./key-storage";
 import { clientFor, loadSdk, trackRequest, type SDK } from "./own-key-client";
 
@@ -33,7 +43,7 @@ export const FEATURE_EFFORT = {
   recommend: "low",
   enrichMaterial: "low",
   refineSummary: "low",
-  draftOkrs: "medium",
+  draftPlan: "medium",
 } as const satisfies Record<keyof Omit<AIProvider, "kind">, Effort>;
 
 /** Thinking counts towards max_tokens; this leaves room for it without risking HTTP timeouts. */
@@ -174,7 +184,7 @@ export function validateApiKey(apiKey: string, signal?: AbortSignal): Promise<vo
 }
 
 export const ownKeyProvider: AIProvider = {
-  kind: "own-key",
+  kind: "key",
   recommend: async (input, signal) =>
     askClaudeWithKey({
       spec: buildRecommendPrompt(parseRequest(recommendRequestSchema, input)),
@@ -200,6 +210,10 @@ export const ownKeyProvider: AIProvider = {
     // The output schema already limits skill ids; this enforces it regardless.
     return restrictDraftSkills(draft, request.skills);
   },
-  // The OKR wizard implements this with askClaudeWithKey and FEATURE_EFFORT.draftOkrs.
-  draftOkrs: draftOkrsNotImplemented,
+  draftPlan: async (input, signal) => {
+    const request = parseRequest(draftPlanRequestSchema, input);
+    return withTimeout(DRAFT_PLAN_TIMEOUT_MS, signal, (timed) =>
+      askClaudeWithKey({ spec: buildDraftPlanPrompt(request), schema: planDraftSchema, effort: FEATURE_EFFORT.draftPlan, signal: timed }),
+    );
+  },
 };

@@ -1,27 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fetchAIStatus } from "./client";
-import { offProvider, selectProviderKind, type AIProvider, type AIProviderKind } from "./provider";
-import { useHasApiKey } from "./providers/key-storage";
+import type { PlanDraft } from "@/lib/domain/plan-draft";
+import { offProvider, type AIProvider, type AIProviderKind } from "./provider";
 import { localProvider } from "./providers/local";
 import { ownKeyProvider } from "./providers/own-key";
 import { AIRequestError } from "./request-error";
 import type {
-  AIStatus,
-  DraftOkrsRequest,
+  DraftPlanRequest,
   EnrichMaterialRequest,
   MaterialDraft,
-  OkrDraft,
   RecommendRequest,
   RecommendResponse,
   RefineSummaryRequest,
   SummaryFeedback,
 } from "./schemas";
+import { useAIStatus, type LocalClaudeStatus } from "./status";
+
+export { useAIStatus, useLocalClaudeStatus, type AIStatusInfo, type LocalClaudeStatus } from "./status";
 
 /**
- * React access to the AI features: which provider is active, plus one async
- * action per feature, each with its own loading / error / data state.
+ * React access to the Claude features: which provider is active, plus one
+ * async action per feature, each with its own loading / error / data state.
  *
  * Provider order (ADR 008): the visitor's own Claude API key → the local
  * Claude Code CLI (only when `/api/ai/status` says it's available) → off.
@@ -30,11 +30,8 @@ import type {
  *   if (ai.status.state === "available") ai.recommend.run({ context, existingTitles });
  */
 
-export type AIStatusState =
-  | { state: "checking" }
-  | { state: "available" }
-  /** No key and no local Claude Code; `reason` and `code` describe the local check. */
-  | { state: "unavailable"; reason?: string; code?: AIStatus["code"] };
+/** "available" with a key or local Claude Code; otherwise the local check's state. */
+export type AIStatusState = LocalClaudeStatus;
 
 export interface AsyncAction<Input, Output> {
   /** Resolves with the result, or `undefined` if the call failed or was superseded. */
@@ -47,26 +44,6 @@ export interface AsyncAction<Input, Output> {
   /** Clears data and error, and cancels a call in flight. */
   reset: () => void;
 }
-
-// One status request per page load, shared by every component using the hook.
-let statusPromise: Promise<AIStatus> | undefined;
-
-function loadStatus(fresh: boolean): Promise<AIStatus> {
-  if (fresh || !statusPromise) {
-    statusPromise = fetchAIStatus({ fresh }).catch((error: unknown) => {
-      statusPromise = undefined; // allow a retry
-      return {
-        available: false,
-        code: "error",
-        reason: error instanceof Error ? error.message : "Couldn't check AI availability.",
-      } satisfies AIStatus;
-    });
-  }
-  return statusPromise;
-}
-
-const toStatusState = (status: AIStatus): AIStatusState =>
-  status.available ? { state: "available" } : { state: "unavailable", reason: status.reason, code: status.code };
 
 function useAsyncAction<Input, Output>(
   request: (input: Input, signal: AbortSignal) => Promise<Output>,
@@ -129,8 +106,8 @@ function useAsyncAction<Input, Output>(
 }
 
 export interface UseAI {
-  /** Where AI calls go; "off" while checking or when neither a key nor local Claude Code is available. */
-  provider: AIProviderKind;
+  /** Where Claude calls go: "key", "local", or null while checking or when Claude is off. */
+  provider: AIProviderKind | null;
   status: AIStatusState;
   /** Re-checks local availability, e.g. after the user installs or signs in to Claude Code. */
   recheck: () => void;
@@ -138,53 +115,23 @@ export interface UseAI {
   refineSummary: AsyncAction<RefineSummaryRequest, SummaryFeedback>;
   /** Drafts a resource's details from a pasted title or link. */
   enrichMaterial: AsyncAction<EnrichMaterialRequest, MaterialDraft>;
-  /** Drafts objectives for the OKR wizard. The providers don't implement it yet. */
-  draftOkrs: AsyncAction<DraftOkrsRequest, OkrDraft>;
+  /** Drafts the OKR wizard's plan; repair it before review. Fails with code "timeout" after 60 s. */
+  draftPlan: AsyncAction<DraftPlanRequest, PlanDraft>;
 }
 
-/** Local Claude Code availability (`/api/ai/status`), one request shared by every caller on the page. */
-export function useLocalClaudeStatus({ enabled = true }: { enabled?: boolean } = {}): {
-  status: AIStatusState;
-  recheck: () => void;
-} {
-  const [status, setStatus] = useState<AIStatusState>({ state: "checking" });
-
-  const check = useCallback((fresh: boolean) => {
-    let active = true;
-    loadStatus(fresh).then((result) => {
-      if (active) setStatus(toStatusState(result));
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => (enabled ? check(false) : undefined), [enabled, check]);
-
-  const recheck = useCallback(() => {
-    setStatus({ state: "checking" });
-    check(true);
-  }, [check]);
-
-  return { status, recheck };
-}
+const PROVIDERS: Record<AIProviderKind, AIProvider> = { key: ownKeyProvider, local: localProvider };
 
 export function useAI(): UseAI {
-  // A boolean, never the key itself: the key isn't held in React state (or visible in DevTools).
-  const hasKey = useHasApiKey();
-  // With a key the local CLI is never used, so skip its status check (which spawns processes).
-  const local = useLocalClaudeStatus({ enabled: !hasKey });
-
-  const provider = selectProviderKind({ hasKey, localAvailable: local.status.state === "available" });
-  const active: AIProvider = provider === "own-key" ? ownKeyProvider : provider === "local" ? localProvider : offProvider;
+  const { provider, local, recheck } = useAIStatus();
+  const active = provider ? PROVIDERS[provider] : offProvider;
 
   return {
     provider,
-    status: hasKey ? { state: "available" } : local.status,
-    recheck: local.recheck,
+    status: provider === "key" ? { state: "available" } : local,
+    recheck,
     recommend: useAsyncAction(active.recommend),
     refineSummary: useAsyncAction(active.refineSummary),
     enrichMaterial: useAsyncAction(active.enrichMaterial),
-    draftOkrs: useAsyncAction(active.draftOkrs),
+    draftPlan: useAsyncAction(active.draftPlan),
   };
 }

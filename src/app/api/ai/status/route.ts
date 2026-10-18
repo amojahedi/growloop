@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   if (denial) {
     return Response.json({
       available: false,
-      code: denial.code === "demo-mode" ? "demo-mode" : "disabled",
+      code: "disabled",
       reason: denial.error,
     } satisfies AIStatus);
   }

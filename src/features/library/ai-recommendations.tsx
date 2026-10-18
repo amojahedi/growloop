@@ -18,9 +18,8 @@ interface AIRecommendationsProps {
 }
 
 const DESCRIPTIONS: Record<AIProviderKind, string> = {
-  "own-key": "Suggested by Claude, using your API key",
+  key: "Suggested by Claude, using your API key",
   local: "Suggested by Claude Code running on your machine",
-  off: "Suggested by Claude",
 };
 
 /** "Recommend materials" via the active AI provider (L-6). Degrades to a setup hint when AI is off. */
@@ -30,7 +29,7 @@ export function AIRecommendations({ context, existingTitles, skillIds = [] }: AI
   const [saved, setSaved] = useState<ReadonlySet<string>>(new Set());
 
   return (
-    <Section title="AI recommendations" description={DESCRIPTIONS[provider]}>
+    <Section title="AI recommendations" description={provider ? DESCRIPTIONS[provider] : "Suggested by Claude"}>
       {status.state === "checking" && <p className="text-sm text-muted-foreground">Checking AI…</p>}
 
       {status.state === "unavailable" && (

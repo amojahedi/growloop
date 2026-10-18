@@ -1,15 +1,17 @@
 import { z } from "zod";
-import { MATERIAL_COSTS, MATERIAL_LEVELS, MATERIAL_TYPES } from "@/lib/domain/types";
+import { PLAN_DRAFT_LIMITS, type PlanDraft } from "@/lib/domain/plan-draft";
+import { GOAL_IDS, KEY_RESULT_TYPES, MATERIAL_COSTS, MATERIAL_LEVELS, MATERIAL_TYPES, ROLE_IDS } from "@/lib/domain/types";
 
 /**
- * Request and response contracts for the local AI features. Shared by the
- * route handlers (server) and `useAI()` (client); contains no server code.
+ * Request and response contracts for the AI features. Shared by the local
+ * route handlers (server), the own-key provider and `useAI()` (browser);
+ * contains no server code.
  */
 
 // --- Status ---------------------------------------------------------------------
 
-/** "disabled": the server isn't reached via localhost, so AI is off (e.g. a hosted deployment). */
-export const aiUnavailableCodes = ["demo-mode", "disabled", "not-installed", "not-signed-in", "error"] as const;
+/** "disabled": the server isn't reached via localhost, so Claude Code can't be used (e.g. a hosted deployment). */
+export const aiUnavailableCodes = ["disabled", "not-installed", "not-signed-in", "error"] as const;
 export type AIUnavailableCode = (typeof aiUnavailableCodes)[number];
 
 export const aiStatusSchema = z.object({
@@ -157,32 +159,81 @@ export function restrictDraftSkills(draft: MaterialDraft, skills: readonly { id:
   return { ...draft, skillIds: skills.map((skill) => skill.id).filter((id) => chosen.has(id)) };
 }
 
-// --- Draft OKRs (OKR wizard) -----------------------------------------------------
+// --- Draft plan (OKR wizard) -------------------------------------------------------
+
+/** The wizard waits this long for Claude before offering the quick draft (okrs-and-wizard.md §States). */
+export const DRAFT_PLAN_TIMEOUT_MS = 60_000;
+
+const quarterKey = z.string().regex(/^\d{4}-Q[1-4]$/, "Expected a quarter key like 2026-Q4");
+const level = z.number().int().min(1).max(5);
+
+export const draftPlanRequestSchema = z.object({
+  role: z.enum(ROLE_IDS),
+  goal: z.enum(GOAL_IDS),
+  goalText: clampedText(PLAN_DRAFT_LIMITS.goalText).optional(),
+  /** Focus skills in pick order. */
+  skills: z
+    .array(z.object({ id: requiredText(100), name: requiredText(100), current: level, target: level }))
+    .min(1)
+    .max(PLAN_DRAFT_LIMITS.maxSkills),
+  /** Quarters to draft for (one objective each), earliest first. */
+  quarters: z.array(quarterKey).min(1).max(8),
+  currentQuarter: quarterKey,
+  weeksLeftInCurrentQuarter: z.number().min(0).max(14),
+  /** Materials a key result may target: up to 12 per focus skill, in recommended order. */
+  candidates: z
+    .array(
+      z.object({
+        id: requiredText(200),
+        skillId: requiredText(100),
+        title: requiredText(300),
+        type: z.enum(MATERIAL_TYPES),
+        level: z.enum(MATERIAL_LEVELS),
+        hours: z.number().positive().max(1000).optional(),
+      }),
+    )
+    .max(PLAN_DRAFT_LIMITS.candidatesPerSkill * PLAN_DRAFT_LIMITS.maxSkills),
+  /** Pasted LinkedIn or CV text: used once for this draft, never stored. */
+  context: clampedText(PLAN_DRAFT_LIMITS.context).optional(),
+});
+export type DraftPlanRequest = z.input<typeof draftPlanRequestSchema>;
+export type DraftPlanInput = z.output<typeof draftPlanRequestSchema>;
+
+/** Trims and cuts text to a limit; anything unusable becomes "" for the repair step to regenerate. */
+const draftText = (max: number) =>
+  z
+    .string()
+    .transform((value) => value.trim().slice(0, max))
+    .catch("");
 
 /**
- * Provisional contract for the upcoming OKR wizard (PRD §6: fixed questions →
- * 3–4 objectives with 2–3 skill-linked key results). The wizard owns this
- * shape and may refine it, adding zod schemas and a prompt in `prompts.ts`.
+ * Claude's draft, validated loosely: shape and types are checked here, while
+ * the rules (scope, caps, known skills and materials, 2–3 KRs) are enforced by
+ * the shared repair step before review, for both drafting engines.
  */
-export interface DraftOkrsRequest {
-  /** The wizard's fixed questions with the user's answers. */
-  answers: { question: string; answer: string }[];
-  /** The user's skills; key results may only link to these ids. */
-  skills: { id: string; name: string }[];
-}
-
-export interface OkrDraft {
-  objectives: {
-    title: string;
-    description?: string;
-    keyResults: { title: string; skillIds: string[] }[];
-  }[];
-}
+export const planDraftSchema = z.object({
+  rationale: draftText(PLAN_DRAFT_LIMITS.rationale),
+  objectives: z.array(
+    z.object({
+      quarter: z.string().trim(),
+      title: draftText(PLAN_DRAFT_LIMITS.objectiveTitle),
+      why: draftText(PLAN_DRAFT_LIMITS.why),
+      keyResults: z.array(
+        z.object({
+          skillId: z.string().trim(),
+          type: z.enum(KEY_RESULT_TYPES),
+          materialId: optional(z.string().trim().min(1)),
+          count: optional(z.number()),
+          title: draftText(PLAN_DRAFT_LIMITS.keyResultTitle),
+        }),
+      ),
+    }),
+  ),
+}) satisfies z.ZodType<PlanDraft, unknown>;
 
 // --- Errors -----------------------------------------------------------------------
 
 export const aiErrorCodes = [
-  "demo-mode",
   "forbidden",
   "bad-request",
   "unsupported-media-type",

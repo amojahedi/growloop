@@ -1,7 +1,6 @@
 import "server-only";
 
 import { z } from "zod";
-import { isDemoMode } from "@/lib/env";
 import { ClaudeCliError } from "./errors";
 import type { AIErrorCode, AIErrorResponse } from "./schemas";
 
@@ -10,14 +9,12 @@ import type { AIErrorCode, AIErrorResponse } from "./schemas";
  *
  * The AI endpoints spend the user's Claude subscription by spawning a local
  * process, so access is denied by default. They only answer when:
- *  - the app is not in demo mode, and
  *  - the request reached the server through a loopback host name (this also
  *    defeats DNS-rebinding and LAN access), and
  *  - for POSTs, the browser's Origin is this same server and the body is JSON.
  */
 
 const STATUS_BY_CODE: Record<AIErrorCode, number> = {
-  "demo-mode": 403,
   forbidden: 403,
   "bad-request": 400,
   "unsupported-media-type": 415,
@@ -67,18 +64,12 @@ export function isJsonContentType(contentType: string | null): boolean {
 }
 
 export interface AccessDenial {
-  code: Extract<AIErrorCode, "demo-mode" | "forbidden">;
+  code: Extract<AIErrorCode, "forbidden">;
   error: string;
 }
 
 /** Server-side gate for every AI endpoint. Returns why access is denied, or null. */
 export function aiAccessDenial(request: Request): AccessDenial | null {
-  if (isDemoMode) {
-    return {
-      code: "demo-mode",
-      error: "AI features run on your own machine with Claude Code. Run Growloop locally to enable them.",
-    };
-  }
   if (!isLoopbackHost(request.headers.get("host"))) {
     return {
       code: "forbidden",

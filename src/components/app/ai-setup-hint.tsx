@@ -33,8 +33,8 @@ export function AISetupHint({
   children: React.ReactNode;
   className?: string;
 }) {
-  // "demo-mode" / "disabled": not on localhost, so the CLI can't be used here at all.
-  const hosted = status.code === "demo-mode" || status.code === "disabled";
+  // "disabled": not on localhost, so the CLI can't be used here at all.
+  const hosted = status.code === "disabled";
 
   return (
     <div className={cn("flex flex-col gap-1 text-sm text-muted-foreground", className)}>

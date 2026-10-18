@@ -29,7 +29,7 @@ Open http://localhost:3000.
 
 ### How AI works (optional)
 
-AI features (recommendations, "Add your own" drafts, summary feedback) are optional; everything else works without them. Growloop never uses a key of its own. It picks the first of these that's available:
+AI features (drafting your yearly plan, recommendations, "Add your own" drafts, summary feedback) are optional; everything else works without them. Growloop never uses a key of its own. It picks the first of these that's available:
 
 1. **Your own Claude API key** (works online and locally). Paste a key in **Settings → Claude**. It's stored only in your browser, under its own entry (never in exported JSON), and sent only to Anthropic: the browser calls the Claude API directly, so the Growloop server never sees it. **Forget key** removes it. Anyone with access to your browser profile could read it, so don't save it on shared computers. See [ADR 008](docs/decisions/008-hosted-app-with-own-key.md).
 2. **Claude Code on your computer** (local only). When Growloop runs on `localhost`, it can use your installed [Claude Code](https://docs.claude.com/en/docs/claude-code) CLI in headless mode (`claude -p`) with your own subscription. Install it and sign in once (`claude`), then restart the dev server. These endpoints refuse requests from any other host, so they're always off on a hosted deployment. See [ADR 004](docs/decisions/004-ai-via-local-claude-code.md).
@@ -43,13 +43,12 @@ Copy `.env.example` to `.env.local`. All variables are optional:
 
 | Variable | Purpose |
 |---|---|
-| `NEXT_PUBLIC_DEMO_MODE` | `true` seeds sample data on first load and disables the local Claude Code bridge (hosted demo). Visitors can still use their own key. |
 | `CLAUDE_CLI_PATH` | Path to `claude` if it isn't on the server's `PATH`. |
 | `GROWLOOP_CLAUDE_MODEL` | Model passed to `claude --model` for local Claude Code. (With your own key, Growloop uses Claude Opus 5.5.) |
 
 ## Deploying
 
-Growloop deploys to Vercel as-is: import the repository in Vercel and deploy. No environment variables are required. There are no server-side secrets: data stays in each visitor's browser, and AI uses each visitor's own Claude API key, entered in Settings. The local Claude Code endpoints stay disabled on the deployed site.
+Growloop deploys to Vercel as-is: import the repository in Vercel and deploy. No environment variables are required, and there is one build for hosted and local use. There are no server-side secrets: data stays in each visitor's browser, and AI uses each visitor's own Claude API key, entered in Settings. The local Claude Code endpoints stay disabled on the deployed site. Visitors can look around with **Try sample data**, a separate sample workspace that never touches their own data ([ADR 009](docs/decisions/009-sample-mode-and-device-preferences.md)).
 
 ## Development
 
@@ -62,13 +61,24 @@ npm test            # Vitest (npm run test:watch for watch mode)
 npm run build       # production build
 ```
 
+**Simulating month, quarter and year ends.** Development builds (`npm run dev`) read a clock override from the browser, so the month-end review, quarter close and year archive can be tried without waiting. In the browser console:
+
+```js
+localStorage.setItem("growloop:dev-now", "2027-01-01")   // that day, at the current time
+localStorage.removeItem("growloop:dev-now")              // back to the real clock
+```
+
+Reload after changing it. Production builds ignore the override.
+
+**Browser storage.** `growloop:data` holds your workspace (exported and migrated between schema versions), `growloop:sample` the sample workspace while sample mode is on, `growloop:device` per-browser preferences (first-launch screen, tour, sample mode) and `growloop:claude-key` your Claude API key. Only `growloop:data` is ever exported.
+
 | Path | Contents |
 |---|---|
-| `src/lib/domain/` | Pure, framework-free domain logic (dates, board, OKRs, dashboard selectors, rollover) and the shared types. |
-| `src/lib/store/` | Zustand store persisted to localStorage, zod schema, migrations, JSON export/import. |
-| `src/lib/ai/` | AI providers (own key in the browser, local Claude Code CLI bridge), prompts, response schemas, key storage and the `useAI()` hook. |
+| `src/lib/domain/` | Pure, framework-free domain logic (dates, board, OKRs, notes, month-end review, dashboard selectors) and the shared types. |
+| `src/lib/store/` | Zustand store persisted to localStorage, zod schema, migrations, JSON export/import, sample mode and device preferences. |
+| `src/lib/ai/` | Claude providers (own key in the browser, local Claude Code CLI bridge), prompts (`prompts/`, one per feature), response schemas, key storage, the shared status (`useAIStatus()`) and the `useAI()` hook. |
 | `src/styles/` | Design tokens: shared contract plus the Linen theme (light and dark). |
-| `src/data/` | Curated skills, library and demo data. |
+| `src/data/` | Curated skills, library and sample data. |
 | `src/features/` | Page-level feature components; `src/app/` holds routes. |
 
 ## License
