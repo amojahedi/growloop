@@ -14,6 +14,7 @@ import { KeyResultLink } from "./key-result-link";
  *  - **Add** (primary) puts it in To Do on the current month's board and saves it to the library.
  *  - **Save to library** (secondary) keeps it for later.
  * After Add, an optional key-result link and Undo are offered in place.
+ * Once it is on the board, "On board" opens its card there (`/board?item=<id>`).
  */
 export function ResourceActions({ material }: { material: Material }) {
   const { currentMonth } = useMonthNavigation();
@@ -47,7 +48,10 @@ export function ResourceActions({ material }: { material: Material }) {
       <div className="flex flex-wrap items-center gap-2">
         {planned ? (
           <Button asChild variant="outline" size="sm">
-            <Link href="/board" aria-label={`"${material.title}" is on your ${month} board. Open board`}>
+            <Link
+              href={`/board?item=${encodeURIComponent(planned.id)}`}
+              aria-label={`"${material.title}" is on your ${month} board. Open the card`}
+            >
               <CheckIcon aria-hidden />
               On board
             </Link>
