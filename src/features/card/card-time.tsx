@@ -75,10 +75,10 @@ function EstimateField({ item, placeholder }: { item: PlanItem; placeholder?: nu
       <div className="flex items-center gap-2">
         <Input
           id={id}
-          type="number"
+          // Text, not number: a number field drops "1,5", and parseHours accepts a decimal comma.
+          type="text"
           inputMode="decimal"
-          min="0"
-          step="0.5"
+          autoComplete="off"
           className="w-28"
           placeholder={placeholder === undefined ? undefined : String(placeholder)}
           value={estimate.draft}
@@ -143,10 +143,9 @@ function LogTimeForm({ itemId }: { itemId: string }) {
           </label>
           <Input
             id={hoursId}
-            type="number"
+            type="text"
             inputMode="decimal"
-            min="0"
-            step="0.25"
+            autoComplete="off"
             className="w-24"
             value={hours}
             aria-invalid={error ? true : undefined}

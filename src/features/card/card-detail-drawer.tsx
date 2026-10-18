@@ -36,6 +36,12 @@ export interface CardDetailDrawerProps {
   readOnly?: boolean;
   /** Opens with that field focused, e.g. "summary" for the board's "Write summary" nudge. */
   focus?: "summary" | "notes";
+  /**
+   * "Write summary" on the summary toast after a move to Done from the drawer.
+   * The board reopens the card with `focus=summary`; while this card is still
+   * open the drawer focuses its summary itself.
+   */
+  onWriteSummary?: (itemId: ID) => void;
 }
 
 /**
@@ -46,7 +52,7 @@ export interface CardDetailDrawerProps {
  * Standalone: the board renders it for `?item=<id>` and owns the URL and the
  * focus return to the card; the drawer reads and writes the store itself.
  */
-export function CardDetailDrawer({ itemId, onClose, readOnly, focus }: CardDetailDrawerProps) {
+export function CardDetailDrawer({ itemId, onClose, readOnly, focus, onWriteSummary }: CardDetailDrawerProps) {
   const item = usePlanItems().find((candidate) => candidate.id === itemId);
   // Inside <DataGate> today comes from context; rendered elsewhere it falls back to the clock.
   const clockDay = useClockDay();
@@ -57,7 +63,16 @@ export function CardDetailDrawer({ itemId, onClose, readOnly, focus }: CardDetai
     <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
       {item && today && (
         <TodayContext value={today}>
-          <CardDrawerContent item={item} today={today} forcedReadOnly={readOnly} focus={focus} onClose={onClose} />
+          {/* Keyed by card: switching cards must not carry typing, feedback or dialogs over to the next one. */}
+          <CardDrawerContent
+            key={item.id}
+            item={item}
+            today={today}
+            forcedReadOnly={readOnly}
+            focus={focus}
+            onClose={onClose}
+            onWriteSummary={onWriteSummary}
+          />
         </TodayContext>
       )}
     </Sheet>
@@ -70,12 +85,14 @@ function CardDrawerContent({
   forcedReadOnly,
   focus,
   onClose,
+  onWriteSummary,
 }: {
   item: PlanItem;
   today: string;
   forcedReadOnly?: boolean;
   focus?: "summary" | "notes";
   onClose: () => void;
+  onWriteSummary?: (itemId: ID) => void;
 }) {
   const material = useMaterialMap().get(item.materialId);
   const archivedYears = useArchivedYears();
@@ -85,7 +102,10 @@ function CardDrawerContent({
   const summaryRef = useRef<HTMLTextAreaElement>(null);
   const notesRef = useRef<HTMLTextAreaElement>(null);
   // Moving to Done here follows up like the board: "Did you earn…?" and the summary toast.
-  const followUps = useDoneFollowUps({ onWriteSummary: () => summaryRef.current?.focus() });
+  // The toast outlives this content: once it is gone (closed, or another card), hand over to the board.
+  const followUps = useDoneFollowUps({
+    onWriteSummary: (id) => (summaryRef.current?.isConnected ? summaryRef.current.focus() : onWriteSummary?.(id)),
+  });
   const title = material?.title ?? "Removed material";
   const TypeIcon = material ? MATERIAL_TYPE_ICONS[material.type] : undefined;
   const carried = carriedOverLabel(item);
@@ -140,8 +160,8 @@ function CardDrawerContent({
         </div>
 
         <CardTasks item={item} readOnly={readOnly} />
-        <CardSummary item={item} material={material} materialTitle={title} textareaRef={summaryRef} />
-        <CardNotes item={item} textareaRef={notesRef} />
+        <CardSummary item={item} material={material} materialTitle={title} readOnly={readOnly} textareaRef={summaryRef} />
+        <CardNotes item={item} readOnly={readOnly} textareaRef={notesRef} />
         <CardReminder item={item} readOnly={readOnly} />
 
         <div className="flex flex-col gap-4">
@@ -171,7 +191,7 @@ function StatusControl({
   item: PlanItem;
   currentMonth: string;
   readOnly: boolean;
-  onMoved: (before: PlanItem, status: BoardStatus) => void;
+  onMoved: (before: PlanItem, status: BoardStatus) => unknown;
 }) {
   const { movePlanItem } = useActions();
   const id = useId();

@@ -71,14 +71,31 @@ function ReminderFields({ item, onDone }: { item: PlanItem; onDone: () => void }
   const today = useToday();
   const dateId = useId();
   const noteId = useId();
+  const hintId = useId();
+  const dateRef = useRef<HTMLInputElement>(null);
   const [date, setDate] = useState(item.reminder?.date ?? "");
+  const [asked, setAsked] = useState(false);
   const validDate = isDayKey(date) && date >= today ? date : undefined;
 
-  // The note autosaves once there is a date to attach it to.
+  // The note is stored with a date; without one it stays pending and "Saved" doesn't show.
   const [initialNote] = useState(item.reminder?.note ?? "");
   const note = useAutosave(initialNote, (text) => {
-    if (validDate) setReminder(item.id, { date: validDate, note: text.trim() });
+    if (!validDate) return false;
+    setReminder(item.id, { date: validDate, note: text.trim() });
   });
+  const needsDate = !validDate && note.draft.trim() !== "";
+  const hint = date !== "" && !validDate ? "Pick today or a later date." : needsDate ? "Pick a date" : "";
+
+  /** Done, Enter and Escape close the fields, unless that would drop a note that has no date yet. */
+  const finish = () => {
+    note.flush();
+    if (needsDate) {
+      setAsked(true);
+      dateRef.current?.focus();
+      return;
+    }
+    onDone();
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -89,18 +106,21 @@ function ReminderFields({ item, onDone }: { item: PlanItem; onDone: () => void }
           </label>
           <Input
             id={dateId}
+            ref={dateRef}
             {...ESCAPE_LOCAL}
             type="date"
             min={today}
             value={date}
             autoFocus
             required
+            aria-invalid={(asked && needsDate) || (date !== "" && !validDate) || undefined}
+            aria-describedby={hintId}
             onChange={(event) => {
               const next = event.target.value;
               setDate(next);
               if (isDayKey(next) && next >= today) setReminder(item.id, { date: next, note: note.draft.trim() });
             }}
-            onKeyDown={(event) => event.key === "Escape" && onDone()}
+            onKeyDown={(event) => event.key === "Escape" && finish()}
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -116,26 +136,18 @@ function ReminderFields({ item, onDone }: { item: PlanItem; onDone: () => void }
             onChange={(event) => note.change(event.target.value)}
             onBlur={note.flush}
             onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === "Escape") {
-                note.flush();
-                onDone();
-              }
+              if (event.key === "Enter" || event.key === "Escape") finish();
             }}
           />
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            note.flush();
-            onDone();
-          }}
-        >
+        <Button variant="outline" size="sm" onClick={finish}>
           Done
         </Button>
-        {date && !validDate && <p className="text-xs text-destructive">Pick today or a later date.</p>}
+        <p id={hintId} className={asked && needsDate ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>
+          {hint}
+        </p>
         <SavedHint saved={note.saved} />
       </div>
     </div>

@@ -468,6 +468,107 @@ describe("CardDetailDrawer", () => {
     expect(findCardNote(data().notes, id, "summary")?.body).toBe("Still mine");
   });
 
+  it("switching cards while open saves pending typing to the first card and starts the next one fresh", async () => {
+    const first = addCard();
+    const second = addCard(certification.id);
+    fakeAI.refine.mockResolvedValue({ strengths: ["Clear"], gaps: [], suggestions: [], improvedVersion: "Shorter." });
+    const { rerender, onClose } = renderDrawer(first);
+    const show = (id: string) =>
+      rerender(
+        <TodayContext value={TODAY}>
+          <CardDetailDrawer itemId={id} onClose={onClose} />
+          <Toaster />
+        </TodayContext>,
+      );
+
+    type(summaryField(), "Output is not the same as outcome.");
+    await act(async () => fireEvent.click(inDialog().getByRole("button", { name: "Get feedback from Claude" })));
+    expect(inDialog().getByRole("region", { name: "Feedback from Claude" })).toBeInTheDocument();
+    // Typing still inside the debounce window when the card changes.
+    fireEvent.change(inDialog().getByRole("textbox", { name: "Notes" }), { target: { value: "Pending note" } });
+
+    show(second);
+    expect(screen.getByRole("dialog", { name: certification.title })).toBeInTheDocument();
+    expect(findCardNote(data().notes, first, "item_note")?.body).toBe("Pending note");
+    expect(findCardNote(data().notes, second, "item_note")).toBeUndefined();
+    expect(inDialog().getByRole("textbox", { name: "Notes" })).toHaveValue("");
+    expect(summaryField()).toHaveValue("");
+    expect(inDialog().queryByRole("region", { name: "Feedback from Claude" })).not.toBeInTheDocument();
+  });
+
+  it("hands Write summary to the board once the drawer has closed", () => {
+    const id = addCard(book.id, "2026-10", "in_progress");
+    const onWriteSummary = vi.fn();
+    const { rerender, onClose } = renderDrawer(id, { onWriteSummary });
+    fireEvent.change(inDialog().getByRole("combobox", { name: "Status" }), { target: { value: "done" } });
+    rerender(
+      <TodayContext value={TODAY}>
+        <CardDetailDrawer itemId={null} onClose={onClose} onWriteSummary={onWriteSummary} />
+        <Toaster />
+      </TodayContext>,
+    );
+    const toaster = document.querySelector<HTMLElement>("[data-toaster]")!;
+    fireEvent.click(within(toaster).getByRole("button", { name: "Write summary" }));
+    expect(onWriteSummary).toHaveBeenCalledWith(id);
+  });
+
+  it("doesn't tick a read-only card's Summarize task with its first summary", () => {
+    const id = addCard(book.id, "2026-09", "in_progress");
+    renderDrawer(id);
+    type(summaryField(), "Written after the month ended");
+    expect(findCardNote(data().notes, id, "summary")?.body).toBe("Written after the month ended");
+    expect(summaryTask(item(id))?.done).toBe(false);
+  });
+
+  it("undoing Use this version restores only the text, keeping a review date set since", async () => {
+    const id = addCard();
+    fakeAI.refine.mockResolvedValue({ strengths: [], gaps: [], suggestions: ["Shorter"], improvedVersion: "Measure outcomes." });
+    renderDrawer(id);
+    type(summaryField(), "Output is not the same as outcome.");
+    await act(async () => fireEvent.click(inDialog().getByRole("button", { name: "Get feedback from Claude" })));
+    fireEvent.click(inDialog().getByRole("button", { name: "Use this version" }));
+    const noteId = findCardNote(data().notes, id, "summary")!.id;
+    act(() => store().setNoteReview(noteId, "2026-10-30"));
+
+    const toaster = document.querySelector<HTMLElement>("[data-toaster]")!;
+    fireEvent.click(within(toaster).getByRole("button", { name: "Undo" }));
+    expect(findCardNote(data().notes, id, "summary")).toMatchObject({ body: "Output is not the same as outcome.", reviewAt: "2026-10-30" });
+    expect(findCardNote(data().notes, id, "summary")?.refinedAt).toBeUndefined();
+  });
+
+  it("keeps a reminder note without a date pending: no Saved, a Pick a date hint, and Done doesn't drop it", () => {
+    const id = addCard();
+    renderDrawer(id);
+    fireEvent.click(inDialog().getByRole("button", { name: "Add reminder" }));
+    const note = inDialog().getByLabelText("Note (optional)");
+    fireEvent.change(note, { target: { value: "Bring outcome ideas" } });
+    fireEvent.blur(note);
+    expect(item(id).reminder).toBeUndefined();
+    expect(inDialog().getAllByRole("status").some((status) => status.textContent === "Saved")).toBe(false);
+    expect(inDialog().getByText("Pick a date")).toBeInTheDocument();
+
+    fireEvent.click(inDialog().getByRole("button", { name: "Done" }));
+    const date = inDialog().getByLabelText("Date");
+    expect(document.activeElement).toBe(date);
+    expect(date).toHaveAttribute("aria-invalid", "true");
+
+    fireEvent.change(date, { target: { value: "2026-10-20" } });
+    expect(item(id).reminder).toEqual({ date: "2026-10-20", note: "Bring outcome ideas" });
+    fireEvent.click(inDialog().getByRole("button", { name: "Done" }));
+    expect(inDialog().getByText("Oct 20")).toBeInTheDocument();
+  });
+
+  it("takes a decimal comma in the estimate", () => {
+    const id = addCard();
+    renderDrawer(id);
+    fireEvent.click(inDialog().getByRole("button", { name: "Time (optional)" }));
+    const estimate = inDialog().getByLabelText("Estimate (hours)");
+    expect(estimate).toHaveAttribute("type", "text");
+    fireEvent.change(estimate, { target: { value: "1,5" } });
+    fireEvent.blur(estimate);
+    expect(item(id).estimatedHours).toBe(1.5);
+  });
+
   it("opens with the summary or the notes focused", () => {
     const id = addCard();
     const { unmount } = renderDrawer(id, { focus: "summary" });
