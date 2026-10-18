@@ -14,8 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { toast } from "@/components/ui/toast";
-import { useSampleMode } from "@/lib/store/device";
+import { dismissToast, toast } from "@/components/ui/toast";
+import { isSampleModeOn, useSampleMode } from "@/lib/store/device";
 import { useActions } from "@/lib/store/hooks";
 import { useDataTransfer } from "@/lib/store/use-data-transfer";
 
@@ -35,6 +35,15 @@ export function DataSettings() {
   const [pendingImport, setPendingImport] = useState<{ json: string } | null>(null);
   const [eraseOpen, setEraseOpen] = useState(false);
 
+  // Sample mode switched (here, from the banner or in another tab): a pending
+  // import or erase was asked about another workspace, so close those dialogs.
+  const [seenSampleMode, setSeenSampleMode] = useState(sampleMode);
+  if (seenSampleMode !== sampleMode) {
+    setSeenSampleMode(sampleMode);
+    setPendingImport(null);
+    setEraseOpen(false);
+  }
+
   const onFile = async (file: File | undefined) => {
     if (!file) return;
     setImportError(undefined);
@@ -45,8 +54,10 @@ export function DataSettings() {
 
   const replace = () => {
     if (!pendingImport) return;
-    const result = applyImport(pendingImport.json);
     setPendingImport(null);
+    // Checked again at apply time: imports never land in the sample workspace.
+    if (isSampleModeOn()) return;
+    const result = applyImport(pendingImport.json);
     if (result.ok) toast({ message: "Import complete." });
     else setImportError(result.error);
   };
@@ -56,6 +67,8 @@ export function DataSettings() {
       toast({ message: "Couldn't load the sample. Try again." });
       return;
     }
+    // An Undo toast from the workspace that was just swapped out must not act on this one.
+    dismissToast();
     router.push("/");
   };
 
@@ -67,6 +80,7 @@ export function DataSettings() {
 
   const erase = () => {
     eraseEverything();
+    dismissToast();
     setEraseOpen(false);
     // The first-launch screen shows again on the Dashboard.
     router.push("/");

@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { ThemeProvider } from "next-themes";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { dismissToast, Toaster } from "@/components/ui/toast";
+import { dismissToast, toast, Toaster } from "@/components/ui/toast";
 import { API_KEY_STORAGE_KEY, forgetApiKey } from "@/lib/ai/providers/key-storage";
 import { STORAGE_KEY, useAppStore } from "@/lib/store/app-store";
 import { DEVICE_STORAGE_KEY, updateDevicePreferences } from "@/lib/store/device";
@@ -155,6 +155,34 @@ describe("SettingsView", () => {
     expect(confirm).not.toHaveBeenCalled();
   });
 
+  it("closes the replace dialog when sample mode switches on meanwhile, without importing", async () => {
+    const imported = { ...emptyWorkspace(), planItems: [makeItem()] };
+    renderSettings();
+    await chooseFile(jsonFile(serializeWorkspace(imported, "2026-10-01T09:00:00.000Z")));
+    expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+
+    // E.g. sample data entered in another tab.
+    act(() => updateDevicePreferences({ sampleMode: true }));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
+    act(() => updateDevicePreferences({ sampleMode: undefined }));
+    // Back in own data, the stale dialog doesn't come back.
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(useAppStore.getState().data.planItems).toHaveLength(0);
+  });
+
+  it("drops a pending Undo toast when the workspace is swapped", () => {
+    renderSettings();
+    act(() => toast({ message: "Deleted Negotiation", action: { label: "Undo", onClick: () => {} } }));
+    expect(screen.getByRole("button", { name: "Undo" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Try sample data" }));
+    expect(screen.queryByRole("button", { name: "Undo" })).not.toBeInTheDocument();
+
+    act(() => toast({ message: "Deleted Negotiation", action: { label: "Undo", onClick: () => {} } }));
+    fireEvent.click(screen.getByRole("button", { name: "Back to my data" }));
+    expect(screen.queryByRole("button", { name: "Undo" })).not.toBeInTheDocument();
+  });
+
   it("shows the parser's reason for a bad file, without a dialog", async () => {
     renderSettings();
     await chooseFile(jsonFile("{ not json"));
@@ -177,8 +205,10 @@ describe("SettingsView", () => {
     // Cancel is first, so Enter on open doesn't erase.
     await waitFor(() => expect(within(dialog).getByRole("button", { name: "Cancel" })).toHaveFocus());
 
+    act(() => toast({ message: "Removed from October", action: { label: "Undo", onClick: () => {} } }));
     fireEvent.click(within(dialog).getByRole("button", { name: "Erase everything" }));
     expect(useAppStore.getState().data.planItems).toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "Undo" })).not.toBeInTheDocument();
     expect(localStorage.getItem(API_KEY_STORAGE_KEY)).toBeNull();
     expect(localStorage.getItem(STORAGE_KEY) ?? "").not.toContain(item.id);
     expect(push).toHaveBeenCalledWith("/");
