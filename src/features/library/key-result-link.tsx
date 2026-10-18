@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { quarterOf } from "@/lib/domain/dates";
-import { objectivesForQuarter } from "@/lib/domain/okrs";
+import { activeObjectives, findKeyResult, objectivesForQuarter } from "@/lib/domain/okrs";
 import type { ID, PlanItem } from "@/lib/domain/types";
 import { useActions, useMonthNavigation, useObjectives } from "@/lib/store/hooks";
 
@@ -26,15 +26,16 @@ export function KeyResultLink({ item, materialTitle }: { item: PlanItem; materia
   const { updatePlanItem } = useActions();
 
   const options = useMemo(() => {
-    const matches = (skillIds: ID[]) => skillIds.some((id) => item.skillIds.includes(id));
-    return objectivesForQuarter(objectives, quarterOf(currentMonth))
+    const matches = (skillId: ID) => item.skillIds.includes(skillId);
+    return activeObjectives(objectivesForQuarter(objectives, quarterOf(currentMonth)))
       .flatMap((objective) =>
-        objective.keyResults.map((keyResult) => ({ keyResult, objective, relevant: matches(objective.skillIds) })),
+        objective.keyResults.map((keyResult) => ({ keyResult, objective, relevant: matches(keyResult.skillId) })),
       )
       .sort((a, b) => Number(b.relevant) - Number(a.relevant));
   }, [objectives, currentMonth, item.skillIds]);
 
-  const linked = options.find((option) => option.keyResult.id === item.keyResultId);
+  // Auto-linked cards may count toward a KR in a later quarter.
+  const linked = item.keyResultId ? findKeyResult(objectives, item.keyResultId) : undefined;
   if (linked) {
     return (
       <span className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">

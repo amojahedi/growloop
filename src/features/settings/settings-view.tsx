@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { DataGate } from "@/components/app/data-gate";
 import { Section } from "@/components/app/section";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
+import { useSampleMode } from "@/lib/store/device";
 import { useActions } from "@/lib/store/hooks";
 import { useDataTransfer } from "@/lib/store/use-data-transfer";
 import { ClaudeSettings } from "./claude-settings";
@@ -20,9 +22,10 @@ export function SettingsView() {
   );
 }
 
-/** Export / import / reset. Data never leaves this browser unless exported. */
+/** Export / import / sample data / erase. Data never leaves this browser unless exported. */
 function DataSettings() {
-  const { resetToDemo, resetToEmpty } = useActions();
+  const { enterSampleMode, exitSampleMode, eraseEverything } = useActions();
+  const sampleMode = useSampleMode();
   const { downloadExport, importFile } = useDataTransfer();
   const fileInput = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string>();
@@ -39,24 +42,48 @@ function DataSettings() {
         <Button variant="outline" size="sm" onClick={downloadExport}>
           Export JSON
         </Button>
-        <Button variant="outline" size="sm" onClick={() => fileInput.current?.click()}>
+        <Button variant="outline" size="sm" disabled={sampleMode} onClick={() => fileInput.current?.click()}>
           Import JSON…
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => window.confirm("Replace all data with the sample workspace?") && resetToDemo()}
-        >
-          Load sample data
-        </Button>
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={() => window.confirm("Delete all plans, notes and objectives? This cannot be undone.") && resetToEmpty()}
-        >
-          Start fresh
-        </Button>
+        {sampleMode ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const { ownWorkspaceEmpty } = exitSampleMode();
+              toast({ message: ownWorkspaceEmpty ? "Fresh start. It's all yours." : "Back to your own data." });
+            }}
+          >
+            Back to my data
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (!enterSampleMode()) toast({ message: "Couldn't load the sample. Try again." });
+            }}
+          >
+            Try sample data
+          </Button>
+        )}
+        {!sampleMode && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() =>
+              window.confirm(
+                "Erase everything on this device? This deletes your plans, notes, objectives, settings and saved Claude key from this browser. It can't be undone.",
+              ) && eraseEverything()
+            }
+          >
+            Erase everything
+          </Button>
+        )}
       </div>
+      <p className="mt-3 text-sm text-muted-foreground">
+        {sampleMode ? "Leave sample data to import." : "Your own data stays safe and comes back when you exit sample data."}
+      </p>
       {message && (
         <p className="mt-3 text-sm text-muted-foreground" role="status">
           {message}

@@ -5,7 +5,7 @@ import { Section } from "@/components/app/section";
 import { Button } from "@/components/ui/button";
 import { formatQuarter } from "@/lib/domain/dates";
 import { objectivesForQuarter } from "@/lib/domain/okrs";
-import { useActions, useMonthNavigation, useObjectives, usePlanItems } from "@/lib/store/hooks";
+import { useActions, useMonthNavigation, useObjectives, usePlanItems, useSkills } from "@/lib/store/hooks";
 import { ObjectiveProgressList } from "./objective-progress-list";
 
 /** Quarterly objectives and key results for the quarter of the viewed month (O-1..O-3). */
@@ -24,16 +24,21 @@ export function OkrsView() {
   );
 }
 
+/** Kept minimal until the wizard and the shared objective editor arrive: one count key result on a chosen skill. */
 function NewObjectiveForm() {
   const { addObjective } = useActions();
   const { quarter } = useMonthNavigation();
+  const skills = useSkills();
   const [title, setTitle] = useState("");
   const [keyResult, setKeyResult] = useState("");
+  const [skillId, setSkillId] = useState(skills[0]?.id ?? "");
+  const skill = skills.find((candidate) => candidate.id === skillId);
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!title.trim()) return;
-    addObjective({ quarter, title, keyResults: keyResult.trim() ? [{ title: keyResult }] : [] });
+    if (!title.trim() || !skill) return;
+    const keyResultTitle = keyResult.trim() || `Complete 3 ${skill.name} items`;
+    addObjective({ quarter, title, keyResults: [{ title: keyResultTitle, skillId: skill.id, type: "count", count: 3 }] });
     setTitle("");
     setKeyResult("");
   };
@@ -48,14 +53,26 @@ function NewObjectiveForm() {
           value={title}
           onChange={(event) => setTitle(event.target.value)}
         />
+        <select
+          aria-label="Skill"
+          className="rounded-md border bg-background px-2 py-1"
+          value={skillId}
+          onChange={(event) => setSkillId(event.target.value)}
+        >
+          {skills.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.name}
+            </option>
+          ))}
+        </select>
         <input
-          aria-label="First key result"
-          placeholder="First key result (optional)"
+          aria-label="Key result"
+          placeholder={skill ? `Key result (optional), e.g. Complete 3 ${skill.name} items` : "Key result (optional)"}
           className="rounded-md border bg-background px-2 py-1"
           value={keyResult}
           onChange={(event) => setKeyResult(event.target.value)}
         />
-        <Button type="submit" size="sm" className="self-start" disabled={!title.trim()}>
+        <Button type="submit" size="sm" className="self-start" disabled={!title.trim() || !skill}>
           Add objective
         </Button>
       </form>

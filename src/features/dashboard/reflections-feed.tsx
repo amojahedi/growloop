@@ -1,33 +1,41 @@
 "use client";
 
 import { EmptyHint, Section } from "@/components/app/section";
-import { latestReflections } from "@/lib/domain/dashboard";
+import { latestNotes } from "@/lib/domain/notes";
+import type { NoteKind } from "@/lib/domain/types";
 import { formatShortDate } from "@/lib/format";
-import { useMaterialMap, usePlanItems } from "@/lib/store/hooks";
+import { useMaterialMap, useNotes } from "@/lib/store/hooks";
 
-/** Latest summaries and notes (D-5). */
+const KIND_LABELS: Record<NoteKind, string> = { summary: "summary", item_note: "notes", free: "note" };
+
+/** Latest summaries and notes (D-5), read from the Notebook's notes. */
 export function ReflectionsFeed() {
-  const items = usePlanItems();
+  const notes = latestNotes(useNotes(), 5);
   const materials = useMaterialMap();
-  const reflections = latestReflections(items, 5);
 
   return (
     <Section title="Notes & summaries" description="Latest first" className="h-full">
-      {reflections.length === 0 ? (
+      {notes.length === 0 ? (
         <EmptyHint>Summaries you write in your own words will show up here.</EmptyHint>
       ) : (
         <ul className="flex flex-col gap-3">
-          {reflections.map((reflection) => (
-            <li key={`${reflection.itemId}-${reflection.kind}`} className="text-sm">
-              <p className="font-medium">
-                {materials.get(reflection.materialId)?.title ?? "Unknown material"}{" "}
-                <span className="font-normal text-muted-foreground">
-                  · {reflection.kind} · {formatShortDate(reflection.updatedAt)}
-                </span>
-              </p>
-              <p className="line-clamp-2 text-muted-foreground">{reflection.text}</p>
-            </li>
-          ))}
+          {notes.map((note) => {
+            const source =
+              note.kind === "free"
+                ? note.title?.trim() || "Untitled note"
+                : (materials.get(note.materialId ?? "")?.title ?? "Removed material");
+            return (
+              <li key={note.id} className="text-sm">
+                <p className="font-medium">
+                  {source}{" "}
+                  <span className="font-normal text-muted-foreground">
+                    · {KIND_LABELS[note.kind]} · {formatShortDate(note.updatedAt)}
+                  </span>
+                </p>
+                <p className="line-clamp-2 text-muted-foreground">{note.body}</p>
+              </li>
+            );
+          })}
         </ul>
       )}
     </Section>
