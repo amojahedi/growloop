@@ -11,7 +11,7 @@ import { ResourceActions } from "../library/resource-actions";
 import { BoardMonthSwitcher } from "./board-month-switcher";
 import { BoardView, SUMMARY_NUDGE } from "./board-view";
 
-vi.mock("next/navigation", () => import("./test-navigation"));
+vi.mock("next/navigation", () => import("./next-navigation.test-utils"));
 
 // The overlay is a visual copy of the card; without it dnd-kit measures the card itself,
 // which keeps the fake layout below simple.
@@ -336,6 +336,13 @@ describe("BoardView past months", () => {
     expect(within(menu).getAllByRole("menuitem").map((item) => item.textContent)).toEqual(["Open"]);
   });
 
+  it("opens a read-only card with Space as well as Enter", async () => {
+    renderBoard();
+    card(third.title).focus();
+    await press("Space");
+    expect(screen.getByRole("dialog", { name: third.title })).toBeInTheDocument();
+  });
+
   it("goes back to the current month from the banner", () => {
     renderBoard();
     fireEvent.click(screen.getByRole("button", { name: "Back to October" }));
@@ -493,6 +500,53 @@ describe("BoardView keyboard drag", () => {
     actions.focus();
     await press("Space", actions);
     expect(announcement() ?? "").not.toMatch(/Picked up/);
+  });
+});
+
+describe("BoardView drags only from the card itself", () => {
+  beforeEach(fakeLayout);
+
+  const pointer = { isPrimary: true, button: 0, pointerType: "mouse" };
+  // Whether a drag started: dnd-kit announced something (pick-up, then the slot it is over).
+  async function pointerDrag(target: Element) {
+    const before = announcement();
+    fireEvent.pointerDown(target, { ...pointer, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(document, { ...pointer, clientX: 110, clientY: 108 });
+    await settle();
+    const dragged = announcement() !== before;
+    fireEvent.pointerUp(document, { ...pointer, clientX: 110, clientY: 108 });
+    await settle();
+    return dragged;
+  }
+  async function slowTouch(target: Element) {
+    const before = announcement();
+    fireEvent.touchStart(target, { touches: [{ clientX: 100, clientY: 100 }] });
+    await act(() => new Promise((resolve) => setTimeout(resolve, 260)));
+    const dragged = announcement() !== before;
+    fireEvent.touchEnd(target, { touches: [], changedTouches: [{ clientX: 100, clientY: 100 }] });
+    await settle();
+    return dragged;
+  }
+
+  it("starts a pointer drag from the card (control for the tests below)", async () => {
+    renderBoard();
+    expect(await pointerDrag(card(first.title))).toBe(true);
+  });
+
+  it("doesn't start a drag from a press and move on a ⋯ menu item", async () => {
+    renderBoard();
+    const menu = openMenu(first.title);
+    expect(await pointerDrag(within(menu).getByRole("menuitem", { name: "Move to Done" }))).toBe(false);
+    expect(await pointerDrag(screen.getByRole("button", { name: `Actions for ${second.title}` }))).toBe(false);
+  });
+
+  it("doesn't start a drag from a slow touch on ⋯ or on Mark as earned", async () => {
+    state().addPlanItem(certification.id, "2026-10", { status: "done" });
+    renderBoard();
+    expect(await slowTouch(screen.getByRole("button", { name: `Actions for ${second.title}` }))).toBe(false);
+    expect(await slowTouch(screen.getByRole("button", { name: `Mark ${certification.title} as earned` }))).toBe(false);
+    // Control: the same touch on the card itself picks it up.
+    expect(await slowTouch(card(first.title))).toBe(true);
   });
 });
 

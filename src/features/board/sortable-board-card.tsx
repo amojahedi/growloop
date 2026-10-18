@@ -37,9 +37,9 @@ const HANDLE_CLASSES =
 const MENU_CLASSES =
   "absolute top-2.5 right-2.5 opacity-0 group-hover/card:opacity-100 group-focus-within/card:opacity-100 data-[state=open]:opacity-100 [@media(hover:none)]:opacity-100";
 
-/** Enter opens the card; Space stays the keyboard drag key. */
-const opensOnEnter = (onOpen: () => void) => (event: KeyboardEvent<HTMLDivElement>) => {
-  if (event.key === "Enter" && event.target === event.currentTarget) {
+/** Opens the card on these keys when the card itself has focus. Draggable cards keep Space for picking up. */
+const opensOn = (keys: readonly string[], onOpen: () => void) => (event: KeyboardEvent<HTMLDivElement>) => {
+  if (keys.includes(event.key) && event.target === event.currentTarget) {
     event.preventDefault();
     onOpen();
   }
@@ -49,8 +49,10 @@ const opensOnEnter = (onOpen: () => void) => (event: KeyboardEvent<HTMLDivElemen
  * A draggable board card (B-2). The card itself is the focusable drag handle
  * for the keyboard (Space picks it up) and opens the drawer on click or Enter;
  * the ⋯ menu and "Mark as earned" are its siblings, not its children, so the
- * handle holds no nested controls and keys pressed on them don't pick it up.
- * Pointers can grab anywhere: the sensors' activation distance keeps clicks working.
+ * handle holds no nested controls. The drag listeners sit on the handle only:
+ * presses on the siblings (and on the menu, whose portal events bubble through
+ * the React tree to the list item) never start a drag. Pointers can grab
+ * anywhere on the card: the sensors' activation distance keeps clicks working.
  * Hovering or focusing the card previews its skill impact on any radar on screen
  * (S-4); previews are cleared and paused while any card is being dragged.
  */
@@ -65,25 +67,29 @@ export function SortableBoardCard({ dragging, moves, onOpen, onMove, onRemove, o
     { id: props.item.id, label: title, source: props.item },
     { paused: active !== null },
   );
+  const openOnEnter = opensOn(["Enter"], onOpen);
 
   return (
     <li
       ref={setNodeRef}
       data-item-id={props.item.id}
       style={{ transform: CSS.Translate.toString(transform), transition }}
-      className={cn("group/card relative cursor-grab", isDragging && "opacity-40")}
-      {...listeners}
+      className={cn("group/card relative", isDragging && "opacity-40")}
       {...previewTrigger}
     >
       <BoardCard
         {...props}
         {...attributes}
+        {...listeners}
         footerInset={onMarkEarned !== undefined}
         ref={setActivatorNodeRef}
-        // A keyboard drag also ends with Enter: don't open the card on that key press.
-        onKeyDown={active === null ? opensOnEnter(onOpen) : undefined}
+        onKeyDown={(event) => {
+          listeners?.onKeyDown?.(event);
+          // A keyboard drag also ends with Enter: don't open the card on that key press.
+          if (active === null) openOnEnter(event);
+        }}
         onClick={onOpen}
-        className={HANDLE_CLASSES}
+        className={cn("cursor-grab", HANDLE_CLASSES)}
       />
       {!dragging && (
         <CardMenu title={title} moves={moves} onOpen={onOpen} onMove={onMove} onRemove={onRemove} className={MENU_CLASSES} />
@@ -94,7 +100,8 @@ export function SortableBoardCard({ dragging, moves, onOpen, onMove, onRemove, o
 }
 
 /**
- * A card in a past month (B-5): not draggable, and its ⋯ menu only opens it.
+ * A card in a read-only month (B-5): not draggable, so Enter and Space both
+ * open it, like any button; its ⋯ menu only opens it.
  * The drawer keeps summary, notes and review later editable.
  */
 export function StaticBoardCard({ item, material, onOpen }: Pick<BoardCardItemProps, "item" | "material" | "onOpen">) {
@@ -109,7 +116,7 @@ export function StaticBoardCard({ item, material, onOpen }: Pick<BoardCardItemPr
         role="button"
         tabIndex={0}
         onClick={onOpen}
-        onKeyDown={opensOnEnter(onOpen)}
+        onKeyDown={opensOn(["Enter", " "], onOpen)}
         className={cn("cursor-pointer", HANDLE_CLASSES)}
       />
       <CardMenu title={title} moves={null} onOpen={onOpen} onMove={() => {}} onRemove={() => {}} className={MENU_CLASSES} />

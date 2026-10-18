@@ -4,7 +4,7 @@ import { useMemo, useSyncExternalStore } from "react";
  * A stand-in for `next/navigation` in board tests: the URL is jsdom's, and
  * `useSearchParams` follows pushState / replaceState / popstate like Next's router.
  *
- *   vi.mock("next/navigation", () => import("./test-navigation"));
+ *   vi.mock("next/navigation", () => import("./next-navigation.test-utils"));
  */
 
 const listeners = new Set<() => void>();
