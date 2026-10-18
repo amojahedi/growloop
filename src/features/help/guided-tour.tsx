@@ -12,6 +12,9 @@ import {
   beginTour,
   cancelTour,
   completeTour,
+  holdAutoStart,
+  locateStep,
+  releaseAutoStart,
   requestTour,
   resolveTourSteps,
   shouldAutoStartTour,
@@ -37,33 +40,71 @@ export function GuidedTour() {
 /** Time for the Dashboard to render and for a closing dialog or menu to hand focus back. */
 export const TOUR_START_DELAY_MS = 250;
 
+/** Whether a click follows a link to another page than the Dashboard. */
+function leavesDashboard(event: MouseEvent): boolean {
+  const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
+  if (!link) return false;
+  const url = new URL(link.href, window.location.href);
+  return url.origin === window.location.origin && url.pathname !== "/";
+}
+
 function TourHost() {
   const status = useTourStore((state) => state.status);
+  const origin = useTourStore((state) => state.origin);
+  const autoStartHeld = useTourStore((state) => state.autoStartHeld);
   const pathname = usePathname();
   const router = useRouter();
   const prefs = useDevicePreferences();
   const hydrated = useStoreHydrated();
   const [steps, setSteps] = useState<ResolvedStep[]>([]);
+  /** The pathname a Help request navigated away from, so it navigates only once. */
+  const navigatedFrom = useRef<string | null>(null);
+
+  // A hold lasts until the page actually changes.
+  useEffect(() => {
+    if (pathname !== "/") releaseAutoStart();
+  }, [pathname]);
 
   useEffect(() => {
-    if (hydrated && status === "idle" && shouldAutoStartTour(prefs, pathname)) requestTour();
-  }, [hydrated, status, prefs, pathname]);
+    if (hydrated && status === "idle" && !autoStartHeld && shouldAutoStartTour(prefs, pathname)) requestTour("auto");
+  }, [hydrated, status, autoStartHeld, prefs, pathname]);
 
   useEffect(() => {
-    if (status !== "pending") return;
+    if (status !== "pending") {
+      navigatedFrom.current = null;
+      return;
+    }
     if (pathname !== "/") {
-      router.push("/");
+      // An automatic tour never takes anyone anywhere: it waits for the next visit to the Dashboard.
+      if (origin !== "help") return cancelTour();
+      // Help goes to the Dashboard once; leaving it again before the tour starts drops the request.
+      if (navigatedFrom.current === null) {
+        navigatedFrom.current = pathname;
+        router.push("/");
+      } else if (navigatedFrom.current !== pathname) {
+        cancelTour();
+      }
       return;
     }
     if (!hydrated) return;
+    // A link followed before the tour appears wins: the user is leaving.
+    const onClick = (event: MouseEvent) => {
+      if (!leavesDashboard(event)) return;
+      if (origin === "auto") holdAutoStart();
+      else cancelTour();
+    };
+    document.addEventListener("click", onClick, true);
     const timer = setTimeout(() => {
       const resolved = resolveTourSteps(TOUR_STEPS);
       if (resolved.length === 0) return cancelTour();
       setSteps(resolved);
       beginTour();
     }, TOUR_START_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [status, pathname, hydrated, router]);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("click", onClick, true);
+    };
+  }, [status, origin, pathname, hydrated, router]);
 
   // Leaving the Dashboard (e.g. browser Back) ends the tour; it was seen, so it won't start by itself again.
   useEffect(() => {
@@ -166,31 +207,66 @@ function TourOverlay({ initialSteps, onClose }: { initialSteps: ResolvedStep[]; 
     };
   }, []);
 
-  // Follow the target: scroll it into view, track its box through scrolling and resizing.
+  // Follow the target: scroll it into view and track its box through scrolling, resizing and
+  // re-rendering. The element is looked up by its data-tour anchor on every measurement, so a
+  // remounted widget or nav item never leaves a stale spotlight or description behind.
+  const step = current.step;
   useLayoutEffect(() => {
-    const element = current.element;
-    if (!inViewport(element)) element.scrollIntoView({ block: "center", inline: "nearest", behavior: reducedMotion ? "auto" : "smooth" });
     let frame = 0;
+    let described: { element: HTMLElement; previous: string | null } | null = null;
+    const resize = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(() => schedule());
+    let observed: HTMLElement | null = null;
+
+    const describe = (element: HTMLElement | null) => {
+      if (described?.element === element) return;
+      if (described) {
+        if (described.previous === null) described.element.removeAttribute("aria-describedby");
+        else described.element.setAttribute("aria-describedby", described.previous);
+      }
+      described = null;
+      if (!element) return;
+      const previous = element.getAttribute("aria-describedby");
+      element.setAttribute("aria-describedby", previous ? `${previous} ${bodyId}` : bodyId);
+      described = { element, previous };
+    };
+
     const measure = () => {
+      const element = locateStep(step);
+      describe(element);
+      if (element !== observed) {
+        if (observed) resize?.unobserve(observed);
+        if (element) resize?.observe(element);
+        observed = element;
+      }
+      if (!element) return setRect(null);
       const { top, left, width, height } = element.getBoundingClientRect();
-      setRect({ top, left, width, height });
+      setRect((previous) =>
+        previous && previous.top === top && previous.left === left && previous.width === width && previous.height === height
+          ? previous
+          : { top, left, width, height },
+      );
     };
     const schedule = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(measure);
     };
+
+    const first = locateStep(step);
+    if (first && !inViewport(first)) first.scrollIntoView({ block: "center", inline: "nearest", behavior: reducedMotion ? "auto" : "smooth" });
     measure();
     window.addEventListener("scroll", schedule, true);
     window.addEventListener("resize", schedule);
-    const observer = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(schedule);
-    observer?.observe(element);
+    const mutations = typeof MutationObserver === "undefined" ? undefined : new MutationObserver(schedule);
+    mutations?.observe(document.body, { childList: true, subtree: true });
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("scroll", schedule, true);
       window.removeEventListener("resize", schedule);
-      observer?.disconnect();
+      resize?.disconnect();
+      mutations?.disconnect();
+      describe(null);
     };
-  }, [current.element, reducedMotion]);
+  }, [step, bodyId, reducedMotion]);
 
   // Targets can appear or disappear when the window is resized (the sidebar becomes the menu button).
   useEffect(() => {
@@ -214,17 +290,6 @@ function TourOverlay({ initialSteps, onClose }: { initialSteps: ResolvedStep[]; 
     const { width, height } = popover.getBoundingClientRect();
     setPosition(placePopover(rect, { width, height }, { width: window.innerWidth, height: window.innerHeight }));
   }, [rect, index]);
-
-  // The highlighted element is described by the step's text.
-  useEffect(() => {
-    const element = current.element;
-    const previous = element.getAttribute("aria-describedby");
-    element.setAttribute("aria-describedby", previous ? `${previous} ${bodyId}` : bodyId);
-    return () => {
-      if (previous === null) element.removeAttribute("aria-describedby");
-      else element.setAttribute("aria-describedby", previous);
-    };
-  }, [current.element, bodyId]);
 
   // Esc skips; Tab stays inside the popover.
   useEffect(() => {

@@ -5,18 +5,46 @@ import { readDevicePreferences, updateDevicePreferences, type DevicePreferences 
 
 /**
  * The guided tour's session state (help-and-guide.md §Guided tour). "pending"
- * means it was asked for (from Help, or automatically on the first visit) and
- * starts once the Dashboard shows its targets; "running" means it is on screen.
- * Whether it was seen or finished is a device preference (ADR 009).
+ * means it was asked for and starts once the Dashboard shows its targets;
+ * "running" means it is on screen. Whether it was seen or finished is a device
+ * preference (ADR 009).
+ *
+ * Where a request came from matters: a Help request takes the user to the
+ * Dashboard; an automatic one ("auto", the first visit) never navigates and
+ * gives way as soon as the user goes anywhere else.
  */
 
 export type TourStatus = "idle" | "pending" | "running";
+export type TourOrigin = "auto" | "help";
 
-export const useTourStore = create<{ status: TourStatus }>(() => ({ status: "idle" }));
+interface TourState {
+  status: TourStatus;
+  origin: TourOrigin | null;
+  /**
+   * Set while the user is on their way off the Dashboard (a link was followed,
+   * or the first-launch screen sent them to the wizard): no automatic start
+   * until the page actually changes.
+   */
+  autoStartHeld: boolean;
+}
+
+export const useTourStore = create<TourState>(() => ({ status: "idle", origin: null, autoStartHeld: false }));
 
 /** Asks for the tour; the tour host starts it on the Dashboard. */
-export function requestTour(): void {
-  if (useTourStore.getState().status === "idle") useTourStore.setState({ status: "pending" });
+export function requestTour(origin: TourOrigin = "help"): void {
+  const { status, autoStartHeld } = useTourStore.getState();
+  if (status !== "idle" || (origin === "auto" && autoStartHeld)) return;
+  useTourStore.setState({ status: "pending", origin });
+}
+
+/** Holds automatic starts until the page changes (the user is leaving the Dashboard). */
+export function holdAutoStart(): void {
+  const { status, origin } = useTourStore.getState();
+  useTourStore.setState({ autoStartHeld: true, ...(status === "pending" && origin === "auto" ? { status: "idle", origin: null } : {}) });
+}
+
+export function releaseAutoStart(): void {
+  if (useTourStore.getState().autoStartHeld) useTourStore.setState({ autoStartHeld: false });
 }
 
 /** The tour is on screen: from now on it never starts by itself again. */
@@ -27,14 +55,19 @@ export function beginTour(): void {
 
 /** Finished (Done) or skipped (Skip tour, Esc): both count as completed. */
 export function completeTour(): void {
-  useTourStore.setState({ status: "idle" });
+  useTourStore.setState({ status: "idle", origin: null });
   const at = now().toISOString();
   updateDevicePreferences({ tourCompletedAt: at, tourSeenAt: readDevicePreferences().tourSeenAt ?? at });
 }
 
-/** The tour was asked for but had nothing to show (no target appeared). */
+/** The tour was asked for but had nothing to show, or the user left before it started. */
 export function cancelTour(): void {
-  useTourStore.setState({ status: "idle" });
+  useTourStore.setState({ status: "idle", origin: null });
+}
+
+/** The live element for a step: its target, or the fallback when the target isn't on screen. */
+export function locateStep(step: TourStep, root: ParentNode = document): HTMLElement | null {
+  return findTourTarget(step.target, root) ?? (step.fallbackTarget ? findTourTarget(step.fallbackTarget, root) : null);
 }
 
 /**
@@ -67,7 +100,7 @@ export interface ResolvedStep {
 /** The steps that can be shown right now, each with its element; missing targets are skipped. */
 export function resolveTourSteps(steps: readonly TourStep[], root: ParentNode = document): ResolvedStep[] {
   return steps.flatMap((step) => {
-    const element = findTourTarget(step.target, root) ?? (step.fallbackTarget ? findTourTarget(step.fallbackTarget, root) : null);
+    const element = locateStep(step, root);
     return element ? [{ step, element }] : [];
   });
 }

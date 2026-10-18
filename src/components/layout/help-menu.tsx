@@ -30,7 +30,7 @@ export function HelpMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-52">
-        <DropdownMenuItem onSelect={requestTour}>
+        <DropdownMenuItem onSelect={() => requestTour("help")}>
           <CompassIcon aria-hidden />
           Take the tour
         </DropdownMenuItem>
