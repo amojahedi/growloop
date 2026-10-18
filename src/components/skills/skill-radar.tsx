@@ -42,6 +42,8 @@ interface SkillRadarProps {
   title: string;
   height?: number;
   className?: string;
+  /** Makes each axis label a button, e.g. to open the skill sheet. */
+  onAxisClick?: (skillId: ID) => void;
 }
 
 type Row = SkillRadarAxis & Record<string, number | string>;
@@ -59,7 +61,7 @@ export function axisSummary(axis: SkillRadarAxis, index: number, series: readonl
  * so pass the reference series (e.g. projected) before the one it frames.
  * Values are also rendered as a visually hidden table for screen readers.
  */
-export function SkillRadar({ axes, series, title, height = 300, className }: SkillRadarProps) {
+export function SkillRadar({ axes, series, title, height = 300, className, onAxisClick }: SkillRadarProps) {
   const tableId = useId();
   const rows: Row[] = axes.map((axis, index) => ({
     ...axis,
@@ -71,7 +73,7 @@ export function SkillRadar({ axes, series, title, height = 300, className }: Ski
       <ResponsiveContainer width="100%" height={height} initialDimension={{ width: 320, height }}>
         <RadarChart data={rows} outerRadius="68%" title={title} margin={{ top: 8, right: 24, bottom: 8, left: 24 }}>
           <PolarGrid stroke="var(--border)" />
-          <PolarAngleAxis dataKey="name" tick={(props) => <AxisTick {...props} axes={axes} />} />
+          <PolarAngleAxis dataKey="name" tick={(props) => <AxisTick {...props} axes={axes} onClick={onAxisClick} />} />
           {/* Fixed at 0 so small values don't fill the chart; at least 1 so an empty month still has a shape. */}
           <PolarRadiusAxis domain={[0, (max: number) => Math.max(1, max)]} tick={false} axisLine={false} />
           {series.map((s) => (
@@ -155,20 +157,47 @@ function AxisTick({
   textAnchor,
   index,
   axes,
-}: { x: number | string; y: number | string; textAnchor: string; index: number; axes: readonly SkillRadarAxis[] }) {
+  onClick,
+}: {
+  x: number | string;
+  y: number | string;
+  textAnchor: string;
+  index: number;
+  axes: readonly SkillRadarAxis[];
+  onClick?: (skillId: ID) => void;
+}) {
   const axis = axes[index];
   if (!axis) return null;
-  return (
+  const label = (
     <text
       x={x}
       y={y}
       textAnchor={textAnchor as "start" | "middle" | "end"}
       dominantBaseline="central"
-      className="text-xs font-medium"
+      className={cn("text-xs font-medium", onClick && "group-hover/axis:underline group-focus-visible/axis:underline")}
       style={{ fill: skillTextColor(axis.color) }}
     >
       {axis.name}
     </text>
+  );
+  if (!onClick) return label;
+  return (
+    <g
+      role="button"
+      aria-label={`Open ${axis.name}`}
+      aria-haspopup="dialog"
+      tabIndex={0}
+      className="group/axis cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      onClick={() => onClick(axis.skillId)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick(axis.skillId);
+        }
+      }}
+    >
+      {label}
+    </g>
   );
 }
 
