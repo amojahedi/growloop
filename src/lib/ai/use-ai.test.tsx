@@ -88,7 +88,7 @@ describe("useAI", () => {
 
 describe("useAI provider selection", () => {
   it("uses the visitor's own key first, without asking the local server", async () => {
-    localStorage.setItem("growloop:claude-api-key", "sk-ant-api03-test");
+    localStorage.setItem("growloop:claude-key", "sk-ant-api03-test");
     const feedback = { strengths: ["Clear"], gaps: [], suggestions: [] };
     sdk.create.mockResolvedValue({ content: [{ type: "text", text: JSON.stringify(feedback) }], stop_reason: "end_turn" });
     fetchMock.mockImplementation(() => respond({ available: true }));
@@ -133,7 +133,7 @@ describe("useAI provider selection", () => {
   it("switches provider when a key is saved or forgotten", async () => {
     fetchMock.mockImplementation(() => respond({ available: false, code: "disabled" }));
     const useAI = await loadHook();
-    const { saveApiKey, forgetApiKey } = await import("./api-key-storage");
+    const { saveApiKey, forgetApiKey } = await import("./providers/key-storage");
     const { result } = renderHook(() => useAI());
     await waitFor(() => expect(result.current.status.state).toBe("unavailable"));
 
@@ -144,5 +144,47 @@ describe("useAI provider selection", () => {
 
     act(() => forgetApiKey());
     await waitFor(() => expect(result.current.provider).toBe("off"));
+  });
+
+  it("forgetting the key stops an action in flight and clears a key-rejected error", async () => {
+    fetchMock.mockImplementation(() => respond({ available: false, code: "disabled" }));
+    const useAI = await loadHook();
+    // Imported after the module reset, so its error classes match the ones the provider sees.
+    const Anthropic = await import("@anthropic-ai/sdk");
+    sdk.create.mockImplementation(
+      (_params: unknown, { signal }: { signal: AbortSignal }) =>
+        new Promise((_resolve, reject) => signal.addEventListener("abort", () => reject(new Anthropic.APIUserAbortError()))),
+    );
+    const { saveApiKey, forgetApiKey } = await import("./providers/key-storage");
+    saveApiKey("sk-ant-api03-test");
+    const { result } = renderHook(() => useAI());
+
+    let pending!: Promise<unknown>;
+    act(() => {
+      pending = result.current.recommend.run({ context: { kind: "skill", name: "Roadmapping" } });
+    });
+    await waitFor(() => expect(sdk.create).toHaveBeenCalled());
+    expect(result.current.recommend.loading).toBe(true);
+
+    act(() => forgetApiKey());
+    await act(async () => {
+      await expect(pending).resolves.toBeUndefined();
+    });
+    expect(result.current.recommend).toMatchObject({ loading: false, data: undefined, error: undefined });
+    expect(result.current.provider).not.toBe("own-key");
+
+    // A rejected key's error disappears once the key is forgotten.
+    sdk.create.mockRejectedValue(
+      Anthropic.APIError.generate(401, { type: "error", error: { type: "authentication_error" } }, "bad key", new Headers()),
+    );
+    act(() => {
+      saveApiKey("sk-ant-api03-wrong");
+    });
+    await act(async () => {
+      await result.current.recommend.run({ context: { kind: "skill", name: "Roadmapping" } });
+    });
+    expect(result.current.recommend.error).toMatchObject({ code: "key-rejected" });
+    act(() => forgetApiKey());
+    expect(result.current.recommend.error).toBeUndefined();
   });
 });

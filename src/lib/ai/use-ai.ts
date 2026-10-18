@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useClaudeApiKey } from "./api-key-storage";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchAIStatus } from "./client";
 import { offProvider, selectProviderKind, type AIProvider, type AIProviderKind } from "./provider";
+import { useHasApiKey } from "./providers/key-storage";
 import { localProvider } from "./providers/local";
-import { createOwnKeyProvider } from "./providers/own-key";
+import { ownKeyProvider } from "./providers/own-key";
 import { AIRequestError } from "./request-error";
 import type {
   AIStatus,
@@ -41,6 +41,8 @@ export interface AsyncAction<Input, Output> {
   run: (input: Input) => Promise<Output | undefined>;
   data: Output | undefined;
   error: AIRequestError | undefined;
+  /** The error from the latest `run`, readable right after it resolves (state updates land later). */
+  lastError: () => AIRequestError | undefined;
   loading: boolean;
   /** Clears data and error, and cancels a call in flight. */
   reset: () => void;
@@ -70,11 +72,16 @@ function useAsyncAction<Input, Output>(
   request: (input: Input, signal: AbortSignal) => Promise<Output>,
 ): AsyncAction<Input, Output> {
   const [data, setData] = useState<Output>();
-  const [error, setError] = useState<AIRequestError>();
+  // Tagged with the request that failed, so an error (e.g. "key rejected") clears once the provider changes.
+  const [failure, setFailure] = useState<{ request: typeof request; error: AIRequestError }>();
+  const error = failure?.request === request ? failure.error : undefined;
+  const lastErrorRef = useRef<AIRequestError | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const controllerRef = useRef<AbortController | null>(null);
 
-  useEffect(() => () => controllerRef.current?.abort(), []);
+  // Cancel a call in flight on unmount, and when the provider behind `request` changes
+  // (e.g. the key was forgotten): its result must not appear under the new provider.
+  useEffect(() => () => controllerRef.current?.abort(), [request]);
 
   const run = useCallback(
     async (input: Input) => {
@@ -82,7 +89,8 @@ function useAsyncAction<Input, Output>(
       const controller = new AbortController();
       controllerRef.current = controller;
       setLoading(true);
-      setError(undefined);
+      setFailure(undefined);
+      lastErrorRef.current = undefined;
 
       try {
         const result = await request(input, controller.signal);
@@ -91,7 +99,10 @@ function useAsyncAction<Input, Output>(
         return result;
       } catch (caught) {
         if (controller.signal.aborted) return undefined;
-        setError(caught instanceof AIRequestError ? caught : new AIRequestError("Something went wrong.", "process-failed"));
+        const failed =
+          caught instanceof AIRequestError ? caught : new AIRequestError("Something went wrong.", "process-failed");
+        lastErrorRef.current = failed;
+        setFailure({ request, error: failed });
         return undefined;
       } finally {
         if (controllerRef.current === controller) {
@@ -107,11 +118,14 @@ function useAsyncAction<Input, Output>(
     controllerRef.current?.abort();
     controllerRef.current = null;
     setData(undefined);
-    setError(undefined);
+    setFailure(undefined);
+    lastErrorRef.current = undefined;
     setLoading(false);
   }, []);
 
-  return { run, data, error, loading, reset };
+  const lastError = useCallback(() => lastErrorRef.current, []);
+
+  return { run, data, error, lastError, loading, reset };
 }
 
 export interface UseAI {
@@ -128,39 +142,46 @@ export interface UseAI {
   draftOkrs: AsyncAction<DraftOkrsRequest, OkrDraft>;
 }
 
-export function useAI(): UseAI {
-  const apiKey = useClaudeApiKey();
-  const hasKey = apiKey !== null;
-  const [localStatus, setLocalStatus] = useState<AIStatusState>({ state: "checking" });
+/** Local Claude Code availability (`/api/ai/status`), one request shared by every caller on the page. */
+export function useLocalClaudeStatus({ enabled = true }: { enabled?: boolean } = {}): {
+  status: AIStatusState;
+  recheck: () => void;
+} {
+  const [status, setStatus] = useState<AIStatusState>({ state: "checking" });
 
   const check = useCallback((fresh: boolean) => {
     let active = true;
     loadStatus(fresh).then((result) => {
-      if (active) setLocalStatus(toStatusState(result));
+      if (active) setStatus(toStatusState(result));
     });
     return () => {
       active = false;
     };
   }, []);
 
-  // With a key the local CLI is never used, so skip its status check (which spawns processes).
-  useEffect(() => (hasKey ? undefined : check(false)), [hasKey, check]);
+  useEffect(() => (enabled ? check(false) : undefined), [enabled, check]);
 
   const recheck = useCallback(() => {
-    setLocalStatus({ state: "checking" });
+    setStatus({ state: "checking" });
     check(true);
   }, [check]);
 
-  const provider = selectProviderKind({ apiKey, localAvailable: localStatus.state === "available" });
-  const active = useMemo<AIProvider>(() => {
-    if (provider === "own-key" && apiKey) return createOwnKeyProvider(apiKey);
-    return provider === "local" ? localProvider : offProvider;
-  }, [provider, apiKey]);
+  return { status, recheck };
+}
+
+export function useAI(): UseAI {
+  // A boolean, never the key itself: the key isn't held in React state (or visible in DevTools).
+  const hasKey = useHasApiKey();
+  // With a key the local CLI is never used, so skip its status check (which spawns processes).
+  const local = useLocalClaudeStatus({ enabled: !hasKey });
+
+  const provider = selectProviderKind({ hasKey, localAvailable: local.status.state === "available" });
+  const active: AIProvider = provider === "own-key" ? ownKeyProvider : provider === "local" ? localProvider : offProvider;
 
   return {
     provider,
-    status: hasKey ? { state: "available" } : localStatus,
-    recheck,
+    status: hasKey ? { state: "available" } : local.status,
+    recheck: local.recheck,
     recommend: useAsyncAction(active.recommend),
     refineSummary: useAsyncAction(active.refineSummary),
     enrichMaterial: useAsyncAction(active.enrichMaterial),

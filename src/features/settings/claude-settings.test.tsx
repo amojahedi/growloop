@@ -3,74 +3,109 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AIRequestError } from "@/lib/ai/request-error";
 
-const testApiKey = vi.hoisted(() => vi.fn());
+const validateApiKey = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/ai/providers/own-key", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/ai/providers/own-key")>()),
-  testApiKey,
+  validateApiKey,
 }));
 
 const fetchMock = vi.fn<typeof fetch>();
 const { ClaudeSettings } = await import("./claude-settings");
-const { API_KEY_STORAGE_KEY } = await import("@/lib/ai/api-key-storage");
+const { API_KEY_STORAGE_KEY, forgetApiKey } = await import("@/lib/ai/providers/key-storage");
 
-const KEY = "sk-ant-api03-test-key";
-const keyInput = () => screen.getByLabelText("Claude API key");
+const KEY = "sk-ant-api03-test-key-wxyz";
+const keyInput = () => screen.getByLabelText(/Your Claude API key/);
+const statusFor = (local: Record<string, unknown>) =>
+  fetchMock.mockImplementation(() => Promise.resolve(Response.json(local)));
+
+async function saveKey(value: string) {
+  fireEvent.change(keyInput(), { target: { value } });
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Save key" })));
+}
 
 beforeEach(() => {
   localStorage.clear();
-  testApiKey.mockReset();
+  forgetApiKey();
+  validateApiKey.mockReset();
   fetchMock.mockReset();
-  // Hosted site: the local Claude Code routes are disabled.
-  fetchMock.mockImplementation(() =>
-    Promise.resolve(Response.json({ available: false, code: "disabled", reason: "Not on localhost" })),
-  );
+  // Hosted site by default: the local Claude Code routes are disabled.
+  statusFor({ available: false, code: "disabled", reason: "Not on localhost" });
   vi.stubGlobal("fetch", fetchMock);
 });
 
 afterEach(cleanup);
 
 describe("ClaudeSettings", () => {
-  it("saves a key, uses it, and forgets it", async () => {
+  it("checks the key once, saves it, masks it, and forgets it", async () => {
+    validateApiKey.mockResolvedValueOnce(undefined);
     render(<ClaudeSettings />);
-    await waitFor(() => expect(screen.getByText("AI is off")).toBeInTheDocument());
-    expect(keyInput()).toHaveAttribute("type", "password");
-    expect(screen.getByText(/stays in this browser only and is sent only to Anthropic/)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Forget key" })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Claude is off")).toBeInTheDocument());
+    expect(screen.getByText(/goes only to Anthropic/)).toBeInTheDocument();
+    expect(screen.getByText(/usually a few cents/)).toBeInTheDocument();
+    // Hosted: no Claude Code row.
+    expect(screen.queryByText("Claude Code on this computer")).not.toBeInTheDocument();
 
-    fireEvent.change(keyInput(), { target: { value: KEY } });
-    fireEvent.click(screen.getByRole("button", { name: "Save key" }));
+    // Not a form, and opted out of password managers.
+    const input = keyInput();
+    expect(input.closest("form")).toBeNull();
+    expect(input).toHaveAttribute("type", "password");
+    expect(input).toHaveAttribute("autocomplete", "off");
+    expect(input).toHaveAttribute("data-1p-ignore");
+    expect(input).toHaveAttribute("data-lpignore", "true");
+    expect(input).toHaveAttribute("data-bwignore");
+    expect(input).toHaveAttribute("data-form-type", "other");
 
+    await saveKey(KEY);
+
+    expect(validateApiKey).toHaveBeenCalledWith(KEY, expect.any(AbortSignal));
     expect(localStorage.getItem(API_KEY_STORAGE_KEY)).toBe(KEY);
-    expect(keyInput()).toHaveValue("");
-    expect(screen.getByText("Using your key")).toBeInTheDocument();
-    // The saved key is never shown on the page.
-    expect(document.body.textContent).not.toContain(KEY);
+    expect(screen.getByText("Claude is on · your API key")).toBeInTheDocument();
+    expect(screen.getByText("Claude is on.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Saved key ending in wxyz")).toHaveTextContent(/•+wxyz/);
+    // The full key is never shown on the page.
+    expect(document.body.innerHTML).not.toContain(KEY);
 
     fireEvent.click(screen.getByRole("button", { name: "Forget key" }));
     expect(localStorage.getItem(API_KEY_STORAGE_KEY)).toBeNull();
-    await waitFor(() => expect(screen.getByText("AI is off")).toBeInTheDocument());
+    expect(screen.getByText("Key forgotten. It's no longer stored in this browser.")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Claude is off")).toBeInTheDocument());
   });
 
-  it("rejects keys with the wrong format without saving", () => {
+  it("rejects obviously wrong keys without a network call", async () => {
     render(<ClaudeSettings />);
-    fireEvent.change(keyInput(), { target: { value: "not-a-key" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save key" }));
+    await saveKey("not-a-key");
 
-    expect(screen.getByRole("alert")).toHaveTextContent("sk-ant-");
+    expect(screen.getByRole("alert")).toHaveTextContent("That key didn't work. Check it and try again.");
+    expect(validateApiKey).not.toHaveBeenCalled();
     expect(localStorage.getItem(API_KEY_STORAGE_KEY)).toBeNull();
   });
 
-  it("tests the pasted key and reports the result", async () => {
-    testApiKey.mockResolvedValueOnce(undefined);
+  it.each([
+    ["key-rejected", "That key didn't work. Check it and try again."],
+    ["network", "Couldn't reach Anthropic. Check your connection and try again."],
+  ] as const)("stores nothing when the check fails (%s)", async (code, text) => {
+    validateApiKey.mockRejectedValueOnce(new AIRequestError("x", code));
     render(<ClaudeSettings />);
-    fireEvent.change(keyInput(), { target: { value: KEY } });
+    await saveKey(KEY);
 
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Test key" })));
-    expect(testApiKey).toHaveBeenCalledWith(KEY, expect.any(AbortSignal));
-    expect(screen.getByText(/The key works/)).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(text);
+    expect(localStorage.getItem(API_KEY_STORAGE_KEY)).toBeNull();
+  });
 
-    testApiKey.mockRejectedValueOnce(new AIRequestError("Key rejected. Check your Claude API key in Settings.", "key-rejected"));
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Test key" })));
-    expect(screen.getByRole("alert")).toHaveTextContent("Key rejected");
+  it("shows Claude Code on this computer when running locally", async () => {
+    statusFor({ available: true });
+    validateApiKey.mockResolvedValueOnce(undefined);
+    // Fresh modules: the local status is fetched once per page load.
+    vi.resetModules();
+    const { ClaudeSettings: LocalSettings } = await import("./claude-settings");
+    render(<LocalSettings />);
+
+    await waitFor(() => expect(screen.getByText("Claude is on · Claude Code on this computer")).toBeInTheDocument());
+    expect(screen.getByText(/Found · signed in/)).toBeInTheDocument();
+    expect(screen.getByText(/Optional: use an API key instead/)).toBeInTheDocument();
+
+    await saveKey(KEY);
+    expect(screen.getByText("Claude is on · your API key")).toBeInTheDocument();
+    expect(screen.getByText(/Found · not used while your API key is saved/)).toBeInTheDocument();
   });
 });

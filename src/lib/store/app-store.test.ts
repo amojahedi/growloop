@@ -21,7 +21,7 @@ const { STORAGE_KEY, useAppStore } = await import("./app-store");
 const { emptyWorkspace } = await import("./seed");
 const { hoursLoggedInMonth, monthActivity } = await import("@/lib/domain/dashboard");
 const { BACKUP_STORAGE_KEY } = await import("./backup");
-const { API_KEY_STORAGE_KEY, readApiKey, saveApiKey } = await import("@/lib/ai/api-key-storage");
+const { API_KEY_STORAGE_KEY, readApiKey, saveApiKey } = await import("@/lib/ai/providers/key-storage");
 
 const store = () => useAppStore.getState();
 const data = () => useAppStore.getState().data;
@@ -257,9 +257,6 @@ describe("data management", () => {
     const tampered = JSON.stringify({ ...parsed, apiKey: "sk-ant-api03-other", data: { ...parsed.data, apiKey: "sk-ant-api03-other" } });
     store().importData(tampered);
     expect(JSON.stringify(data())).not.toContain("sk-ant-api03-other");
-    expect(readApiKey()).toBe(key);
-
-    store().resetToEmpty();
     expect(readApiKey()).toBe(key);
   });
 

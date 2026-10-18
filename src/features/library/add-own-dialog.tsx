@@ -2,7 +2,8 @@
 
 import { SparklesIcon } from "lucide-react";
 import { useId, useRef, useState } from "react";
-import { AISetupHint } from "@/components/app/ai-setup-hint";
+import { AIErrorNotice } from "@/components/app/ai-error-notice";
+import { AISetupHint, TurnOnClaudeLink } from "@/components/app/ai-setup-hint";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -102,7 +103,9 @@ function PasteStep({
     cancelled.current = false;
     const draft = await enrichMaterial.run({ input: text, skills: skills.map(({ id, name }) => ({ id, name })) });
     if (cancelled.current) return;
-    // A failure never loses the paste: fall back to the pre-filled form and say why.
+    // A rejected key stays on this step with its own notice (forget the key, or fill in by hand).
+    if (!draft && enrichMaterial.lastError()?.code === "key-rejected") return;
+    // Any other failure never loses the paste: fall back to the pre-filled form and say why.
     onReview(
       draft
         ? initialForm(pasted, draft)
@@ -150,8 +153,11 @@ function PasteStep({
 
       {status.state === "checking" && <p className="text-xs text-muted-foreground">Checking AI…</p>}
       {status.state === "unavailable" && (
-        <AISetupHint status={status} onRecheck={recheck} suffix="You can still fill in the details yourself." />
+        <AISetupHint status={status} onRecheck={recheck}>
+          Fill in the details yourself, or <TurnOnClaudeLink>turn on Claude</TurnOnClaudeLink> to fill them for you.
+        </AISetupHint>
       )}
+      {enrichMaterial.error?.code === "key-rejected" && <AIErrorNotice error={enrichMaterial.error} />}
 
       <DialogFooter>
         {canUseClaude && (

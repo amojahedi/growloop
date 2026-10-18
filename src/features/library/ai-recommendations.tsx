@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AISetupHint } from "@/components/app/ai-setup-hint";
+import { AIErrorNotice } from "@/components/app/ai-error-notice";
+import { AISetupHint, TurnOnClaudeLink } from "@/components/app/ai-setup-hint";
 import { Section } from "@/components/app/section";
 import { Button } from "@/components/ui/button";
 import type { AIProviderKind } from "@/lib/ai/provider";
@@ -32,7 +33,11 @@ export function AIRecommendations({ context, existingTitles, skillIds = [] }: AI
     <Section title="AI recommendations" description={DESCRIPTIONS[provider]}>
       {status.state === "checking" && <p className="text-sm text-muted-foreground">Checking AI…</p>}
 
-      {status.state === "unavailable" && <AISetupHint status={status} onRecheck={recheck} />}
+      {status.state === "unavailable" && (
+        <AISetupHint status={status} onRecheck={recheck}>
+          Want picks for {context.kind === "skill" ? context.name : context.title}? <TurnOnClaudeLink />.
+        </AISetupHint>
+      )}
 
       {status.state === "available" && (
         <div className="flex flex-col gap-3">
@@ -44,7 +49,7 @@ export function AIRecommendations({ context, existingTitles, skillIds = [] }: AI
           >
             {recommend.loading ? "Asking Claude…" : "Recommend materials"}
           </Button>
-          {recommend.error && <p className="text-sm text-destructive">{recommend.error.message}</p>}
+          {recommend.error && <AIErrorNotice error={recommend.error} />}
           {recommend.data && (
             <ul className="divide-y">
               {recommend.data.recommendations.map((recommendation) => (

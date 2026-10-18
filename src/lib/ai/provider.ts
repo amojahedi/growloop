@@ -36,18 +36,18 @@ export interface AIProvider {
 
 /** Provider order: own key → local Claude Code (only when available) → off. */
 export function selectProviderKind({
-  apiKey,
+  hasKey,
   localAvailable,
 }: {
-  apiKey: string | null;
+  hasKey: boolean;
   localAvailable: boolean;
 }): AIProviderKind {
-  if (apiKey) return "own-key";
+  if (hasKey) return "own-key";
   if (localAvailable) return "local";
   return "off";
 }
 
-export const AI_OFF_MESSAGE = "AI is off. Add your Claude API key in Settings to turn it on.";
+export const AI_OFF_MESSAGE = "Claude is off. Turn it on in Settings.";
 
 const rejectOff = () => Promise.reject(new AIRequestError(AI_OFF_MESSAGE, "off"));
 

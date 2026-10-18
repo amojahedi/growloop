@@ -1,9 +1,10 @@
+// @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /** The SDK is mocked: these tests never make network calls. Error classes are the real ones. */
 const sdk = vi.hoisted(() => ({
   create: vi.fn(),
-  retrieve: vi.fn(),
+  list: vi.fn(),
   constructed: [] as Record<string, unknown>[],
 }));
 
@@ -11,7 +12,7 @@ vi.mock("@anthropic-ai/sdk", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@anthropic-ai/sdk")>();
   class FakeAnthropic {
     beta = { messages: { create: sdk.create } };
-    models = { retrieve: sdk.retrieve };
+    models = { list: sdk.list };
     constructor(options: Record<string, unknown>) {
       sdk.constructed.push(options);
     }
@@ -20,9 +21,12 @@ vi.mock("@anthropic-ai/sdk", async (importOriginal) => {
 });
 
 const Anthropic = await import("@anthropic-ai/sdk");
-const { createOwnKeyProvider, testApiKey, toStructuredOutputSchema, OWN_KEY_MODEL } = await import("./own-key");
+const { ownKeyProvider, validateApiKey, toStructuredOutputSchema, OWN_KEY_MODEL } = await import("./own-key");
+const { forgetApiKey, saveApiKey } = await import("./key-storage");
+const { hasCachedClient, setSdkImporterForTests } = await import("./own-key-client");
 
 const KEY = "sk-ant-api03-test-key";
+const skill = { context: { kind: "skill" as const, name: "Discovery" } };
 
 const message = (text: string, stopReason = "end_turn") => ({
   id: "msg_1",
@@ -45,9 +49,19 @@ const recommendations = {
   recommendations: [{ title: "Inspired", author: "Marty Cagan", type: "book", why: "Covers product discovery." }],
 };
 
+/** A create() that only settles when its signal aborts. */
+const hangUntilAborted = (_params: unknown, { signal }: { signal: AbortSignal }) =>
+  new Promise((_resolve, reject) => {
+    signal.addEventListener("abort", () => reject(new Anthropic.APIUserAbortError()));
+  });
+
 beforeEach(() => {
   sdk.create.mockReset();
-  sdk.retrieve.mockReset();
+  sdk.list.mockReset();
+  localStorage.clear();
+  forgetApiKey();
+  setSdkImporterForTests(() => import("@anthropic-ai/sdk"));
+  saveApiKey(KEY);
 });
 
 describe("own-key provider", () => {
@@ -55,8 +69,8 @@ describe("own-key provider", () => {
     sdk.create.mockResolvedValue(message(JSON.stringify(recommendations)));
     const controller = new AbortController();
 
-    const result = await createOwnKeyProvider(KEY).recommend(
-      { context: { kind: "skill", name: "Discovery" }, existingTitles: ["Continuous Discovery Habits"] },
+    const result = await ownKeyProvider.recommend(
+      { ...skill, existingTitles: ["Continuous Discovery Habits"] },
       controller.signal,
     );
 
@@ -76,24 +90,31 @@ describe("own-key provider", () => {
     expect(params.messages).toEqual([{ role: "user", content: expect.stringContaining('<user_data label="skill">') }]);
     expect(params.messages[0].content).toContain("Continuous Discovery Habits");
     expect(JSON.stringify(params.output_config.format.schema)).not.toContain("maxItems");
-    expect(options).toEqual({ signal: controller.signal });
+    // The caller's signal is linked to the request's own signal.
+    expect(options.signal).toBeInstanceOf(AbortSignal);
   });
 
-  it("creates a browser client for the key, with SDK logging off", async () => {
+  it("reads the key at call time and creates a browser client with SDK logging off", async () => {
     sdk.create.mockResolvedValue(message(JSON.stringify(recommendations)));
-    await createOwnKeyProvider(KEY).recommend({ context: { kind: "skill", name: "Discovery" } });
+    await ownKeyProvider.recommend(skill);
 
     expect(sdk.constructed.at(-1)).toMatchObject({ apiKey: KEY, dangerouslyAllowBrowser: true, logLevel: "off" });
   });
 
-  it("uses medium effort for summary feedback", async () => {
+  it("is off when no key is saved", async () => {
+    forgetApiKey();
+    await expect(ownKeyProvider.recommend(skill)).rejects.toMatchObject({ code: "off" });
+    expect(sdk.create).not.toHaveBeenCalled();
+  });
+
+  it("uses low effort for summary feedback (medium is for the OKR wizard)", async () => {
     const feedback = { strengths: ["Clear"], gaps: [], suggestions: ["Add an example"] };
     sdk.create.mockResolvedValue(message(JSON.stringify(feedback)));
 
-    await expect(
-      createOwnKeyProvider(KEY).refineSummary({ material: { title: "Inspired" }, summary: "Discovery first." }),
-    ).resolves.toEqual(feedback);
-    expect(sdk.create.mock.calls[0][0].output_config.effort).toBe("medium");
+    await expect(ownKeyProvider.refineSummary({ material: { title: "Inspired" }, summary: "Discovery first." })).resolves.toEqual(
+      feedback,
+    );
+    expect(sdk.create.mock.calls[0][0].output_config.effort).toBe("low");
   });
 
   it("keeps only the user's own skill ids in a draft", async () => {
@@ -101,91 +122,109 @@ describe("own-key provider", () => {
       message(JSON.stringify({ type: "book", title: "Inspired", author: "", tagline: "", summary: "", skillIds: ["discovery", "made-up"] })),
     );
 
-    const draft = await createOwnKeyProvider(KEY).enrichMaterial({
-      input: "Inspired",
-      skills: [{ id: "discovery", name: "Discovery" }],
-    });
+    const draft = await ownKeyProvider.enrichMaterial({ input: "Inspired", skills: [{ id: "discovery", name: "Discovery" }] });
     expect(draft.skillIds).toEqual(["discovery"]);
-    expect(sdk.create.mock.calls[0][0].output_config.effort).toBe("low");
   });
 
   it("rejects invalid input without calling Claude", async () => {
-    await expect(
-      createOwnKeyProvider(KEY).refineSummary({ material: { title: "Inspired" }, summary: "   " }),
-    ).rejects.toMatchObject({ code: "bad-request", message: expect.stringContaining("Write a summary first.") });
+    await expect(ownKeyProvider.refineSummary({ material: { title: "Inspired" }, summary: "   " })).rejects.toMatchObject({
+      code: "bad-request",
+      message: expect.stringContaining("Write a summary first."),
+    });
     expect(sdk.create).not.toHaveBeenCalled();
   });
 
   it("reports a refusal instead of reading the content", async () => {
     sdk.create.mockResolvedValue(message("", "refusal"));
-    await expect(createOwnKeyProvider(KEY).recommend({ context: { kind: "skill", name: "Discovery" } })).rejects.toMatchObject({
+    await expect(ownKeyProvider.recommend(skill)).rejects.toMatchObject({
       code: "refusal",
+      message: "Claude couldn't respond this time.",
     });
   });
 
   it("reports a cut-off answer (max_tokens)", async () => {
     sdk.create.mockResolvedValue(message('{"recommendations": [', "max_tokens"));
-    await expect(createOwnKeyProvider(KEY).recommend({ context: { kind: "skill", name: "Discovery" } })).rejects.toMatchObject({
-      code: "truncated",
-    });
+    await expect(ownKeyProvider.recommend(skill)).rejects.toMatchObject({ code: "truncated" });
   });
 
   it("rejects answers with an unexpected shape", async () => {
     sdk.create.mockResolvedValue(message(JSON.stringify({ items: [] })));
-    await expect(createOwnKeyProvider(KEY).recommend({ context: { kind: "skill", name: "Discovery" } })).rejects.toMatchObject({
-      code: "invalid-output",
-    });
+    await expect(ownKeyProvider.recommend(skill)).rejects.toMatchObject({ code: "invalid-output" });
   });
 
   it.each([
-    [401, "key-rejected", "Key rejected"],
-    [429, "rate-limited", "rate limit"],
-    [529, "model-error", "temporarily unavailable"],
+    [401, "key-rejected", "Your Claude key was rejected. Check it in Settings."],
+    [403, "key-rejected", "Your Claude key was rejected. Check it in Settings."],
+    [429, "rate-limited", "Your key hit Claude's rate limit. Wait a moment and try again."],
+    [529, "model-error", "Claude is temporarily unavailable. Try again shortly."],
   ])("maps HTTP %i to a friendly %s error", async (status, code, text) => {
     sdk.create.mockRejectedValue(apiError(status, "upstream detail"));
-    const error = await createOwnKeyProvider(KEY)
-      .recommend({ context: { kind: "skill", name: "Discovery" } })
-      .catch((caught: unknown) => caught);
+    const error = await ownKeyProvider.recommend(skill).catch((caught: unknown) => caught);
 
-    expect(error).toMatchObject({ name: "AIRequestError", code, message: expect.stringContaining(text) });
+    expect(error).toMatchObject({ name: "AIRequestError", code, message: text });
   });
 
   it("maps connection failures", async () => {
     sdk.create.mockRejectedValue(new Anthropic.APIConnectionError({ message: "fetch failed" }));
-    await expect(createOwnKeyProvider(KEY).recommend({ context: { kind: "skill", name: "Discovery" } })).rejects.toMatchObject({
-      code: "network",
-    });
+    await expect(ownKeyProvider.recommend(skill)).rejects.toMatchObject({ code: "network" });
   });
 
-  it("passes the abort signal through and reports cancellation", async () => {
-    sdk.create.mockImplementation(
-      (_params: unknown, { signal }: { signal: AbortSignal }) =>
-        new Promise((_resolve, reject) => {
-          signal.addEventListener("abort", () => reject(new Anthropic.APIUserAbortError()));
-        }),
-    );
+  it("cancels when the caller aborts", async () => {
+    sdk.create.mockImplementation(hangUntilAborted);
     const controller = new AbortController();
-    const pending = createOwnKeyProvider(KEY).recommend({ context: { kind: "skill", name: "Discovery" } }, controller.signal);
+    const pending = ownKeyProvider.recommend(skill, controller.signal);
     await vi.waitFor(() => expect(sdk.create).toHaveBeenCalled());
     controller.abort();
 
     await expect(pending).rejects.toMatchObject({ code: "aborted" });
   });
+
+  it("forgetting the key cancels requests in flight and drops the cached client", async () => {
+    sdk.create.mockImplementation(hangUntilAborted);
+    const pending = ownKeyProvider.recommend(skill);
+    await vi.waitFor(() => expect(sdk.create).toHaveBeenCalled());
+    expect(hasCachedClient()).toBe(true);
+
+    forgetApiKey();
+
+    await expect(pending).rejects.toMatchObject({ code: "aborted" });
+    expect(hasCachedClient()).toBe(false);
+  });
+
+  it("retries loading the SDK after a failed chunk load", async () => {
+    let attempts = 0;
+    setSdkImporterForTests(async () => {
+      attempts += 1;
+      if (attempts === 1) throw new TypeError("Failed to fetch dynamically imported module");
+      return Anthropic;
+    });
+    sdk.create.mockResolvedValue(message(JSON.stringify(recommendations)));
+
+    await expect(ownKeyProvider.recommend(skill)).rejects.toMatchObject({
+      code: "network",
+      message: "Couldn't reach Anthropic. Check your connection and try again.",
+    });
+    await expect(ownKeyProvider.recommend(skill)).resolves.toEqual(recommendations);
+    expect(attempts).toBe(2);
+  });
 });
 
-describe("testApiKey", () => {
-  it("checks the key with a free model lookup", async () => {
-    sdk.retrieve.mockResolvedValue({ id: OWN_KEY_MODEL });
+describe("validateApiKey", () => {
+  it("checks a key with one cheap model listing, without caching its client", async () => {
+    forgetApiKey();
+    sdk.list.mockResolvedValue({ data: [] });
     const controller = new AbortController();
 
-    await expect(testApiKey(KEY, controller.signal)).resolves.toBeUndefined();
-    expect(sdk.retrieve).toHaveBeenCalledWith("claude-opus-5-5", null, { signal: controller.signal });
+    await expect(validateApiKey(` ${KEY} `, controller.signal)).resolves.toBeUndefined();
+    expect(sdk.list).toHaveBeenCalledWith({ limit: 1 }, { signal: controller.signal });
+    expect(sdk.constructed.at(-1)).toMatchObject({ apiKey: KEY });
     expect(sdk.create).not.toHaveBeenCalled();
+    expect(hasCachedClient()).toBe(false);
   });
 
   it("says when the key is rejected", async () => {
-    sdk.retrieve.mockRejectedValue(apiError(401, "invalid x-api-key"));
-    await expect(testApiKey("sk-ant-wrong")).rejects.toMatchObject({ code: "key-rejected", message: expect.stringMatching(/^Key rejected/) });
+    sdk.list.mockRejectedValue(apiError(401, "invalid x-api-key"));
+    await expect(validateApiKey("sk-ant-wrong")).rejects.toMatchObject({ code: "key-rejected" });
   });
 });
 
